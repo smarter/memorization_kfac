@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memorization_kfac"
+description = "K-FAC / EKFAC memorization experiments built on top of bergson"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT License"}
+version = "0.1.0"
+dependencies = [
+    "bergson @ git+https://github.com/smarter/bergson@015a6ad54ebfb12d46be569ce518254554e2658f",
+    "accelerate",
+    "bitsandbytes>=0.46.1",
+    "datasets",
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.7",
+    "jaxtyping>=0.3.3",
+    "ml_dtypes",
+    "natsort",
+    "numpy",
+    "peft>=0.17.0",
+    "pyarrow",
+    "scipy",
+    "simple-parsing",
+    "torch",
+    "torchopt",
+    "tqdm",
+    "transformers>=4.57.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["data*", "evaluations*", "metrics*"]
+
+[tool.ruff]
+lint.ignore = ["E741", "F722"]   # Ambiguous variable name and jaxtyping shape annotation
+lint.select = ["E", "F", "I"]
+line-length = 120
+
+[dependency-groups]
+dev = [
+    "dvc[s3]>=3.64.0",
+    "pre-commit>=4.2.0",
+    "pre-commit-uv>=4.1.5",
+    "pyright>=1.1.406",
+    "pytest>=8.4.2",
+    "rapidfuzz>=3.14.3",
+    "zstandard>=0.25.0",
+]
