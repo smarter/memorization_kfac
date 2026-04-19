@@ -1,1 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.Python
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# Package managers
+uv.lock
+
+# DVC / experiment artefacts
+/out/
+/cache/
+/runs/
+/tmp/
+/figures/
+/results/
+/metrics_out/
+/influence_results/
+
+# Model & plot artefacts
+*.pt
+*.pth
+*.safetensors
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Pipeline temporary files
 data/pile10k_None.txt
+data/kfac_factors/
+data/kfac_factors_paper/
+data/kfac_factors_paper_bergson/
+data/kfac_factors_paper_bergson_converted/
+data/kfac_factors_paper_sample/

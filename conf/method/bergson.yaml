@@ -1,0 +1,16 @@
+# @package _global_
+method:
+  name: "bergson"
+
+collect_kfac:
+  script: "data/collect_kfac_bergson.py"
+  # pyproject.toml pins the exact bergson commit, so DVC re-runs this stage
+  # whenever the pin is bumped.
+  extra_dep: "pyproject.toml"
+  fsdp: true
+  world_size: 8
+
+eval_kfac:
+  use_eigenvalue_corrections: true
+  args:
+    bergson-factors: ${out_dir.collect_kfac}
