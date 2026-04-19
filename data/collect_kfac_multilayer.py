@@ -37,6 +37,8 @@ def parse():
                    default="kfac_out")
     p.add_argument("--sample_labels", action="store_true",
                    help="If set, use multinomial‑sampled labels")
+    p.add_argument("--seed", type=int, default=42,
+                   help="Random seed for reproducibility")
     return p.parse_args()
 
 # ---------- raw‑shard streaming dataset -----------------------
@@ -122,6 +124,12 @@ def chunked(it, n):
 def main():
     a = parse()
 
+    # ----- set random seed for reproducibility ----------------
+    torch.manual_seed(a.seed)
+    random.seed(a.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(a.seed)
+
     # ----- fix device string ("cuda" → "cuda:0") --------------
     if a.device.startswith("cuda") and ":" not in a.device:
         a.device = "cuda:0"
@@ -154,7 +162,7 @@ def main():
         collate_fn=lambda b: {"input_ids": torch.stack(
             [torch.tensor(x["input_ids"]) for x in b])})
 
-    ce = torch.nn.CrossEntropyLoss(ignore_index=-100)
+    ce = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction="sum")
     a.save_dir.mkdir(parents=True, exist_ok=True)
 
     # --- progressively collect layers in small groups ----------
@@ -196,7 +204,7 @@ def main():
                                 .reshape(-1, logits.size(-1)),
                             1).squeeze(1)
                     loss = torch.nn.functional.cross_entropy(
-                            logits.reshape(-1, logits.size(-1)), y)
+                            logits.reshape(-1, logits.size(-1)), y, reduction="sum")
                 else:
                     # --- gold labels ------------------------------------------------
                     loss = ce(logits.reshape(-1, logits.size(-1)),

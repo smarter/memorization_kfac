@@ -18,45 +18,52 @@ from typing import Dict, List, Optional, Union, Tuple
 class KFACTreatment:
     """
     Apply K-FAC compression to specified linear layers in a model.
-    
+
     This class uses K-FAC factors (activation and gradient covariances) to project
     weights onto top eigenspaces for memorization reduction.
-    
+
     Note on dimensions:
     - For gate/up projections: W has shape [11008, 4096] = [out_features, in_features]
     - For down projection: W has shape [4096, 11008] = [out_features, in_features]
     - G always corresponds to output dimension (gradient covariance)
     - A always corresponds to input dimension (activation covariance)
     """
-    
-    def __init__(self, model, layer_names: List[str], kfac_factors_path: str, 
-                 device: Optional[str] = None, keep_eigenvectors_on_cpu: bool = False):
+
+    def __init__(self, model, layer_names: List[str], kfac_factors_path: Optional[str] = None,
+                 device: Optional[str] = None, keep_eigenvectors_on_cpu: bool = False,
+                 kfac_info: Optional[Dict[str, Dict]] = None):
         """
         Initialize K-FAC treatment.
-        
+
         Args:
             model: The PyTorch model to apply treatment to
             layer_names: List of layer names to compress (e.g., ['model.layers.31.mlp.up_proj'])
-            kfac_factors_path: Path to the saved K-FAC factors file
+            kfac_factors_path: Path to the saved K-FAC factors file (optional if kfac_info provided)
             device: Device to use for computations (defaults to model device)
             keep_eigenvectors_on_cpu: If True, store eigenvectors on CPU to save GPU memory
+            kfac_info: Pre-computed K-FAC info dict. If provided, skips loading from file.
+                       Each entry should have keys: W_orig, eva_A, evc_A, eva_G, evc_G
         """
         self.model = model
         self.layer_names = layer_names
         self.device = device or next(model.parameters()).device
         self.keep_eigenvectors_on_cpu = keep_eigenvectors_on_cpu
-        
-        # Load K-FAC factors
-        self.kfac_data = torch.load(kfac_factors_path, map_location='cpu')
-        
+
         # Store original weights
         self.original_weights = {}
         self._store_original_weights()
-        
-        # Prepare K-FAC info for each layer
-        self.kfac_info = {}
-        self._prepare_kfac_info()
-        
+
+        # Use pre-computed kfac_info or load from file
+        if kfac_info is not None:
+            self.kfac_data = None
+            self.kfac_info = kfac_info
+        elif kfac_factors_path is not None:
+            self.kfac_data = torch.load(kfac_factors_path, map_location='cpu')
+            self.kfac_info = {}
+            self._prepare_kfac_info()
+        else:
+            raise ValueError("Either kfac_factors_path or kfac_info must be provided")
+
         # Track compression stats
         self.compression_stats = {}
         
@@ -392,6 +399,38 @@ class KFACTreatmentPairwise(KFACTreatment):
 
         return selected
 
+    @staticmethod
+    def _top_pairs_by_correction(lambda_correction: torch.Tensor,
+                                  ratio: float) -> List[Tuple[int, int]]:
+        """
+        Select top pairs using the eigenvalue correction matrix.
+
+        Unlike _top_pairs_by_product which exploits the separable structure of
+        λ_i * μ_j, this method handles the full correction matrix by sorting
+        all entries and selecting until cumulative mass >= ratio * total.
+        """
+        n = lambda_correction.shape[1]
+        flat = lambda_correction.flatten()
+
+        # Sort in descending order
+        sorted_vals, sorted_indices = torch.sort(flat, descending=True)
+
+        # Use float64 for cumsum to avoid precision loss with millions of elements
+        sorted_vals_f64 = sorted_vals.double()
+        total_mass = sorted_vals_f64.sum().item()
+        target_mass = ratio * total_mass
+
+        # Find cutoff using cumsum + binary search
+        cumsum = torch.cumsum(sorted_vals_f64, dim=0)
+        k = min(torch.searchsorted(cumsum, target_mass).item() + 1, len(sorted_indices))
+
+        # Convert flat indices to (i, j) pairs (vectorized)
+        selected_flat = sorted_indices[:k]
+        rows = (selected_flat // n).tolist()
+        cols = (selected_flat % n).tolist()
+
+        return list(zip(rows, cols))
+
     def _project_weight_pairs(self,
                               info: Dict,
                               pairs: List[Tuple[int, int]]) -> torch.Tensor:
@@ -485,14 +524,19 @@ class KFACTreatmentPairwise(KFACTreatment):
 
     def apply_kfac_by_product(self,
                               variance_ratio: Union[float,
-                                                    Dict[str, float]]):
+                                                    Dict[str, float]],
+                              use_weight_coefficients: bool = False):
         """
         Project each registered layer onto the span of the largest
-        λ_i μ_j products until the chosen fraction of total mass is kept.
+        importance scores until the chosen fraction of total mass is kept.
 
         variance_ratio
             • single float → same ratio for every layer, or
             • dict[layer_name] = ratio
+        use_weight_coefficients
+            If True, weight importance by C_ij^2 (squared weight coefficients
+            in the eigenbasis). This minimizes second-order loss impact rather
+            than just curvature.
         """
         # Build a per‑layer ratio map
         if isinstance(variance_ratio, float):
@@ -510,13 +554,61 @@ class KFACTreatmentPairwise(KFACTreatment):
                 assert (eva_G[:-1] >= eva_G[1:]).all(), "eva_G must be sorted desc"
                 assert (eva_A[:-1] >= eva_A[1:]).all(), "eva_A must be sorted desc"
 
-                # Step 1: which (i,j) pairs?
-                pairs = self._top_pairs_by_product(eva_G, eva_A, rho)
+                # Step 1: Compute base importance (curvature estimate)
+                if 'lambda_correction' in info:
+                    # Use eigenvalue corrections (EK-FAC)
+                    importance = info['lambda_correction'].to(self.device)
+                    print(f"  Using eigenvalue corrections for pair selection")
+                else:
+                    # Outer product of eigenvalues (standard K-FAC)
+                    importance = eva_G.unsqueeze(1) * eva_A.unsqueeze(0)  # [m, n]
 
-                # Step 2: build projection
+                # Step 2: Apply weight coefficient weighting if requested
+                if use_weight_coefficients:
+                    Ug = info['evc_G'].to(self.device)
+                    Ua = info['evc_A'].to(self.device)
+                    W = info['W_orig'].to(self.device).float()
+                    C = Ug.T @ W @ Ua  # [m, n]
+                    C_sq = C ** 2
+                    # Diagnostic: show how concentrated C² is
+                    C_sq_flat = C_sq.flatten()
+                    total_C_sq = C_sq_flat.sum()
+                    sorted_C_sq = C_sq_flat.sort(descending=True).values
+                    cumsum_C_sq = sorted_C_sq.cumsum(0) / total_C_sq
+                    top1pct = (cumsum_C_sq <= 0.01).sum().item()
+                    top10pct = (cumsum_C_sq <= 0.10).sum().item()
+                    top40pct = (cumsum_C_sq <= 0.40).sum().item()
+                    print(f"  C² concentration: top {top1pct} pairs (of {C_sq_flat.numel()}) = 1% mass, "
+                          f"top {top10pct} = 10%, top {top40pct} = 40%")
+                    importance = C_sq * importance
+                    # Also show concentration of final importance
+                    imp_flat = importance.flatten()
+                    n_pairs = imp_flat.numel()
+                    total_imp = imp_flat.sum()
+                    sorted_imp = imp_flat.sort(descending=True).values
+                    cumsum_imp = sorted_imp.cumsum(0) / total_imp
+                    # What mass % do we get at 5%, 10%, and 15% of pairs?
+                    idx_5pct = int(n_pairs * 0.05)
+                    idx_10pct = int(n_pairs * 0.10)
+                    idx_15pct = int(n_pairs * 0.15)
+                    mass_at_5pct = cumsum_imp[idx_5pct - 1].item() if idx_5pct > 0 else 0
+                    mass_at_10pct = cumsum_imp[idx_10pct - 1].item() if idx_10pct > 0 else 0
+                    mass_at_15pct = cumsum_imp[idx_15pct - 1].item() if idx_15pct > 0 else 0
+                    print(f"  C²×Λ: 5% pairs = {mass_at_5pct:.1%}, 10% = {mass_at_10pct:.1%}, 15% = {mass_at_15pct:.1%}")
+                    print(f"  Using weight coefficients for pair selection")
+
+                # Step 3: Select pairs
+                if use_weight_coefficients or 'lambda_correction' in info:
+                    # Non-separable: use general flatten-sort selection
+                    pairs = self._top_pairs_by_correction(importance, rho)
+                else:
+                    # Separable: use efficient heap-based selection
+                    pairs = self._top_pairs_by_product(eva_G, eva_A, rho)
+
+                # Step 4: build projection
                 W_proj = self._project_weight_pairs(info, pairs)
 
-                # Step 3: write back
+                # Step 5: write back
                 layer = self._get_layer_by_name(layer_name)
                 layer.weight.copy_(W_proj.to(layer.weight.dtype))
 

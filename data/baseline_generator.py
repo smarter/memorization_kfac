@@ -103,10 +103,11 @@ def generate_baseline_topk(model,
         device: Device to use (auto-detect if None)
     """
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Ensure model is on correct device and in eval mode
-    model = model.to(device).eval()
+        device = next(model.parameters()).device
+
+    # Ensure model is in eval mode
+    # NOTE: Don't call .to(device) on accelerate-dispatched models!
+    model.eval()
     
     # Create dataset
     ds = TextChunkDataset(data_path, tokenizer, seq_len, max_tokens=max_tokens)
@@ -279,11 +280,10 @@ def get_baseline_predictions(model_name: str,
 
 
 if __name__ == "__main__":
-    # Example usage
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Generate baseline top-k predictions")
-    parser.add_argument("--model", default="allenai/OLMo-2-1124-7B", 
+    parser.add_argument("--model", default="allenai/OLMo-2-1124-7B",
                        help="Model name or path")
     parser.add_argument("--data", required=True,
                        help="Path to text data file")
@@ -291,17 +291,23 @@ if __name__ == "__main__":
                        help="Cache directory")
     parser.add_argument("--k", type=int, default=10,
                        help="Number of top predictions")
+    parser.add_argument("--seq-len", type=int, default=1024,
+                       help="Sequence length for processing")
+    parser.add_argument("--batch-size", type=int, default=8,
+                       help="Batch size for inference")
     parser.add_argument("--max-tokens", type=int, default=200000,
                        help="Maximum tokens to process")
-    
+
     args = parser.parse_args()
-    
+
     baseline_file = get_baseline_predictions(
         model_name=args.model,
         data_path=args.data,
         cache_dir=args.cache_dir,
         k=args.k,
+        seq_len=args.seq_len,
+        batch_size=args.batch_size,
         max_tokens=args.max_tokens
     )
-    
+
     print(f"\nBaseline file: {baseline_file}")
