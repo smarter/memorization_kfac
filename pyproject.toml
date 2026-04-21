@@ -11,7 +11,7 @@ license = {text = "MIT License"}
 version = "0.1.0"
 dependencies = [
     # Depend on https://github.com/EleutherAI/bergson/pull/239
-    "bergson @ git+https://github.com/smarter/bergson@7692c9a99f5eb57642094b750914981acd2c5a3f",
+    "bergson @ git+https://github.com/smarter/bergson@d3a4a1c44ed3ceee6abc727ee65359b9e1390f97",
     "accelerate",
     "bitsandbytes>=0.46.1",
     "datasets",
