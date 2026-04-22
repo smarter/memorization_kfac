@@ -10,8 +10,8 @@ requires-python = ">=3.10"
 license = {text = "MIT License"}
 version = "0.1.0"
 dependencies = [
-    # Depend on https://github.com/EleutherAI/bergson/pull/239
-    "bergson @ git+https://github.com/smarter/bergson@d3a4a1c44ed3ceee6abc727ee65359b9e1390f97",
+    # Depend on https://github.com/smarter/bergson/tree/ckpt
+    "bergson @ git+https://github.com/smarter/bergson@b2ec01513a1469a22fed614d8791cd79a726c7b0",
     "accelerate",
     "bitsandbytes>=0.46.1",
     "datasets",

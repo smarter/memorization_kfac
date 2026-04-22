@@ -264,6 +264,7 @@ def main():
         token_batch_size=args.batch_size * args.seq_len,
         distributed=dist_cfg,
         overwrite=True,
+        gradient_checkpointing=True
     )
 
     hessian_cfg = HessianConfig(
