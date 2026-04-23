@@ -1,5 +1,5 @@
 vars:
-  - olmes_commit: "f122a7bad99551ffb3f5feec14169af794926f6b"
+  - olmes_commit: "5a51f502d463b8cdc4a2dcad7d7096c41ff1197e"
 
 stages:
   # =============================================================================
