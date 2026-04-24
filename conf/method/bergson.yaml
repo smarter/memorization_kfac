@@ -9,6 +9,8 @@ collect_kfac:
   extra_dep: "pyproject.toml"
   fsdp: true
   world_size: 8
+  args:
+    method: "kfac"
 
 eval_kfac:
   use_eigenvalue_corrections: true

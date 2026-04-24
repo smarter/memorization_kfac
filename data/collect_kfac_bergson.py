@@ -44,6 +44,12 @@ def parse():
     p.add_argument("--model", default="allenai/OLMo-2-1124-7B")
     p.add_argument("--device", default="cuda")
     p.add_argument("--dtype", default="bfloat16", choices=["float32", "bfloat16"])
+    p.add_argument(
+        "--method",
+        default="kfac",
+        choices=["kfac", "tkfac", "shampoo"],
+        help="Hessian approximation method.",
+    )
 
     p.add_argument("--corpus", choices=["olmo", "dolmo"], default="dolmo")
     p.add_argument("--nbytes", type=int, default=100_000_000)
@@ -268,7 +274,7 @@ def main():
     )
 
     hessian_cfg = HessianConfig(
-        method="kfac",
+        method=args.method,
         ev_correction=True,
         # fp32 accumulators keep the bf16 outer-product path numerically stable.
         hessian_dtype="fp32",
