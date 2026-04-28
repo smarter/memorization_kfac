@@ -179,8 +179,8 @@ stages:
       python data/mask_intersection.py
       --model ${model.name}
       --kfac_factors ${out_dir.collect_kfac}
-      --layers_json '${json:${model.layers}}'
       --output ${out_dir.mask_intersection}/results.json
+      ${mask_intersection.args}
     deps:
       - data/mask_intersection.py
       - evaluations/eval_mem_kfac.py
@@ -212,13 +212,8 @@ stages:
       python evaluations/curvature_band_activations.py
       --model ${model.name}
       --kfac_factors ${out_dir.collect_kfac}
-      --target_blocks ${oc.dict.keys:model.layers}
-      --projection ${band_activations.projection}
-      --n_samples ${band_activations.n_samples}
-      --batch_size ${band_activations.batch_size}
-      --seq_len ${band_activations.seq_len}
-      --datasets_json '${json:${band_activations.datasets}}'
       --output ${out_dir.band_activations}/results.json
+      ${band_activations.args}
     deps:
       - evaluations/curvature_band_activations.py
       - evaluations/eval_mem_kfac.py

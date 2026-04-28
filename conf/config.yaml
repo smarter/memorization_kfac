@@ -30,10 +30,6 @@ eval_kfac:
 band_activations:
   # Per-task activation-band analysis on K-FAC's activation eigenbasis.
   # See evaluations/curvature_band_activations.py.
-  projection: "up"
-  n_samples: 128
-  batch_size: 4
-  seq_len: 512
   datasets:
     gsm8k:
       hf_path: "gsm8k"
@@ -49,6 +45,18 @@ band_activations:
       hf_path: "NeelNanda/pile-10k"
       split: "train"
       column: "text"
+  args:
+    target_blocks: ${oc.dict.keys:model.layers}
+    projection: "up"
+    n_samples: 128
+    batch_size: 4
+    seq_len: 512
+    datasets_json: ${json:${band_activations.datasets}}
+
+mask_intersection:
+  # Same pattern: ${json:...} only resolves in conf/.
+  args:
+    layers_json: ${json:${model.layers}}
 
 
 
