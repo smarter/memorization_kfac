@@ -1,70 +1,70 @@
 model:
-  name: allenai/OLMo-2-0425-1B
-  size: 1b
+  name: allenai/OLMo-2-1124-7B
+  size: 7b
   layer_mass:
-    gate: 0.4
-    up: 0.4
+    gate: 0.5
+    up: 0.5
     down: 1.0
   layers:
-    '13':
-      gate: 0.4
-      up: 0.4
+    '23':
+      gate: 0.5
+      up: 0.5
       down: 1.0
-    '14':
-      gate: 0.4
-      up: 0.4
+    '24':
+      gate: 0.5
+      up: 0.5
       down: 1.0
-    '15':
-      gate: 0.4
-      up: 0.4
+    '25':
+      gate: 0.5
+      up: 0.5
       down: 1.0
 eval_kfac:
   args:
-    bs: 128
-    bergson-factors: out/collect_kfac/bergson/1b
-    layers-json: '{"13": {"gate": 0.4, "up": 0.4, "down": 1.0}, "14": {"gate": 0.4,
-      "up": 0.4, "down": 1.0}, "15": {"gate": 0.4, "up": 0.4, "down": 1.0}}'
-  use_eigenvalue_corrections: true
-  use_weight_coefficients: false
+    bs: 96
+    bergson-factors: out/collect_kfac/identity/7b
+    layers-json: '{"23": {"gate": 0.5, "up": 0.5, "down": 1.0}, "24": {"gate": 0.5,
+      "up": 0.5, "down": 1.0}, "25": {"gate": 0.5, "up": 0.5, "down": 1.0}}'
+  use_eigenvalue_corrections: false
+  use_weight_coefficients: true
 method:
-  name: bergson
+  name: identity
 collect_kfac:
-  script: data/collect_kfac_bergson.py
-  extra_dep: bergson/
+  script: data/collect_kfac_identity.py
+  extra_dep: data/collect_kfac_identity.py
   fsdp: false
-  world_size: 1
-  bf16_batch_size: 168
+  world_size: null
+  bf16_batch_size: 1
   sample_labels: true
   args:
     device: cuda
     dtype: bfloat16
     corpus: dolmo
-    nbytes: 10000
+    nbytes: 100000000
     seq_len: 512
     target_blocks:
-    - '13'
-    - '14'
-    - '15'
+    - '23'
+    - '24'
+    - '25'
     layers_per_pass: 3
     batch_size: 1
 benchmark:
   args:
-    task: gsm8k::olmes
-    batch-size: 28
+    task: winogrande::olmes
+    batch-size: 128
 model_method:
-  gate_up_mass: 0.4
-out_suffix: bergson/1b
+  gate_up_mass: 0.5
+out_suffix: identity/7b
 out_dir:
   prepare_pile10k: data/pile10k_None.txt
   prepare_pile10k_cache: out/prepare_pile10k_cache
-  baseline_cache: out/baseline_cache/1b
-  collect_kfac: out/collect_kfac/bergson/1b
-  eval_kfac: out/eval_kfac/bergson/1b
-  plot_figure2: out/plot_figure2/bergson/1b
-  benchmark: out/benchmark/bergson/1b
+  baseline_cache: out/baseline_cache/7b
+  collect_kfac: out/collect_kfac/identity/7b
+  eval_kfac: out/eval_kfac/identity/7b
+  plot_figure2: out/plot_figure2/identity/7b
+  benchmark: out/benchmark/identity/7b
 computed:
-  eigenvalue_corrections_flag: --eigenvalue-corrections
-  weight_coefficients_flag: ''
+  eigenvalue_corrections_flag: ''
+  weight_coefficients_flag: --weight-coefficients
   sample_labels_flag: --sample_labels
   fsdp_flag: ''
-  world_size_flag: --world_size 1
+  world_size_flag: ''
