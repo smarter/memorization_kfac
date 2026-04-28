@@ -9,6 +9,9 @@ collect_kfac:
   extra_dep: "pyproject.toml"
   fsdp: true
   world_size: 8
+  args:
+    # Same as bergson — see conf/method/bergson.yaml for rationale.
+    calibration_mix: "first_n"
 
 eval_kfac:
   # OBD's canonical saliency is D · W^2. To get that ranking from

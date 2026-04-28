@@ -11,6 +11,12 @@ collect_kfac:
   world_size: 8
   args:
     method: "kfac"
+    # Default: alphabetical order (legacy bias toward whichever subdomain
+    # comes first lexicographically). Override with -S
+    # collect_kfac.args.calibration_mix=interleave to round-robin across
+    # top-level subdomain dirs (data/dclm vs data/openwebmath, etc.) and
+    # spread the --nbytes budget across the mix. See data/calibration.py.
+    calibration_mix: "first_n"
 
 eval_kfac:
   use_eigenvalue_corrections: true

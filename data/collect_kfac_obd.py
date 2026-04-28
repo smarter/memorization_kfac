@@ -37,17 +37,20 @@ from typing import Dict
 
 import torch
 import torch.distributed as dist
-from datasets import Dataset, load_dataset
+from datasets import Dataset
 from safetensors import safe_open
 from safetensors.torch import save_file
 from transformers import AutoConfig, AutoTokenizer
-from tqdm.auto import tqdm
 
 from bergson.config import DistributedConfig, HessianConfig, IndexConfig
 from bergson.data import allocate_batches
 from bergson.distributed import launch_distributed_run
 from bergson.hessians.hessian_approximations import collect_hessians
 from bergson.utils.worker_utils import setup_model_and_peft
+
+# Sibling module; factors out the corpus-mix logic shared with
+# collect_kfac_bergson.py.
+from calibration import collect_sequences
 
 
 def parse():
@@ -63,6 +66,12 @@ def parse():
     p.add_argument("--nbytes", type=int, default=100_000_000)
     p.add_argument("--seq_len", type=int, default=512)
     p.add_argument("--batch_size", type=int, default=32)
+    p.add_argument(
+        "--calibration_mix",
+        choices=["first_n", "shuffle", "interleave"],
+        default="first_n",
+        help="Corpus shard ordering — see data/calibration.py.",
+    )
 
     p.add_argument("--layers_per_pass", type=int, default=1)
     p.add_argument(
@@ -78,46 +87,6 @@ def parse():
     p.add_argument("--world_size", type=int, default=None)
     p.add_argument("--fsdp", action="store_true")
     return p.parse_args()
-
-
-def collect_sequences(corpus: str, tokenizer, seq_len: int, nbytes: int) -> list[list[int]]:
-    """Collect fixed-length sequences from a streaming dataset (mirrors bergson script)."""
-    HF_DATASETS = {
-        "olmo": "allenai/olmo-mix-1124",
-        "dolmo": "allenai/dolmino-mix-1124",
-    }
-    if corpus == "olmo":
-        from datasets import Features, Value
-
-        ds = load_dataset(
-            "json",
-            data_files={"train": f"hf://datasets/{HF_DATASETS[corpus]}/data/**/*.json*"},
-            split="train",
-            streaming=True,
-            features=Features({"text": Value("string")}),
-        )
-    else:
-        ds = load_dataset(
-            "json",
-            data_files={"train": f"hf://datasets/{HF_DATASETS[corpus]}/data/**/*.json*"},
-            split="train",
-            streaming=True,
-        )
-
-    sequences = []
-    buf, seen = [], 0
-    for sample in tqdm(ds, desc="Loading sequences"):
-        txt = sample["text"].strip()
-        if not txt:
-            continue
-        seen += len(txt.encode())
-        buf.extend(tokenizer(txt, add_special_tokens=False).input_ids)
-        while len(buf) >= seq_len:
-            sequences.append(buf[:seq_len])
-            buf = buf[seq_len:]
-        if seen >= nbytes:
-            break
-    return sequences
 
 
 def obd_worker(
@@ -258,7 +227,14 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
-    sequences = collect_sequences(args.corpus, tokenizer, args.seq_len, args.nbytes)
+    sequences = collect_sequences(
+        args.corpus,
+        tokenizer,
+        args.seq_len,
+        args.nbytes,
+        seed=args.seed,
+        mix_strategy=args.calibration_mix,
+    )
     print(f"Collected {len(sequences)} sequences")
 
     hf_dataset = Dataset.from_dict(
