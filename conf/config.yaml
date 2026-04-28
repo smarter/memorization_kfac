@@ -37,6 +37,7 @@ out_dir:
   baseline_cache: "out/baseline_cache/${model.size}"
   collect_kfac: "out/collect_kfac/${out_suffix}"
   eval_kfac: "out/eval_kfac/${out_suffix}"
+  mask_intersection: "out/mask_intersection/${out_suffix}"
   plot_figure2: "out/plot_figure2/${out_suffix}"
   benchmark: "out/benchmark/${out_suffix}"
 

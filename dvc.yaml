@@ -163,6 +163,37 @@ stages:
       - nDCG@10
 
   # =============================================================================
+  # Mask Intersection (Experiment 2)
+  # =============================================================================
+  # Compares the K-FAC pair-selection mask against the magnitude (identity)
+  # mask at matched cardinality, in W-space. Computes all four importance
+  # variants {ec=0/1} x {wc=0/1} that the editing pipeline can produce in one
+  # pass; ec=1 entries are skipped if no eigenvalue_correction_sharded was
+  # collected. See notes/identity_pruning_experiments.md (Experiment 2).
+  #
+  # Usage:
+  #   dvc exp run mask_intersection -S model=1b -S method=bergson
+
+  mask_intersection:
+    cmd: >-
+      python data/mask_intersection.py
+      --model ${model.name}
+      --kfac_factors ${out_dir.collect_kfac}
+      --layers_json '${json:${model.layers}}'
+      --output ${out_dir.mask_intersection}/results.json
+    deps:
+      - data/mask_intersection.py
+      - evaluations/eval_mem_kfac.py
+      - ${out_dir.collect_kfac}
+    outs:
+      - ${out_dir.mask_intersection}
+    desc: |
+      Compare K-FAC pair-selection vs magnitude (identity) mask at matched
+      cardinality. Outputs results.json with per-layer IoU, cosine, relative
+      reconstruction errors, and cross-mass terms across all four importance
+      variants.
+
+  # =============================================================================
   # Figure 2: K-FAC Eigenvector Activation Ratios
   # =============================================================================
 
