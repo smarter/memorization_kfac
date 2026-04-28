@@ -27,6 +27,29 @@ eval_kfac:
   args:
     layers-json: ${json:${model.layers}}
 
+band_activations:
+  # Per-task activation-band analysis on K-FAC's activation eigenbasis.
+  # See evaluations/curvature_band_activations.py.
+  projection: "up"
+  n_samples: 128
+  batch_size: 4
+  seq_len: 512
+  datasets:
+    gsm8k:
+      hf_path: "gsm8k"
+      hf_config: "main"
+      split: "train"
+      column: "question"
+    winogrande:
+      hf_path: "winogrande"
+      hf_config: "winogrande_xl"
+      split: "train"
+      column: "sentence"
+    pile10k:
+      hf_path: "NeelNanda/pile-10k"
+      split: "train"
+      column: "text"
+
 
 
 # Common output suffix and directories
@@ -38,6 +61,7 @@ out_dir:
   collect_kfac: "out/collect_kfac/${out_suffix}"
   eval_kfac: "out/eval_kfac/${out_suffix}"
   mask_intersection: "out/mask_intersection/${out_suffix}"
+  band_activations: "out/band_activations/${out_suffix}"
   plot_figure2: "out/plot_figure2/${out_suffix}"
   benchmark: "out/benchmark/${out_suffix}"
 

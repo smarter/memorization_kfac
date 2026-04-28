@@ -194,6 +194,44 @@ stages:
       variants.
 
   # =============================================================================
+  # Curvature-band activation ratios per task (Experiment 1)
+  # =============================================================================
+  # For each MLP layer, projects pre-MLP activations onto K-FAC's activation
+  # eigenvectors split into top-10/10-25/25-50/bottom-50 percentile bands by
+  # eigenvalue, and reports the mean L2 norm per dataset. Generalises the
+  # paper's Figure 2 (memorized vs clean) to arbitrary task datasets so we
+  # can ask "does GSM8K concentrate on the bottom-of-the-spectrum more than
+  # Winogrande does?" — the smoking-gun test for whether the K-FAC basis is
+  # specifically anti-aligned with math-relevant weight directions.
+  #
+  # Usage:
+  #   dvc exp run band_activations -S model=1b -S method=bergson
+
+  band_activations:
+    cmd: >-
+      python evaluations/curvature_band_activations.py
+      --model ${model.name}
+      --kfac_factors ${out_dir.collect_kfac}
+      --target_blocks ${oc.dict.keys:model.layers}
+      --projection ${band_activations.projection}
+      --n_samples ${band_activations.n_samples}
+      --batch_size ${band_activations.batch_size}
+      --seq_len ${band_activations.seq_len}
+      --datasets_json '${json:${band_activations.datasets}}'
+      --output ${out_dir.band_activations}/results.json
+    deps:
+      - evaluations/curvature_band_activations.py
+      - evaluations/eval_mem_kfac.py
+      - ${out_dir.collect_kfac}
+    outs:
+      - ${out_dir.band_activations}
+    desc: |
+      Per-task activation-band analysis on K-FAC's activation eigenbasis.
+      Outputs results.json with per-(layer, band, dataset) mean L2 norms
+      plus cross-dataset ratios. Tells you whether GSM8K's hidden activations
+      load disproportionately on low-curvature K-FAC eigenvectors.
+
+  # =============================================================================
   # Figure 2: K-FAC Eigenvector Activation Ratios
   # =============================================================================
 
