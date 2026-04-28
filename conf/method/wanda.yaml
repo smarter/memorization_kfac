@@ -1,0 +1,22 @@
+# @package _global_
+method:
+  name: "wanda"
+
+collect_kfac:
+  script: "data/collect_kfac_wanda.py"
+  # Wanda's calibration is just diag(A^T A); we read it directly from
+  # bergson's already-collected activation covariances rather than re-running
+  # forward passes. This stage re-runs whenever the bergson factors change.
+  extra_dep: "out/collect_kfac/bergson/${model.size}"
+  fsdp: false
+  world_size: null
+  args:
+    source: "out/collect_kfac/bergson/${model.size}"
+
+eval_kfac:
+  # For Wanda, importance with --weight-coefficients = eva_A * W^2 = the
+  # canonical Wanda ranking. The EC variant is constructed to be equivalent
+  # (lambda_correction encodes eva_A), so leaving it off is fine.
+  use_eigenvalue_corrections: false
+  args:
+    bergson-factors: ${out_dir.collect_kfac}
