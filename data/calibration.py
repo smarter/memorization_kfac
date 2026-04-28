@@ -17,6 +17,10 @@ controls how shards are ordered:
   - ``interleave`` : group shards by top-level subdomain, then round-robin
     between subdomains. Within ``--nbytes`` you get a roughly uniform mix
     across subdomains regardless of relative shard sizes.
+  - ``dolmino_50B``: weighted interleave matching the 50B Dolmino mix
+    proportions published by AI2 (47.2% DCLM / 16.6% FLAN / 5.85% pes2o /
+    7.11% Wiki / 2.45% StackExchange / 20.8% Stage 2 Math). Only valid for
+    ``corpus=dolmo``.
 """
 from __future__ import annotations
 
@@ -37,6 +41,20 @@ HF_DATASETS = {
     "olmo": "allenai/olmo-mix-1124",
     "dolmo": "allenai/dolmino-mix-1124",
 }
+
+
+# Mix proportions for the official 50B Dolmino mix (Mix % column from the
+# dataset card at https://huggingface.co/datasets/allenai/dolmino-mix-1124).
+# Each entry is (top-level prefix under data/, target probability). "Stage 2
+# Math" in the dataset card aggregates every subdir under data/math/.
+DOLMINO_50B_MIX: list[tuple[str, str, float]] = [
+    ("dclm",          "data/dclm",          0.472),
+    ("flan",          "data/flan",          0.166),
+    ("pes2o",         "data/pes2o",         0.0585),
+    ("wiki",          "data/wiki",          0.0711),
+    ("stackexchange", "data/stackexchange", 0.0245),
+    ("math",          "data/math",          0.208),
+]
 
 
 def _list_data_files(repo_id: str) -> list[str]:
@@ -111,9 +129,52 @@ def _build_iter_dataset(
             stopping_strategy="all_exhausted",
         )
 
+    if mix_strategy == "dolmino_50B":
+        if corpus != "dolmo":
+            raise ValueError(
+                "mix_strategy='dolmino_50B' is only defined for corpus='dolmo'."
+            )
+
+        # Bucket files by which 50B-mix category their path prefix matches.
+        by_category: dict[str, list[str]] = {}
+        for f in files:
+            for cat, prefix, _ in DOLMINO_50B_MIX:
+                if f.startswith(prefix + "/"):
+                    by_category.setdefault(cat, []).append(f)
+                    break
+
+        rng = random.Random(seed)
+        streams = []
+        weights = []
+        for cat, prefix, weight in DOLMINO_50B_MIX:
+            cat_files = sorted(by_category.get(cat, []))
+            if not cat_files:
+                print(
+                    f"[calibration] WARNING: no shards under {prefix}/ for "
+                    f"category {cat!r}; skipping (was {weight:.3%} of mix)"
+                )
+                continue
+            rng.shuffle(cat_files)
+            streams.append(_streaming_ds(repo_id, cat_files, features))
+            weights.append(weight)
+
+        if len(streams) == 1:
+            return streams[0]
+
+        # Renormalise in case any category was missing on disk.
+        total_w = sum(weights)
+        weights = [w / total_w for w in weights]
+
+        return interleave_datasets(
+            streams,
+            probabilities=weights,
+            seed=seed,
+            stopping_strategy="all_exhausted",
+        )
+
     raise ValueError(
         f"Unknown mix_strategy: {mix_strategy!r}. "
-        "Expected one of {'first_n', 'shuffle', 'interleave'}."
+        "Expected one of {'first_n', 'shuffle', 'interleave', 'dolmino_50B'}."
     )
 
 

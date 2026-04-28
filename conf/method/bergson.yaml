@@ -12,10 +12,12 @@ collect_kfac:
   args:
     method: "kfac"
     # Default: alphabetical order (legacy bias toward whichever subdomain
-    # comes first lexicographically). Override with -S
-    # collect_kfac.args.calibration_mix=interleave to round-robin across
-    # top-level subdomain dirs (data/dclm vs data/openwebmath, etc.) and
-    # spread the --nbytes budget across the mix. See data/calibration.py.
+    # comes first lexicographically). Override via
+    # -S collect_kfac.args.calibration_mix=<strategy>:
+    #   shuffle      single random permutation of the shard list (--seed)
+    #   interleave   round-robin across top-level subdomain dirs
+    #   dolmino_50B  weighted interleave matching AI2's published 50B mix
+    # See data/calibration.py.
     calibration_mix: "first_n"
 
 eval_kfac:
