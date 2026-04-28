@@ -66,23 +66,30 @@ def _list_data_files(repo_id: str) -> list[str]:
 
 
 def _features_for(corpus: str) -> Optional[Features]:
-    # The olmo-mix-1124 shards' JSON has fields beyond `text`; pinning the
-    # schema avoids HF datasets inferring a richer struct that fails parsing
-    # on shards with missing keys.
-    if corpus == "olmo":
-        return Features({"text": Value("string")})
+    # Used only as a fallback for shards that need a forced schema. We don't
+    # pin features at load-time anymore because Dolmino subdirs have wildly
+    # heterogeneous extra columns (DCLM has attributes.*, FLAN has
+    # metadata.* etc.) and pinning {"text": "string"} causes the JSON
+    # loader to reject any row with additional columns. Instead, the
+    # post-load .select_columns(["text"]) in _streaming_ds projects each
+    # stream down to a common {text: string} schema, which is what
+    # interleave_datasets needs to align.
     return None
 
 
 def _streaming_ds(repo_id: str, files: Iterable[str], features: Optional[Features]):
     urls = [f"hf://datasets/{repo_id}/{f}" for f in files]
-    return load_dataset(
+    ds = load_dataset(
         "json",
         data_files={"train": urls},
         split="train",
         streaming=True,
         features=features,
     )
+    # Project to the minimal common schema so interleave_datasets can align
+    # streams whose source shards have heterogeneous extra columns. We only
+    # ever read `text`.
+    return ds.select_columns(["text"])
 
 
 def _build_iter_dataset(
