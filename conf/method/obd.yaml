@@ -1,0 +1,22 @@
+# @package _global_
+method:
+  name: "obd"
+
+collect_kfac:
+  script: "data/collect_kfac_obd.py"
+  # Depends on the bergson commit pinned in pyproject.toml (the OBD collector
+  # lives in bergson). Re-runs whenever the pin changes.
+  extra_dep: "pyproject.toml"
+  fsdp: true
+  world_size: 8
+
+eval_kfac:
+  # OBD's canonical saliency is D · W^2. To get that ranking from
+  # KFACTreatmentPairwise.apply_kfac_by_product we need:
+  #   - eigenvalue corrections ON (so importance reads from lambda_correction = D)
+  #   - weight coefficients   ON (so importance is multiplied by C^2 = W^2,
+  #     since Q's are identity here)
+  use_eigenvalue_corrections: true
+  use_weight_coefficients: true
+  args:
+    bergson-factors: ${out_dir.collect_kfac}

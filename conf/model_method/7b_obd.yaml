@@ -1,0 +1,8 @@
+# @package _global_
+model_method:
+  # Mirror the bergson default so OBD is a comparable baseline at the same
+  # target compression budget.
+  gate_up_mass: 0.40
+
+collect_kfac:
+  bf16_batch_size: 40
