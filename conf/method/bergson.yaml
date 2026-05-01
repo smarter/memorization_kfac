@@ -17,6 +17,7 @@ collect_kfac:
     #   shuffle      single random permutation of the shard list (--seed)
     #   interleave   round-robin across top-level subdomain dirs
     #   dolmino_50B  weighted interleave matching AI2's published 50B mix
+    #   gsm8k        restrict to data/math/gsm8k/ only (Dolmino)
     # See data/calibration.py.
     calibration_mix: "first_n"
 

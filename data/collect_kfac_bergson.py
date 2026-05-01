@@ -60,7 +60,7 @@ def parse():
     p.add_argument("--batch_size", type=int, default=32)
     p.add_argument(
         "--calibration_mix",
-        choices=["first_n", "shuffle", "interleave", "dolmino_50B"],
+        choices=["first_n", "shuffle", "interleave", "dolmino_50B", "gsm8k"],
         default="first_n",
         help="How to order corpus shards during streaming. 'first_n' (default) "
         "consumes alphabetically-first shards only — biases the calibration "
@@ -68,7 +68,8 @@ def parse():
         "randomises the shard order globally; 'interleave' round-robins across "
         "top-level subdomain dirs (e.g. data/dclm vs data/openwebmath); "
         "'dolmino_50B' weighted-interleaves to match the published 50B Dolmino "
-        "mix (47.2/16.6/5.85/7.11/2.45/20.8 for DCLM/FLAN/pes2o/Wiki/SE/Math).",
+        "mix (47.2/16.6/5.85/7.11/2.45/20.8 for DCLM/FLAN/pes2o/Wiki/SE/Math); "
+        "'gsm8k' restricts to data/math/gsm8k/ only (Dolmino).",
     )
 
     p.add_argument(

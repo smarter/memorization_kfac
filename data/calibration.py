@@ -21,6 +21,11 @@ controls how shards are ordered:
     proportions published by AI2 (47.2% DCLM / 16.6% FLAN / 5.85% pes2o /
     7.11% Wiki / 2.45% StackExchange / 20.8% Stage 2 Math). Only valid for
     ``corpus=dolmo``.
+  - ``gsm8k``      : restrict the shard list to ``data/math/gsm8k/`` only.
+    Use this to ask "does a GSM8K-shaped calibration set preserve GSM8K
+    directions?". Only valid for ``corpus=dolmo``. The GSM8K subdir is
+    tiny so ``--nbytes`` is typically not reached — the run consumes the
+    whole subdir.
 """
 from __future__ import annotations
 
@@ -136,6 +141,21 @@ def _build_iter_dataset(
             stopping_strategy="all_exhausted",
         )
 
+    if mix_strategy == "gsm8k":
+        if corpus != "dolmo":
+            raise ValueError(
+                "mix_strategy='gsm8k' is only defined for corpus='dolmo'."
+            )
+        prefix = "data/math/gsm8k/"
+        gsm_files = sorted(f for f in files if f.startswith(prefix))
+        if not gsm_files:
+            raise SystemExit(
+                f"No GSM8K shards found under {prefix} in {repo_id}."
+            )
+        rng = random.Random(seed)
+        rng.shuffle(gsm_files)
+        return _streaming_ds(repo_id, gsm_files, features)
+
     if mix_strategy == "dolmino_50B":
         if corpus != "dolmo":
             raise ValueError(
@@ -181,7 +201,8 @@ def _build_iter_dataset(
 
     raise ValueError(
         f"Unknown mix_strategy: {mix_strategy!r}. "
-        "Expected one of {'first_n', 'shuffle', 'interleave', 'dolmino_50B'}."
+        "Expected one of {'first_n', 'shuffle', 'interleave', 'dolmino_50B', "
+        "'gsm8k'}."
     )
 
 

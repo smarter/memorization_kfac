@@ -68,7 +68,7 @@ def parse():
     p.add_argument("--batch_size", type=int, default=32)
     p.add_argument(
         "--calibration_mix",
-        choices=["first_n", "shuffle", "interleave", "dolmino_50B"],
+        choices=["first_n", "shuffle", "interleave", "dolmino_50B", "gsm8k"],
         default="first_n",
         help="Corpus shard ordering — see data/calibration.py.",
     )
