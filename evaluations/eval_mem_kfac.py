@@ -213,6 +213,7 @@ def load_bergson_kfac_info(
     device: Optional[str] = None,
     keep_on_cpu: bool = False,
     use_eigenvalue_corrections: bool = False,
+    wanda: bool = False,
 ) -> Dict[str, Dict]:
     """
     Load K-FAC info from bergson format with pre-computed eigenvectors.
@@ -227,21 +228,41 @@ def load_bergson_kfac_info(
         device: Device to use for computations
         keep_on_cpu: If True, keep eigenvectors on CPU
         use_eigenvalue_corrections: If True, load pre-computed eigenvalue corrections
+        wanda: If True, reinterpret the bergson factors as Wanda saliency
+            (Sun et al. 2024). Skips eigenvector / gradient-covariance loading
+            and synthesises evc_A=evc_G=I, eva_A=diag(A^T A)/N, eva_G=1, and
+            lambda_correction[o,i]=eva_A[i] so EKFAC importance equals eva_A
+            and importance with --weight-coefficients equals eva_A * W^2 (the
+            canonical Wanda ranking). Mutually exclusive with
+            use_eigenvalue_corrections.
 
     Returns:
         Dict mapping layer_name -> {W_orig, eva_A, evc_A, eva_G, evc_G, lambda_correction (optional)}
     """
+    if wanda and use_eigenvalue_corrections:
+        raise ValueError(
+            "wanda=True synthesises lambda_correction internally; "
+            "use_eigenvalue_corrections must be False."
+        )
+
     bergson_path = Path(bergson_path)
     influence_path = bergson_path / "influence_results"
     device = device or next(model.parameters()).device
 
-    # Load eigenvectors (normalize keys to handle gradient checkpointing)
-    act_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "activation_eigen_sharded"))
-    grad_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "gradient_eigen_sharded"))
-
-    # Load covariances to compute eigenvalues
+    # Always need activation covariance (Wanda reads its diagonal; the standard
+    # path uses it for the Rayleigh-quotient eigenvalue derivation).
     act_cov = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "activation_covariance_sharded"))
-    grad_cov = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "gradient_covariance_sharded"))
+
+    if wanda:
+        # Wanda only needs diag(A^T A). Skip eigenvectors and grad covariance.
+        act_eigen = None
+        grad_eigen = None
+        grad_cov = None
+    else:
+        # Load eigenvectors (normalize keys to handle gradient checkpointing)
+        act_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "activation_eigen_sharded"))
+        grad_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "gradient_eigen_sharded"))
+        grad_cov = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "gradient_covariance_sharded"))
 
     # Load total_processed for normalization
     total_processed_path = influence_path / "total_processed_covariances.pt"
@@ -268,9 +289,6 @@ def load_bergson_kfac_info(
         # model.layers.14.mlp.gate_proj -> layers.14.mlp.gate_proj
         bergson_key = layer_name.removeprefix("model.")
 
-        if bergson_key not in act_eigen:
-            raise ValueError(f"Eigenvectors not found for {bergson_key} in bergson factors")
-
         # Get original weight
         parts = layer_name.split('.')
         layer = model
@@ -279,6 +297,38 @@ def load_bergson_kfac_info(
         W_orig = layer.weight.data.detach().clone()
 
         compute_device = "cpu" if keep_on_cpu else device
+        out_features, in_features = W_orig.shape
+
+        if wanda:
+            if bergson_key not in act_cov:
+                raise ValueError(f"Activation covariance not found for {bergson_key}")
+
+            # Diagonal of A^T A normalised by sample count = ||X_:,i||_2^2 / N.
+            cov_A_diag = act_cov[bergson_key].float().to(compute_device).diagonal() / total_processed
+            # Sort descending to match the convention enforced by the standard
+            # K-FAC path (and the legacy collect_kfac_wanda derivation).
+            idx_A = cov_A_diag.argsort(descending=True)
+            eva_A = cov_A_diag[idx_A]
+            eva_G = torch.ones(out_features, device=compute_device, dtype=eva_A.dtype)
+            evc_A = torch.eye(in_features, device=compute_device, dtype=eva_A.dtype)[:, idx_A]
+            evc_G = torch.eye(out_features, device=compute_device, dtype=eva_A.dtype)
+            # lambda_correction[o, i] = eva_A[i] so EKFAC importance reads as eva_A.
+            lambda_corr = eva_A.unsqueeze(0).expand(out_features, in_features).contiguous()
+
+            print(f"{layer_name}: W{tuple(W_orig.shape)}, wanda (diag A^T A)")
+
+            kfac_info[layer_name] = {
+                'W_orig': W_orig,
+                'eva_A': eva_A,
+                'evc_A': evc_A,
+                'eva_G': eva_G,
+                'evc_G': evc_G,
+                'lambda_correction': lambda_corr,
+            }
+            continue
+
+        if bergson_key not in act_eigen:
+            raise ValueError(f"Eigenvectors not found for {bergson_key} in bergson factors")
 
         # Load eigenvectors (note: eigh returns ascending order, we need descending)
         evc_A = act_eigen[bergson_key].float().to(compute_device)
@@ -304,7 +354,6 @@ def load_bergson_kfac_info(
         evc_G = evc_G[:, idx_G]
 
         # Verify dimensions
-        out_features, in_features = W_orig.shape
         assert evc_G.shape[0] == out_features, \
             f"G eigenvectors shape {evc_G.shape} doesn't match output dim {out_features}"
         assert evc_A.shape[0] == in_features, \
@@ -349,7 +398,8 @@ def apply_kfac_to_layer(model,
                        use_cache: bool = True,
                        refresh_cache: bool = False,
                        use_eigenvalue_corrections: bool = False,
-                       use_weight_coefficients: bool = False) -> None:
+                       use_weight_coefficients: bool = False,
+                       wanda: bool = False) -> None:
     """Apply K-FAC to a single layer's MLP projections.
 
     Args:
@@ -385,6 +435,7 @@ def apply_kfac_to_layer(model,
             f"__rho{_rho_to_str(variance)}"
             f"{'__evcorr' if use_eigenvalue_corrections else ''}"
             f"{'__wcoef' if use_weight_coefficients else ''}"
+            f"{'__wanda' if wanda else ''}"
             f"__{proj_layer.weight.dtype.__str__()}.pt"
         )
 
@@ -405,6 +456,7 @@ def apply_kfac_to_layer(model,
                 model=model,
                 device=proj_layer.weight.device,
                 use_eigenvalue_corrections=use_eigenvalue_corrections,
+                wanda=wanda,
             )
             kfac = KFACTreatmentPairwise(
                 model,
@@ -474,6 +526,12 @@ def main():
     parser.add_argument("--weight-coefficients", action="store_true",
                        help="Weight pair importance by C_ij^2 (squared weight coefficients). "
                             "Minimizes second-order loss impact rather than just curvature.")
+    parser.add_argument("--wanda", action="store_true",
+                       help="Reinterpret bergson factors as Wanda saliency (Sun et al. 2024): "
+                            "synthesise evc_A=evc_G=I and eva_A=diag(A^T A)/N from the activation "
+                            "covariance only. Combine with --weight-coefficients for canonical "
+                            "Wanda importance eva_A * W^2. Requires --bergson-factors; mutually "
+                            "exclusive with --eigenvalue-corrections.")
 
     # Evaluation settings
     parser.add_argument("--dtype", type=str, choices=["float16", "bfloat16", "float32"],
@@ -505,6 +563,10 @@ def main():
         parser.error("--bergson-factors and --goodfire-factors are mutually exclusive")
     if args.eigenvalue_corrections and not args.bergson_factors:
         parser.error("--eigenvalue-corrections requires --bergson-factors")
+    if args.wanda and not args.bergson_factors:
+        parser.error("--wanda requires --bergson-factors")
+    if args.wanda and args.eigenvalue_corrections:
+        parser.error("--wanda and --eigenvalue-corrections are mutually exclusive")
     if args.only_baseline and args.skip_baseline:
         parser.error("--only-baseline and --skip-baseline are mutually exclusive")
 
@@ -627,6 +689,7 @@ def main():
                 refresh_cache=args.refresh_cache,
                 use_eigenvalue_corrections=args.eigenvalue_corrections,
                 use_weight_coefficients=args.weight_coefficients,
+                wanda=args.wanda,
             )
 
     # POST-K-FAC EVALUATION (skipped when --only-baseline)

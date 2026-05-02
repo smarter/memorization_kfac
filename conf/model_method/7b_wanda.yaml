@@ -5,6 +5,6 @@ model_method:
   gate_up_mass: 0.40
 
 collect_kfac:
-  # Unused by the wanda derivation script (no model forward passes), but
-  # referenced by config.yaml's ${scale_for_dtype:..} expansion.
-  bf16_batch_size: 1
+  # Wanda re-uses bergson's collected factors; keep this in sync with
+  # conf/model_method/7b_bergson.yaml.
+  bf16_batch_size: 40

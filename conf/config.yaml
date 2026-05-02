@@ -4,11 +4,11 @@
 #   dvc exp run --queue -S 'model=1b,7b' -S 'method=original,bergson'
 
 defaults:
+  - _self_
   - model: 7b # loads model/7b.yaml
   - method: bergson
   - benchmark: gsm8k
   - model_method: ${model}_${method} # loads model_method/7b_bergson.yaml
-  - _self_
 
 collect_kfac:
   sample_labels: true
@@ -24,6 +24,7 @@ collect_kfac:
 
 eval_kfac:
   use_weight_coefficients: false
+  use_wanda: false
   args:
     layers-json: ${json:${model.layers}}
 
@@ -78,6 +79,7 @@ computed:
   # value (dvc expands "key: null" as "--key None").
   eigenvalue_corrections_flag: "${if:${eval_kfac.use_eigenvalue_corrections},'--eigenvalue-corrections',''}"
   weight_coefficients_flag: "${if:${eval_kfac.use_weight_coefficients},'--weight-coefficients',''}"
+  wanda_flag: "${if:${eval_kfac.use_wanda},'--wanda',''}"
   sample_labels_flag: "${if:${collect_kfac.sample_labels},'--sample_labels',''}"
   fsdp_flag: "${if:${collect_kfac.fsdp},'--fsdp',''}"
   world_size_flag: "${if_set:${collect_kfac.world_size},'--world_size'}"
