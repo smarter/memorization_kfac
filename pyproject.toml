@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "memorization_kfac"
 description = "K-FAC / EKFAC memorization experiments built on top of bergson"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 license = {text = "MIT License"}
 version = "0.1.0"
 dependencies = [
@@ -29,6 +29,7 @@ dependencies = [
     "torchopt",
     "tqdm",
     "transformers>=4.57.1,<5",
+    "cuda-bindings==12.9.6",
 ]
 
 [tool.setuptools.packages.find]
