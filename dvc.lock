@@ -1,0 +1,168 @@
+schema: '2.0'
+stages:
+  prepare_pile10k:
+    cmd:
+    - python data/prepare_pile10k.py
+    deps:
+    - path: data/prepare_pile10k.py
+      hash: md5
+      md5: 1c7879abbc08baaadbd11268b83994ae
+      size: 1224
+    outs:
+    - path: data/pile10k_None.txt
+      hash: md5
+      md5: 1574c0e28ff0313dc8ee4b2342c6943a
+      size: 61084719
+  prepare_pile10k_cache:
+    cmd:
+    - python data/prepare_pile10k_cache.py --output out/prepare_pile10k_cache
+    deps:
+    - path: data/pile10k_None.txt
+      hash: md5
+      md5: 1574c0e28ff0313dc8ee4b2342c6943a
+      size: 61084719
+    - path: data/prepare_pile10k_cache.py
+      hash: md5
+      md5: d360347c7c4922fd491a9df2d6151ddc
+      size: 2286
+    outs:
+    - path: out/prepare_pile10k_cache
+      hash: md5
+      md5: 284f1404d5ce6e7aeefbbeab013234bc
+      size: 118745867
+  collect_kfac:
+    cmd: python data/collect_kfac_bergson.py --model allenai/OLMo-2-1124-7B 
+      --save_dir out/collect_kfac/bergson/7b --device cuda --dtype bfloat16 
+      --corpus dolmo --nbytes 100000000 --seq_len 512 --target_blocks 23 24 25 
+      --layers_per_pass 3 --batch_size 36 --method tkfac --calibration_mix gsm8k
+      --sample_labels --fsdp --world_size 8
+    deps:
+    - path: data/collect_kfac_bergson.py
+      hash: md5
+      md5: 0b5b09a32c8482f6d98ea407e30777a1
+      size: 9739
+    - path: pyproject.toml
+      hash: md5
+      md5: 654aabd6b8ab96ea7892e384a3442af7
+      size: 1266
+    outs:
+    - path: out/collect_kfac/bergson/7b
+      hash: md5
+      md5: e49f7a20506be791653532063c912d0f.dir
+      size: 11555870875
+      nfiles: 43
+  baseline_cache:
+    cmd: MEM_KFAC_CACHE_DIR=out/baseline_cache/7b/cache 
+      MEM_EVAL_PT_CACHE=out/prepare_pile10k_cache python 
+      evaluations/eval_mem_kfac.py --model-size 7b --results-tag baseline_7b 
+      --results-dir metrics_out/baseline_cache/7b --only-baseline --baseline 
+      out/baseline_cache/7b --perplexity --bs 96
+    deps:
+    - path: data/baseline_generator.py
+      hash: md5
+      md5: 597d67f3631eeb45059dcf12014ad606
+      size: 11894
+    - path: data/pile10k_None.txt
+      hash: md5
+      md5: 1574c0e28ff0313dc8ee4b2342c6943a
+      size: 61084719
+    - path: evaluations/eval_mem_kfac.py
+      hash: md5
+      md5: 50aefd20cb26111e5c8ce13f35e29d95
+      size: 37188
+    - path: metrics/
+      hash: md5
+      md5: 09bafa932719557855e7534ecc6a4322.dir
+      size: 76907
+      nfiles: 7
+    - path: out/prepare_pile10k_cache
+      hash: md5
+      md5: 284f1404d5ce6e7aeefbbeab013234bc
+      size: 118745867
+    outs:
+    - path: metrics_out/baseline_cache/7b/baseline_eval_log_7b_baseline_7b.jsonl
+      hash: md5
+      md5: ee10eb0a4d290832d0caf88ecfe59dc5
+      size: 1040
+    - path: out/baseline_cache/7b
+      hash: md5
+      md5: cca959fdd82551b9d4a03d0e1d827ae5.dir
+      size: 7979400
+      nfiles: 1
+  eval_kfac:
+    cmd: "MEM_KFAC_FACTORS_ROOT=out/collect_kfac/bergson/7b MEM_KFAC_CACHE_DIR=out/eval_kfac/bergson/7b/cache
+      MEM_EVAL_PT_CACHE=out/prepare_pile10k_cache MEM_EVAL_EDITED_ROOT=out/eval_kfac/bergson/7b/model
+      python evaluations/eval_mem_kfac.py --model-size 7b --results-tag 7b --results-dir
+      metrics_out/eval_kfac/bergson/7b --use-cache --refresh-cache --perplexity --skip-baseline
+      --baseline out/baseline_cache/7b --layers-json '{\"23\": {\"gate\": 0.7, \"\
+      up\": 0.7, \"down\": 1.0}, \"24\": {\"gate\": 0.7, \"up\": 0.7, \"down\": 1.0},
+      \"25\": {\"gate\": 0.7, \"up\": 0.7, \"down\": 1.0}}' --bs 96 --bergson-factors
+      out/collect_kfac/bergson/7b  --weight-coefficients "
+    deps:
+    - path: data/pile10k_None.txt
+      hash: md5
+      md5: 1574c0e28ff0313dc8ee4b2342c6943a
+      size: 61084719
+    - path: evaluations/eval_mem_kfac.py
+      hash: md5
+      md5: 50aefd20cb26111e5c8ce13f35e29d95
+      size: 37188
+    - path: kfac_treatment_pairwise.py
+      hash: md5
+      md5: 44e666634b30f9ce1fcc0d5ddc0c5f8a
+      size: 28387
+    - path: metrics/
+      hash: md5
+      md5: 09bafa932719557855e7534ecc6a4322.dir
+      size: 76907
+      nfiles: 7
+    - path: out/baseline_cache/7b
+      hash: md5
+      md5: cca959fdd82551b9d4a03d0e1d827ae5.dir
+      size: 7979400
+      nfiles: 1
+    - path: out/collect_kfac/bergson/7b
+      hash: md5
+      md5: e49f7a20506be791653532063c912d0f.dir
+      size: 11555870875
+      nfiles: 43
+    - path: out/prepare_pile10k_cache
+      hash: md5
+      md5: 284f1404d5ce6e7aeefbbeab013234bc
+      size: 118745867
+    outs:
+    - path: metrics_out/eval_kfac/bergson/7b/kfac_eval_log_7b_7b.jsonl
+      hash: md5
+      md5: f9190ef2134f6f02508acf3d35ff68a7
+      size: 1219
+    - path: out/eval_kfac/bergson/7b
+      hash: md5
+      md5: 3f52f650c0290ad29dc9fddcf23f75ac.dir
+      size: 15148055145
+      nfiles: 17
+  benchmark:
+    cmd: PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True uvx --python 3.11 
+      --from "ai2-olmes[gpu] @ 
+      git+https://github.com/allenai/olmes.git@5a51f502d463b8cdc4a2dcad7d7096c41ff1197e"
+      --with setuptools==80.10.2 olmes --model out/eval_kfac/bergson/7b/model 
+      --task gsm8k::olmes --batch-size 28 --output-dir 
+      out/benchmark/bergson/7b/gsm8k::olmes && python 
+      evaluations/extract_olmes_metrics.py 
+      out/benchmark/bergson/7b/gsm8k::olmes/metrics.json 
+      metrics_out/benchmark/bergson/7b/gsm8k::olmes.json
+    deps:
+    - path: out/eval_kfac/bergson/7b
+      hash: md5
+      md5: 3f52f650c0290ad29dc9fddcf23f75ac.dir
+      size: 15148055145
+      nfiles: 17
+    outs:
+    - path: metrics_out/benchmark/bergson/7b/gsm8k::olmes.json
+      hash: md5
+      md5: aaed9ef16cc2d78316cf51989763e42c
+      size: 36
+    - path: out/benchmark/bergson/7b/gsm8k::olmes
+      hash: md5
+      md5: 74253aec9617bd94c4149fde1a689355.dir
+      size: 7468358
+      nfiles: 6
