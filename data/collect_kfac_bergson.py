@@ -10,23 +10,17 @@ It additionally supports multiple GPUs via the --world_size and --fsdp flags.
 """
 import argparse
 import json
-import os
 import pathlib
 import random
 import shutil
-from datetime import timedelta
 
 import torch
-import torch.distributed as dist
 from datasets import Dataset
 from transformers import AutoTokenizer
 
 from bergson.config import DistributedConfig, HessianConfig, IndexConfig
-from bergson.data import allocate_batches
 from bergson.distributed import launch_distributed_run
-from bergson.hessians.eigenvectors import compute_eigendecomposition
-from bergson.hessians.hessian_approximations import collect_hessians
-from bergson.utils.worker_utils import setup_model_and_peft
+from bergson.hessians.hessian_approximations import hessian_worker
 
 # Sibling module; factors out the corpus-mix logic shared with
 # collect_kfac_obd.py.
@@ -50,7 +44,7 @@ def parse():
     p.add_argument(
         "--method",
         default="kfac",
-        choices=["kfac", "tkfac", "shampoo"],
+        choices=["kfac", "tkfac", "shampoo", "foof"],
         help="Hessian approximation method.",
     )
 
@@ -106,81 +100,6 @@ def parse():
     return p.parse_args()
 
 
-def kfac_worker(
-    rank: int,
-    local_rank: int,
-    world_size: int,
-    index_cfg: IndexConfig,
-    hessian_cfg: HessianConfig,
-    ds: Dataset,
-    target_modules: set,
-):
-    """Mirror of ``bergson.hessians.hessian_approximations.hessian_worker`` that
-    uses a pre-loaded dataset and caller-supplied ``target_modules``.
-    """
-    if torch.cuda.is_available():
-        torch.cuda.set_device(local_rank)
-
-    if world_size > 1:
-        addr = os.environ.get("MASTER_ADDR", "localhost")
-        port = os.environ.get("MASTER_PORT", "29500")
-
-        dist.init_process_group(
-            "nccl",
-            init_method=f"tcp://{addr}:{port}",
-            device_id=torch.device(f"cuda:{local_rank}"),
-            rank=rank,
-            timeout=timedelta(hours=1),
-            world_size=world_size,
-        )
-
-    model, _ = setup_model_and_peft(index_cfg)
-
-    partial_dir = pathlib.Path(str(index_cfg.partial_run_path))
-    total_processed_path = partial_dir / "total_processed.pt"
-    cov_total_path = partial_dir / "total_processed_covariances.pt"
-    lambda_total_path = partial_dir / "total_processed_lambda_correction.pt"
-
-    kwargs = {
-        "model": model,
-        "data": ds,
-        "index_cfg": index_cfg,
-        "hessian_cfg": hessian_cfg,
-        "target_modules": target_modules,
-        "attention_cfgs": {},
-    }
-
-    batches = allocate_batches(ds["length"][:], index_cfg.token_batch_size)
-    kwargs["batches"] = batches
-
-    # Covariance pass.
-    collect_hessians(**kwargs)
-
-    dist.barrier() if dist.is_initialized() else None
-
-    if rank == 0 and total_processed_path.exists():
-        shutil.copyfile(total_processed_path, cov_total_path)
-
-    total_processed = torch.load(
-        total_processed_path, map_location="cpu", weights_only=False
-    )
-
-    compute_eigendecomposition(
-        str(partial_dir / "activation_sharded"), total_processed=total_processed
-    )
-    compute_eigendecomposition(
-        str(partial_dir / "gradient_sharded"), total_processed=total_processed
-    )
-
-    dist.barrier() if dist.is_initialized() else None
-
-    if hessian_cfg.ev_correction:
-        collect_hessians(**kwargs, ev_correction=True)
-        dist.barrier() if dist.is_initialized() else None
-        if rank == 0 and total_processed_path.exists():
-            shutil.move(str(total_processed_path), str(lambda_total_path))
-
-
 def _rename_legacy_paths(root: pathlib.Path) -> None:
     """Rename bergson's upstream directory names to the legacy ones expected
     by the rest of memorization_kfac/ and the companion notebooks."""
@@ -191,6 +110,24 @@ def _rename_legacy_paths(root: pathlib.Path) -> None:
             if dst.exists():
                 shutil.rmtree(dst)
             src.rename(dst)
+
+
+def _materialise_legacy_total_processed(root: pathlib.Path) -> None:
+    """The downstream eval pipeline reads ``total_processed_covariances.pt``
+    and (when EC is on) ``total_processed_lambda_correction.pt``. Bergson
+    only writes one ``total_processed.pt``; mirror it under both legacy
+    names so we don't have to plumb a second file through the worker.
+    """
+    total_processed_path = root / "total_processed.pt"
+    if not total_processed_path.exists():
+        return
+    for legacy in (
+        "total_processed_covariances.pt",
+        "total_processed_lambda_correction.pt",
+    ):
+        target = root / legacy
+        if not target.exists():
+            shutil.copyfile(total_processed_path, target)
 
 
 def main():
@@ -268,9 +205,12 @@ def main():
     partial.mkdir(parents=True, exist_ok=True)
 
     launch_distributed_run(
-        "kfac",
-        kfac_worker,
-        [index_cfg, hessian_cfg, hf_dataset, target_modules],
+        "hessian",
+        hessian_worker,
+        # bergson.hessians.hessian_approximations.hessian_worker takes:
+        #   (rank, local_rank, world_size, index_cfg, hessian_cfg, ds,
+        #    do_eigendecomposition=True, target_modules=None)
+        [index_cfg, hessian_cfg, hf_dataset, True, target_modules],
         dist_cfg,
     )
 
@@ -279,6 +219,7 @@ def main():
             shutil.rmtree(run_path)
         shutil.move(str(partial), str(run_path))
 
+    _materialise_legacy_total_processed(run_path)
     _rename_legacy_paths(run_path)
 
     metadata = {

@@ -1,0 +1,27 @@
+# @package _global_
+method:
+  name: "foof"
+
+collect_kfac:
+  script: "data/collect_kfac_bergson.py"
+  # pyproject.toml pins the exact bergson commit, so DVC re-runs this stage
+  # whenever the pin is bumped.
+  extra_dep: "pyproject.toml"
+  fsdp: true
+  world_size: 8
+  args:
+    method: "foof"
+    # See conf/method/bergson.yaml for the available calibration_mix values.
+    calibration_mix: "first_n"
+
+eval_kfac:
+  # FOOF (Benzing 2022): F = E[aaᵀ] ⊗ I. Bergson's foof worker writes the
+  # same on-disk layout KFAC produces (real Q_A from eigh, identity Q_G,
+  # eva_g = 1, λ = N · eva_a) plus the EKFAC empirical correction when
+  # ev_correction=True. eval_mem_kfac's --foof flag tells the loader to
+  # skip the (missing) gradient_covariance_sharded read and pin eva_G = 1
+  # so apply uses G · A⁻¹.
+  use_foof: true
+  use_eigenvalue_corrections: true
+  args:
+    bergson-factors: ${out_dir.collect_kfac}

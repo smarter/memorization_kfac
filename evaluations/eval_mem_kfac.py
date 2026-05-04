@@ -214,6 +214,7 @@ def load_bergson_kfac_info(
     keep_on_cpu: bool = False,
     use_eigenvalue_corrections: bool = False,
     wanda: bool = False,
+    foof: bool = False,
 ) -> Dict[str, Dict]:
     """
     Load K-FAC info from bergson format with pre-computed eigenvectors.
@@ -235,6 +236,13 @@ def load_bergson_kfac_info(
             and importance with --weight-coefficients equals eva_A * W^2 (the
             canonical Wanda ranking). Mutually exclusive with
             use_eigenvalue_corrections.
+        foof: If True, treat the bergson factors as FOOF (Benzing 2022,
+            ``E[aaᵀ] ⊗ I``). Loads real Q_A and eva_A from the activation
+            side as usual, but skips ``gradient_covariance_sharded`` (FOOF
+            doesn't write it) and sets ``eva_G = 1`` directly.
+            ``gradient_eigen_sharded`` is the synthesised identity Q_G
+            written by bergson's foof worker. Compatible with
+            use_eigenvalue_corrections; mutually exclusive with wanda.
 
     Returns:
         Dict mapping layer_name -> {W_orig, eva_A, evc_A, eva_G, evc_G, lambda_correction (optional)}
@@ -244,6 +252,8 @@ def load_bergson_kfac_info(
             "wanda=True synthesises lambda_correction internally; "
             "use_eigenvalue_corrections must be False."
         )
+    if wanda and foof:
+        raise ValueError("wanda and foof modes are mutually exclusive.")
 
     bergson_path = Path(bergson_path)
     influence_path = bergson_path / "influence_results"
@@ -257,6 +267,12 @@ def load_bergson_kfac_info(
         # Wanda only needs diag(A^T A). Skip eigenvectors and grad covariance.
         act_eigen = None
         grad_eigen = None
+        grad_cov = None
+    elif foof:
+        # FOOF: real Q_A from disk, synthetic identity Q_G from disk, no
+        # gradient covariance on disk (we'll set eva_G = 1 directly below).
+        act_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "activation_eigen_sharded"))
+        grad_eigen = _normalize_bergson_keys(_load_bergson_sharded(influence_path / "gradient_eigen_sharded"))
         grad_cov = None
     else:
         # Load eigenvectors (normalize keys to handle gradient checkpointing)
@@ -337,12 +353,17 @@ def load_bergson_kfac_info(
         # Normalize and symmetrize covariances
         cov_A = act_cov[bergson_key].float().to(compute_device) / total_processed
         cov_A = (cov_A + cov_A.T) / 2
-        cov_G = grad_cov[bergson_key].float().to(compute_device) / total_processed
-        cov_G = (cov_G + cov_G.T) / 2
 
         # Compute eigenvalues: lambda_i = v_i^T @ C @ v_i
         eva_A = (evc_A.T @ cov_A @ evc_A).diagonal()
-        eva_G = (evc_G.T @ cov_G @ evc_G).diagonal()
+        if foof:
+            # F_FOOF = E[aaᵀ] ⊗ I → eva_G ≡ 1 by construction. No grad
+            # covariance to read; evc_G is the synthetic identity from disk.
+            eva_G = torch.ones(out_features, device=compute_device, dtype=eva_A.dtype)
+        else:
+            cov_G = grad_cov[bergson_key].float().to(compute_device) / total_processed
+            cov_G = (cov_G + cov_G.T) / 2
+            eva_G = (evc_G.T @ cov_G @ evc_G).diagonal()
 
         # Sort in descending order (bergson stores in ascending from eigh)
         idx_A = eva_A.argsort(descending=True)
@@ -359,7 +380,8 @@ def load_bergson_kfac_info(
         assert evc_A.shape[0] == in_features, \
             f"A eigenvectors shape {evc_A.shape} doesn't match input dim {in_features}"
 
-        print(f"{layer_name}: W{tuple(W_orig.shape)}, G{tuple(cov_G.shape)}, A{tuple(cov_A.shape)}")
+        print(f"{layer_name}: W{tuple(W_orig.shape)}, A{tuple(cov_A.shape)}"
+              + ("" if foof else f", G{tuple(cov_G.shape)}"))
 
         layer_info = {
             'W_orig': W_orig,
@@ -399,7 +421,8 @@ def apply_kfac_to_layer(model,
                        refresh_cache: bool = False,
                        use_eigenvalue_corrections: bool = False,
                        use_weight_coefficients: bool = False,
-                       wanda: bool = False) -> None:
+                       wanda: bool = False,
+                       foof: bool = False) -> None:
     """Apply K-FAC to a single layer's MLP projections.
 
     Args:
@@ -436,6 +459,7 @@ def apply_kfac_to_layer(model,
             f"{'__evcorr' if use_eigenvalue_corrections else ''}"
             f"{'__wcoef' if use_weight_coefficients else ''}"
             f"{'__wanda' if wanda else ''}"
+            f"{'__foof' if foof else ''}"
             f"__{proj_layer.weight.dtype.__str__()}.pt"
         )
 
@@ -457,6 +481,7 @@ def apply_kfac_to_layer(model,
                 device=proj_layer.weight.device,
                 use_eigenvalue_corrections=use_eigenvalue_corrections,
                 wanda=wanda,
+                foof=foof,
             )
             kfac = KFACTreatmentPairwise(
                 model,
@@ -532,6 +557,11 @@ def main():
                             "covariance only. Combine with --weight-coefficients for canonical "
                             "Wanda importance eva_A * W^2. Requires --bergson-factors; mutually "
                             "exclusive with --eigenvalue-corrections.")
+    parser.add_argument("--foof", action="store_true",
+                       help="Treat bergson factors as FOOF (Benzing 2022, E[aaᵀ] ⊗ I). "
+                            "Loads real Q_A/eva_A from the activation side; sets eva_G=1 "
+                            "directly (the gradient covariance isn't on disk for FOOF). "
+                            "Requires --bergson-factors; mutually exclusive with --wanda.")
 
     # Evaluation settings
     parser.add_argument("--dtype", type=str, choices=["float16", "bfloat16", "float32"],
@@ -567,6 +597,10 @@ def main():
         parser.error("--wanda requires --bergson-factors")
     if args.wanda and args.eigenvalue_corrections:
         parser.error("--wanda and --eigenvalue-corrections are mutually exclusive")
+    if args.foof and not args.bergson_factors:
+        parser.error("--foof requires --bergson-factors")
+    if args.foof and args.wanda:
+        parser.error("--foof and --wanda are mutually exclusive")
     if args.only_baseline and args.skip_baseline:
         parser.error("--only-baseline and --skip-baseline are mutually exclusive")
 
@@ -690,6 +724,7 @@ def main():
                 use_eigenvalue_corrections=args.eigenvalue_corrections,
                 use_weight_coefficients=args.weight_coefficients,
                 wanda=args.wanda,
+                foof=args.foof,
             )
 
     # POST-K-FAC EVALUATION (skipped when --only-baseline)

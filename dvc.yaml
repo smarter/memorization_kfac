@@ -136,6 +136,7 @@ stages:
       ${computed.eigenvalue_corrections_flag}
       ${computed.weight_coefficients_flag}
       ${computed.wanda_flag}
+      ${computed.foof_flag}
     deps:
       - evaluations/eval_mem_kfac.py
       - metrics/
