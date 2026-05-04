@@ -28,7 +28,7 @@ dependencies = [
     "torch",
     "torchopt",
     "tqdm",
-    "transformers>=4.57.1,<5",
+    "transformers>=5",
 ]
 
 [tool.setuptools.packages.find]

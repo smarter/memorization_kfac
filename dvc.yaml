@@ -1,5 +1,6 @@
 vars:
-  - olmes_commit: "5a51f502d463b8cdc4a2dcad7d7096c41ff1197e"
+  # https://github.com/allenai/olmes/pull/51
+  - olmes_commit: "362c59dbbf5d250e2d2fc88a74e633b4a6da215a"
 
 stages:
   # =============================================================================
@@ -259,7 +260,7 @@ stages:
   benchmark:
     cmd: >-
       PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-      uvx --python 3.11 --from "ai2-olmes[gpu] @ git+https://github.com/allenai/olmes.git@${olmes_commit}"
+      uvx --python 3.11 --from "ai2-olmes[gpu] @ git+https://github.com/BrownianNotion/olmes.git@${olmes_commit}"
       --with setuptools==80.10.2
       olmes
       --model ${out_dir.eval_kfac}/model
