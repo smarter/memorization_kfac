@@ -11,7 +11,7 @@ license = {text = "MIT License"}
 version = "0.1.0"
 dependencies = [
     # Depend on https://github.com/smarter/bergson/tree/ckpt
-    "bergson @ git+https://github.com/smarter/bergson@6ecf8886ce596152730e81eb0340c26df6b2e676",
+    "bergson @ git+https://github.com/smarter/bergson@e1c9a098e17e9162a8c7f7ca5e4cc9c1586d5924",
     "accelerate",
     "bitsandbytes>=0.46.1",
     "datasets",
