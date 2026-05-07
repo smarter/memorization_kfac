@@ -29,6 +29,7 @@ dependencies = [
     "torchopt",
     "tqdm",
     "transformers>=5",
+    "cuda-bindings==12.9.6",
 ]
 
 [tool.setuptools.packages.find]
