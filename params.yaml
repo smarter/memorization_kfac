@@ -11,20 +11,21 @@ collect_kfac:
     - '24'
     - '25'
     layers_per_pass: 3
-    batch_size: 40
+    batch_size: 36
     method: kfac
-    calibration_mix: first_n
+    calibration_mix: gsm8k
   script: data/collect_kfac_bergson.py
   extra_dep: pyproject.toml
   fsdp: true
   world_size: 8
   bf16_batch_size: 40
 eval_kfac:
-  use_weight_coefficients: false
+  use_weight_coefficients: true
   use_wanda: false
+  use_foof: false
   args:
-    layers-json: '{"23": {"gate": 0.4, "up": 0.4, "down": 1.0}, "24": {"gate": 0.4,
-      "up": 0.4, "down": 1.0}, "25": {"gate": 0.4, "up": 0.4, "down": 1.0}}'
+    layers-json: '{"23": {"gate": 0.86, "up": 0.86, "down": 1.0}, "24": {"gate": 0.86,
+      "up": 0.86, "down": 1.0}, "25": {"gate": 0.86, "up": 0.86, "down": 1.0}}'
     bs: 96
     bergson-factors: out/collect_kfac/bergson/7b
   use_eigenvalue_corrections: true
@@ -59,8 +60,8 @@ band_activations:
       "NeelNanda/pile-10k", "split": "train", "column": "text"}}'
 mask_intersection:
   args:
-    layers_json: '{"23": {"gate": 0.4, "up": 0.4, "down": 1.0}, "24": {"gate": 0.4,
-      "up": 0.4, "down": 1.0}, "25": {"gate": 0.4, "up": 0.4, "down": 1.0}}'
+    layers_json: '{"23": {"gate": 0.86, "up": 0.86, "down": 1.0}, "24": {"gate": 0.86,
+      "up": 0.86, "down": 1.0}, "25": {"gate": 0.86, "up": 0.86, "down": 1.0}}'
 out_suffix: bergson/7b
 out_dir:
   prepare_pile10k: data/pile10k_None.txt
@@ -74,8 +75,9 @@ out_dir:
   benchmark: out/benchmark/bergson/7b
 computed:
   eigenvalue_corrections_flag: --eigenvalue-corrections
-  weight_coefficients_flag: ''
+  weight_coefficients_flag: --weight-coefficients
   wanda_flag: ''
+  foof_flag: ''
   sample_labels_flag: --sample_labels
   fsdp_flag: --fsdp
   world_size_flag: --world_size 8
@@ -83,27 +85,27 @@ model:
   name: allenai/OLMo-2-1124-7B
   size: 7b
   layer_mass:
-    gate: 0.4
-    up: 0.4
+    gate: 0.86
+    up: 0.86
     down: 1.0
   layers:
     '23':
-      gate: 0.4
-      up: 0.4
+      gate: 0.86
+      up: 0.86
       down: 1.0
     '24':
-      gate: 0.4
-      up: 0.4
+      gate: 0.86
+      up: 0.86
       down: 1.0
     '25':
-      gate: 0.4
-      up: 0.4
+      gate: 0.86
+      up: 0.86
       down: 1.0
 method:
   name: bergson
 benchmark:
   args:
-    task: gsm8k::olmes
-    batch-size: 28
+    task: winogrande:rc::olmes
+    batch-size: 128
 model_method:
-  gate_up_mass: 0.4
+  gate_up_mass: 0.86
