@@ -1,5 +1,5 @@
 # @package _global_
 benchmark:
   args:
-    task: "winogrande::olmes"
+    task: "winogrande:rc::olmes"
     batch-size: 128
