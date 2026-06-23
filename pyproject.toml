@@ -25,10 +25,10 @@ dependencies = [
     "pyarrow",
     "scipy",
     "simple-parsing",
-    "torch",
     "torchopt",
     "tqdm",
     "transformers>=5",
+    "torch>=2.12.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -48,4 +48,17 @@ dev = [
     "pytest>=8.4.2",
     "rapidfuzz>=3.14.3",
     "zstandard>=0.25.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
