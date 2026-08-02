@@ -24,6 +24,10 @@ stages:
     deps:
       - data/prepare_pile10k_cache.py
       - ${out_dir.prepare_pile10k}
+      # The tokenization depends on the installed transformers version (see the
+      # 5.6.0-5.12.x OLMo-2 pre-tokenizer regression), so environment changes
+      # must invalidate this stage.
+      - pyproject.toml
     outs:
       - ${out_dir.prepare_pile10k_cache}
     desc: |

@@ -28,7 +28,10 @@ dependencies = [
     "torch",
     "torchopt",
     "tqdm",
-    "transformers>=5",
+    # 5.6.0-5.12.x mis-tokenize OLMo-2: GPT2Tokenizer discards tokenizer.json's
+    # pre-tokenizer (fixed by huggingface/transformers#46091 in 5.13.0)
+    "transformers>=5.13",
+    "cuda-bindings==12.9.6",
 ]
 
 [tool.setuptools.packages.find]
