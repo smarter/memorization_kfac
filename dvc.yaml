@@ -266,6 +266,7 @@ stages:
       PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       uvx --python 3.11 --from "ai2-olmes[gpu] @ git+https://github.com/BrownianNotion/olmes.git@${olmes_commit}"
       --with setuptools==80.10.2
+      --with torchao==0.17.0
       olmes
       --model ${out_dir.eval_kfac}/model
       ${benchmark.args}
