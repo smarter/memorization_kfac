@@ -49,7 +49,9 @@ def select_pairs_by_mass(importance: torch.Tensor, rho: float) -> torch.Tensor:
     target = rho * csum[-1].item()
     k = (
         int(
-            torch.searchsorted(csum, torch.tensor(target, dtype=torch.float64)).item()
+            torch.searchsorted(
+                csum, torch.tensor(target, dtype=torch.float64, device=csum.device)
+            ).item()
         )
         + 1
     )
