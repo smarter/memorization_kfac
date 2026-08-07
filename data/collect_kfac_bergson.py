@@ -44,7 +44,7 @@ def parse():
     p.add_argument(
         "--method",
         default="kfac",
-        choices=["kfac", "tkfac", "shampoo", "foof"],
+        choices=["kfac", "tkfac", "shampoo", "foof", "identity"],
         help="Hessian approximation method.",
     )
 
