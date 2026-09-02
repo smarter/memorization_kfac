@@ -525,7 +525,8 @@ class KFACTreatmentPairwise(KFACTreatment):
     def apply_kfac_by_product(self,
                               variance_ratio: Union[float,
                                                     Dict[str, float]],
-                              use_weight_coefficients: bool = False):
+                              use_weight_coefficients: bool = False,
+                              marginal_corrections: bool = False):
         """
         Project each registered layer onto the span of the largest
         importance scores until the chosen fraction of total mass is kept.
@@ -555,7 +556,15 @@ class KFACTreatmentPairwise(KFACTreatment):
                 assert (eva_A[:-1] >= eva_A[1:]).all(), "eva_A must be sorted desc"
 
                 # Step 1: Compute base importance (curvature estimate)
-                if 'lambda_correction' in info:
+                if 'lambda_correction' in info and marginal_corrections:
+                    # Marginal-only correction: the separable (max-entropy)
+                    # matrix with the same row/column sums as the full
+                    # eigenvalue-correction matrix. Tests whether the
+                    # O x I interaction structure of Lambda matters for the edit.
+                    L = info['lambda_correction'].to(self.device)
+                    importance = torch.outer(L.sum(1), L.sum(0)) / L.sum()
+                    print(f"  Using marginal-only eigenvalue corrections for pair selection")
+                elif 'lambda_correction' in info:
                     # Use eigenvalue corrections (EK-FAC)
                     importance = info['lambda_correction'].to(self.device)
                     print(f"  Using eigenvalue corrections for pair selection")

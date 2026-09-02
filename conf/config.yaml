@@ -26,6 +26,9 @@ eval_kfac:
   use_weight_coefficients: false
   use_wanda: false
   use_foof: false
+  # Replace the full O x I correction matrix by the separable matrix with the
+  # same row/column sums (needs use_eigenvalue_corrections: true).
+  use_marginal_corrections: false
   args:
     layers-json: ${json:${model.layers}}
 
@@ -82,6 +85,7 @@ computed:
   weight_coefficients_flag: "${if:${eval_kfac.use_weight_coefficients},'--weight-coefficients',''}"
   wanda_flag: "${if:${eval_kfac.use_wanda},'--wanda',''}"
   foof_flag: "${if:${eval_kfac.use_foof},'--foof',''}"
+  marginal_corrections_flag: "${if:${eval_kfac.use_marginal_corrections},'--marginal-corrections',''}"
   sample_labels_flag: "${if:${collect_kfac.sample_labels},'--sample_labels',''}"
   fsdp_flag: "${if:${collect_kfac.fsdp},'--fsdp',''}"
   world_size_flag: "${if_set:${collect_kfac.world_size},'--world_size'}"

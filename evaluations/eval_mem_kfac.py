@@ -422,7 +422,8 @@ def apply_kfac_to_layer(model,
                        use_eigenvalue_corrections: bool = False,
                        use_weight_coefficients: bool = False,
                        wanda: bool = False,
-                       foof: bool = False) -> None:
+                       foof: bool = False,
+                       marginal_corrections: bool = False) -> None:
     """Apply K-FAC to a single layer's MLP projections.
 
     Args:
@@ -460,6 +461,7 @@ def apply_kfac_to_layer(model,
             f"{'__wcoef' if use_weight_coefficients else ''}"
             f"{'__wanda' if wanda else ''}"
             f"{'__foof' if foof else ''}"
+            f"{'__marg' if marginal_corrections else ''}"
             f"__{proj_layer.weight.dtype.__str__()}.pt"
         )
 
@@ -500,7 +502,8 @@ def apply_kfac_to_layer(model,
             )
 
         kfac.apply_kfac_by_product(variance_ratio=variance,
-                                   use_weight_coefficients=use_weight_coefficients)
+                                   use_weight_coefficients=use_weight_coefficients,
+                                   marginal_corrections=marginal_corrections)
 
         stats = kfac.compression_stats.get(layer_name, None)
         if stats is not None:
@@ -548,6 +551,10 @@ def main():
     parser.add_argument("--eigenvalue-corrections", action="store_true",
                        help="Use pre-computed eigenvalue corrections from bergson format. "
                             "Only supported with --bergson-factors.")
+    parser.add_argument("--marginal-corrections", action="store_true",
+                       help="Replace the full eigenvalue-correction matrix by the separable "
+                            "matrix with the same row/column sums (marginal-only correction). "
+                            "Requires --eigenvalue-corrections.")
     parser.add_argument("--weight-coefficients", action="store_true",
                        help="Weight pair importance by C_ij^2 (squared weight coefficients). "
                             "Minimizes second-order loss impact rather than just curvature.")
@@ -601,6 +608,8 @@ def main():
         parser.error("--foof requires --bergson-factors")
     if args.foof and args.wanda:
         parser.error("--foof and --wanda are mutually exclusive")
+    if args.marginal_corrections and not args.eigenvalue_corrections:
+        parser.error("--marginal-corrections requires --eigenvalue-corrections")
     if args.only_baseline and args.skip_baseline:
         parser.error("--only-baseline and --skip-baseline are mutually exclusive")
 
@@ -725,6 +734,7 @@ def main():
                 use_weight_coefficients=args.weight_coefficients,
                 wanda=args.wanda,
                 foof=args.foof,
+                marginal_corrections=args.marginal_corrections,
             )
 
     # POST-K-FAC EVALUATION (skipped when --only-baseline)
