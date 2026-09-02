@@ -215,6 +215,7 @@ def load_bergson_kfac_info(
     use_eigenvalue_corrections: bool = False,
     wanda: bool = False,
     foof: bool = False,
+    corrections_from: Optional[str] = None,
 ) -> Dict[str, Dict]:
     """
     Load K-FAC info from bergson format with pre-computed eigenvectors.
@@ -243,6 +244,18 @@ def load_bergson_kfac_info(
             ``gradient_eigen_sharded`` is the synthesised identity Q_G
             written by bergson's foof worker. Compatible with
             use_eigenvalue_corrections; mutually exclusive with wanda.
+        corrections_from: Path to a second bergson output directory whose
+            activation/gradient covariances are per-sequence gradient moments
+            (a Shampoo collection: Cov_G = mean_n dW_n dW_n^T,
+            Cov_A = mean_n dW_n^T dW_n). The eigenvalue correction is then
+            synthesised without a correction pass as the separable matrix
+            lambda[o, i] = (q_o^T Cov_G q_o) (p_i^T Cov_A p_i) in this
+            collection's own eigenbasis (Q_G, Q_A). Rests on the identity
+            sum_i Lambda[o, i] = q_o^T Cov_G q_o (and its column analogue):
+            the correction's row/column sums are exactly these quadratic
+            forms, and the separable matrix with those marginals reproduces
+            the full-Lambda edit. Mutually exclusive with
+            use_eigenvalue_corrections and wanda.
 
     Returns:
         Dict mapping layer_name -> {W_orig, eva_A, evc_A, eva_G, evc_G, lambda_correction (optional)}
@@ -254,6 +267,11 @@ def load_bergson_kfac_info(
         )
     if wanda and foof:
         raise ValueError("wanda and foof modes are mutually exclusive.")
+    if corrections_from and (use_eigenvalue_corrections or wanda):
+        raise ValueError(
+            "corrections_from synthesises lambda_correction from a second "
+            "collection; incompatible with use_eigenvalue_corrections and wanda."
+        )
 
     bergson_path = Path(bergson_path)
     influence_path = bergson_path / "influence_results"
@@ -298,6 +316,16 @@ def load_bergson_kfac_info(
             raise FileNotFoundError(f"Eigenvalue corrections total processed not found at {lambda_total_path}")
         total_processed_lambda = torch.load(lambda_total_path, map_location="cpu").item()
         assert total_processed == total_processed_lambda, "Inconsistency: {total_processed} != {total_processed_lambda}"
+
+    # Optionally load a second collection's covariances to synthesise the
+    # correction from (see corrections_from in the docstring).
+    aux_cov_G = aux_cov_A = None
+    aux_total = None
+    if corrections_from:
+        aux_path = Path(corrections_from) / "influence_results"
+        aux_cov_A = _normalize_bergson_keys(_load_bergson_sharded(aux_path / "activation_covariance_sharded"))
+        aux_cov_G = _normalize_bergson_keys(_load_bergson_sharded(aux_path / "gradient_covariance_sharded"))
+        aux_total = torch.load(aux_path / "total_processed_covariances.pt", map_location="cpu").item()
 
     kfac_info = {}
     for layer_name in layer_names:
@@ -403,6 +431,22 @@ def load_bergson_kfac_info(
             layer_info['lambda_correction'] = lambda_corr
             print(f"  Loaded eigenvalue corrections: {tuple(layer_info['lambda_correction'].shape)}")
 
+        if aux_cov_G is not None:
+            if bergson_key not in aux_cov_G or bergson_key not in aux_cov_A:
+                raise ValueError(f"corrections_from: covariances not found for {bergson_key}")
+            cg = aux_cov_G[bergson_key].float().to(compute_device) / aux_total
+            ca = aux_cov_A[bergson_key].float().to(compute_device) / aux_total
+            cg = (cg + cg.T) / 2
+            ca = (ca + ca.T) / 2
+            # Quadratic forms of the per-sequence gradient moments along this
+            # basis = the row/column sums the correction pass would produce.
+            rows = (evc_G.T @ cg @ evc_G).diagonal().clamp_min(0)
+            cols = (evc_A.T @ ca @ evc_A).diagonal().clamp_min(0)
+            layer_info['lambda_correction'] = torch.outer(rows, cols)
+            print(f"  Synthesised separable eigenvalue corrections from {corrections_from}: "
+                  f"{tuple(layer_info['lambda_correction'].shape)}")
+            del cg, ca
+
         kfac_info[layer_name] = layer_info
 
     return kfac_info
@@ -423,7 +467,8 @@ def apply_kfac_to_layer(model,
                        use_weight_coefficients: bool = False,
                        wanda: bool = False,
                        foof: bool = False,
-                       marginal_corrections: bool = False) -> None:
+                       marginal_corrections: bool = False,
+                       corrections_from: Optional[str] = None) -> None:
     """Apply K-FAC to a single layer's MLP projections.
 
     Args:
@@ -462,6 +507,7 @@ def apply_kfac_to_layer(model,
             f"{'__wanda' if wanda else ''}"
             f"{'__foof' if foof else ''}"
             f"{'__marg' if marginal_corrections else ''}"
+            f"{'__auxcorr' if corrections_from else ''}"
             f"__{proj_layer.weight.dtype.__str__()}.pt"
         )
 
@@ -484,6 +530,7 @@ def apply_kfac_to_layer(model,
                 use_eigenvalue_corrections=use_eigenvalue_corrections,
                 wanda=wanda,
                 foof=foof,
+                corrections_from=corrections_from,
             )
             kfac = KFACTreatmentPairwise(
                 model,
@@ -564,6 +611,14 @@ def main():
                             "covariance only. Combine with --weight-coefficients for canonical "
                             "Wanda importance eva_A * W^2. Requires --bergson-factors; mutually "
                             "exclusive with --eigenvalue-corrections.")
+    parser.add_argument("--corrections-from", type=str, default="",
+                       help="Path to a second bergson output directory (a Shampoo collection, "
+                            "whose covariances are per-sequence gradient moments). Synthesises "
+                            "the eigenvalue correction as the separable matrix of quadratic forms "
+                            "of those moments along this collection's eigenbasis, i.e. EK-FAC / "
+                            "E-FOOF / E-Identity corrections without a correction pass. Requires "
+                            "--bergson-factors; mutually exclusive with --eigenvalue-corrections, "
+                            "--marginal-corrections and --wanda.")
     parser.add_argument("--foof", action="store_true",
                        help="Treat bergson factors as FOOF (Benzing 2022, E[aaᵀ] ⊗ I). "
                             "Loads real Q_A/eva_A from the activation side; sets eva_G=1 "
@@ -610,6 +665,10 @@ def main():
         parser.error("--foof and --wanda are mutually exclusive")
     if args.marginal_corrections and not args.eigenvalue_corrections:
         parser.error("--marginal-corrections requires --eigenvalue-corrections")
+    if args.corrections_from and not args.bergson_factors:
+        parser.error("--corrections-from requires --bergson-factors")
+    if args.corrections_from and (args.eigenvalue_corrections or args.wanda):
+        parser.error("--corrections-from is mutually exclusive with --eigenvalue-corrections and --wanda")
     if args.only_baseline and args.skip_baseline:
         parser.error("--only-baseline and --skip-baseline are mutually exclusive")
 
@@ -735,6 +794,7 @@ def main():
                 wanda=args.wanda,
                 foof=args.foof,
                 marginal_corrections=args.marginal_corrections,
+                corrections_from=args.corrections_from or None,
             )
 
     # POST-K-FAC EVALUATION (skipped when --only-baseline)

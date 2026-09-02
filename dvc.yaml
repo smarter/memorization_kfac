@@ -143,6 +143,7 @@ stages:
       ${computed.wanda_flag}
       ${computed.foof_flag}
       ${computed.marginal_corrections_flag}
+      ${computed.corrections_from_flag}
     deps:
       - evaluations/eval_mem_kfac.py
       - metrics/
