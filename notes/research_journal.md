@@ -92,7 +92,21 @@ rho=0.75, ~0.75 after 0.6; probe_iter), but end to end the two-step edit from
 the rho=0.75 model (mined-ados, wally-send; `--start-from-model`, commit
 e651209) sits on the one-shot curve with ~0.01 less memorisation, and the
 same-schedule control with base-model marginals (cynic-jaws; epoxy-rand
-pending) shows re-estimation adds ~1 sigma on GSM8K at best. Deprioritised.
+pending) (cynic-jaws, epoxy-rand) shows re-estimation adds +0.014 / +0.019 GSM8K at equal
+forgetting (same sign in both pairs, ~1-1.5 sigma each). Real but modest:
+use it when marginals are cheap; not a new frontier.
+
+**Pitfall found 2026-09-03 (afternoon):** `data/olmo_7b_dolma_dedup_val.jsonl`
+is the memorized set's *validation split* (the base model recites its suffixes
+with 0.992 strict accuracy), not clean text; the "BSN clean set" used for
+perplexity is the pile10k 112-token cache. A first population probe compared
+memorized against memorized and found a perfect null. Verified populations now
+live in the scratchpad `population_sets.pt`: memorized test+val (1054),
+`clean` = the 1200 least-recited 112-token windows of the cached dolmino
+sequences (suffix greedy accuracy <= 0.375; note the selection biases them to
+high-loss text, mean suffix loss 3.16), `typical` = 1200 random dolmino
+windows (median suffix greedy accuracy 0.50; 1.4% of ordinary pretraining-mix
+windows are recited perfectly).
 
 **Reframing the paper's thesis with these results** (discussion, 2026-09-03):
 * curvature mass of a direction = per-token leverage x number of tokens using
