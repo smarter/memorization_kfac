@@ -144,6 +144,7 @@ stages:
       ${computed.foof_flag}
       ${computed.marginal_corrections_flag}
       ${computed.corrections_from_flag}
+      ${computed.start_from_model_flag}
     deps:
       - evaluations/eval_mem_kfac.py
       - metrics/

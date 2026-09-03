@@ -104,8 +104,15 @@ def get_kfac_factors_path(model_size: str, layer_idx: int, factors_root: Optiona
     raise ValueError(f"No K-FAC factors for layer {layer_idx} in {model_size} model")
 
 
-def load_model_and_tokenizer(model_name: str, dtype: str = "bfloat16", quiet: bool = True):
-    """Load model and tokenizer."""
+def load_model_and_tokenizer(model_name: str, dtype: str = "bfloat16", quiet: bool = True,
+                             weights_path: Optional[str] = None):
+    """Load model and tokenizer.
+
+    weights_path: if given, load the model weights from this directory (e.g. an
+    already-edited model written by a previous eval run) while keeping the
+    tokenizer of ``model_name``. Used for iterative editing.
+    """
+    model_src = weights_path or model_name
     torch_dtype = {
         "float32": torch.float32,
         "float16": torch.float16,
@@ -119,7 +126,7 @@ def load_model_and_tokenizer(model_name: str, dtype: str = "bfloat16", quiet: bo
             if tok.pad_token is None:
                 tok.pad_token = tok.eos_token
             model = AutoModelForCausalLM.from_pretrained(
-                model_name,
+                model_src,
                 torch_dtype=torch_dtype,
                 device_map="auto",
                 trust_remote_code=True,
@@ -129,7 +136,7 @@ def load_model_and_tokenizer(model_name: str, dtype: str = "bfloat16", quiet: bo
         if tok.pad_token is None:
             tok.pad_token = tok.eos_token
         model = AutoModelForCausalLM.from_pretrained(
-            model_name,
+            model_src,
             torch_dtype=torch_dtype,
             device_map="auto",
             trust_remote_code=True,
@@ -611,6 +618,12 @@ def main():
                             "covariance only. Combine with --weight-coefficients for canonical "
                             "Wanda importance eva_A * W^2. Requires --bergson-factors; mutually "
                             "exclusive with --eigenvalue-corrections.")
+    parser.add_argument("--start-from-model", type=str, default="",
+                       help="Load the model weights from this directory (an already-edited model "
+                            "written by a previous eval run) instead of the base checkpoint, so the "
+                            "edit is applied on top of it (iterative editing). The tokenizer and "
+                            "evaluation setup still follow --model-size. Pruned (zero) weights have "
+                            "zero importance, so the mass rule acts on the surviving coordinates.")
     parser.add_argument("--corrections-from", type=str, default="",
                        help="Path to a second bergson output directory (a Shampoo collection, "
                             "whose covariances are per-sequence gradient moments). Synthesises "
@@ -685,8 +698,14 @@ def main():
     config = MODEL_CONFIGS[args.model_size]
     model_name = config["model_name"]
 
-    print(f"Loading {args.model_size} model: {model_name}")
-    model, tokenizer = load_model_and_tokenizer(model_name, dtype=args.dtype)
+    print(f"Loading {args.model_size} model: {model_name}"
+          + (f" (weights from {args.start_from_model})" if args.start_from_model else ""))
+    model, tokenizer = load_model_and_tokenizer(model_name, dtype=args.dtype,
+                                                weights_path=args.start_from_model or None)
+    if args.start_from_model:
+        # Iterative editing: the edit below starts from already-edited weights.
+        # Tag the cache key so cached edits of the base model are never reused.
+        model_name = f"{model_name}@{Path(args.start_from_model.rstrip('/')).name}"
 
     # Parse layer configuration
     if args.layers_file:

@@ -34,6 +34,9 @@ eval_kfac:
   # a correction pass. Absolute path; not a DVC dep (exploratory). See
   # evaluations/eval_mem_kfac.py --corrections-from.
   corrections_from: ""
+  # Start the edit from an already-edited model directory (iterative editing);
+  # absolute path, not a DVC dep (exploratory).
+  start_from_model: ""
   args:
     layers-json: ${json:${model.layers}}
 
@@ -92,6 +95,7 @@ computed:
   foof_flag: "${if:${eval_kfac.use_foof},'--foof',''}"
   marginal_corrections_flag: "${if:${eval_kfac.use_marginal_corrections},'--marginal-corrections',''}"
   corrections_from_flag: "${if_not_empty:${eval_kfac.corrections_from},'--corrections-from '}"
+  start_from_model_flag: "${if_not_empty:${eval_kfac.start_from_model},'--start-from-model '}"
   sample_labels_flag: "${if:${collect_kfac.sample_labels},'--sample_labels',''}"
   fsdp_flag: "${if:${collect_kfac.fsdp},'--fsdp',''}"
   world_size_flag: "${if_set:${collect_kfac.world_size},'--world_size'}"
