@@ -182,9 +182,44 @@ different ordering of directions. The ~100 directions the two orderings
 disagree on have no token-class or frequency signature.
 
 Open: is the memorized share driven by rare tokens (the class attribution on
-the general population showed no class signature of low-depth directions),
-and how much of the flat-direction preference is layer-specific (layers 23 and
-25 running).
+the general population showed no class signature of low-depth directions).
+Layer-specificity: none within 23-25 (see next entry).
+
+## 2026-09-03 (night): functional spectrum vs curvature spectrum; layers 23/25
+
+**Layers 23 and 25 reproduce layer 24.** Memorized share vs depth: Spearman
+-0.85 to -0.96 on every side of every module; within-depth-decile
+share-vs-breadth negative in nearly all deciles, strongest at the top of the
+G side (-0.4 to -0.7). The flat-direction preference of memorized text is
+not layer-specific within the edited block.
+
+**Functional spectrum (probe_band_damage, `band_damage.png`).** Removing one
+decile band of directions at a time (by corrected depth; G and A sides;
+up_proj and gate_proj of layer 24; plus random orthonormal bands of the same
+size) and measuring the suffix-loss increase:
+* Flat bands (deciles 0-6) cost memorized text 0.003-0.005 nats per band and
+  typical text 0.001-0.003 (ratio 1.8-2.3); a *random* band costs the same
+  as a flat band for both populations (mem 0.003-0.005, typical 0.002-0.003).
+* The sharpest band (decile 9) costs typical text 10-36x more than a flat band
+  (0.020-0.042 nats) but memorized text only 5-13x more (0.019-0.035); on the
+  A side the top band hurts typical text *more* than memorized text
+  (ratios 0.45 and 0.87).
+* Reading: general function is concentrated in the sharp directions and
+  nearly absent from the flat ones; memorized function is diffuse, spread
+  over the whole eigenbasis (flat ~ random), so any band of flat directions
+  carries a slice of it. The mass rule works because it removes the flat bulk
+  wholesale: for typical text that bulk is functionally empty, for memorized
+  text it is where a large share of a diffuse support lives. This is the same
+  fact the curvature attribution shows from the gradient side (memorized
+  curvature is spread, typical curvature is concentrated at the top, hence
+  the normalised memorized share rises toward the flat end).
+* The curvature *share* removed (1.1-1.4x selectivity) understates the
+  functional damage (7-8x) because memorized tokens are confidently predicted:
+  small gradients, small Fisher, but a support that collapses when the flat
+  bulk goes. Flat and fragile are two faces of the same geometry.
+
+Joint removal of the flattest k deciles (both modules) vs the sum of single
+bands: -> pending (probe_band_damage_joint).
 
 ---
 
