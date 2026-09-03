@@ -218,8 +218,39 @@ size) and measuring the suffix-loss increase:
   small gradients, small Fisher, but a support that collapses when the flat
   bulk goes. Flat and fragile are two faces of the same geometry.
 
-Joint removal of the flattest k deciles (both modules) vs the sum of single
-bands: -> pending (probe_band_damage_joint).
+**Joint removal (probe_band_damage_joint): memorized support is diffuse *and
+redundant*.** Removing the flattest k deciles of both modules together, vs the
+sum of the single-band effects:
+* G side: typical text is exactly additive (k=6: +0.025 joint vs +0.026 sum;
+  k=9: +0.045 vs +0.046); memorized text is strongly superadditive (k=6:
+  +0.129 vs +0.048, 2.7x; k=9: +0.220 vs +0.074, 3x). The memorized/typical
+  damage ratio grows from 2.0 (one band) to 5.5 (eight bands).
+* A side: memorized superadditive from the start (k=6: +0.117 vs +0.032,
+  3.7x); typical text becomes superadditive only beyond k=6 (k=9: +0.144 vs
+  +0.026), and the ratio peaks at 5.4 (k=5) then falls to 3.1 as typical
+  text starts losing function in the bottom 90% of A directions.
+* Reading: each flat direction carries a small, *redundant* slice of a
+  memorized item's support: removing one is compensated by the others (small
+  single-band damage), removing many collapses it. Typical text does not use
+  the flat G directions at all (additivity = independent noise-level
+  effects). Memorization looks like a distributed, redundant code spread over
+  the low-variance directions; generalization like concentrated use of the
+  high-variance ones. This is why the curvature-mass rule is so selective
+  despite a modest curvature-share difference, and why single-direction
+  interpretability of memorized items is hard.
+
+Conceptual summary of the day (layers 23-25 MLP gate/up of OLMo-2 7B):
+1. Memorized text's gradient signal lives in the flat directions (curvature
+   attribution, robust to control and label mode; the paper's claim, now
+   measured on curvature rather than activation energy).
+2. Memorized text's *function* also lives there, diffusely and redundantly;
+   general function lives in the sharp directions. Curvature-mass pruning
+   separates them because it removes the flat bulk wholesale.
+3. Breadth (how many sequences use a direction) refines depth: at matched
+   depth, memorized-leaning directions are used by fewer sequences.
+4. Curvature comes from ~1% of tokens; memorized tokens are confident (tiny
+   gradients), which is why their curvature share understates their
+   functional dependence.
 
 ---
 
@@ -238,7 +269,15 @@ Promising (benchmark-agnostic, next):
   corrected curvature keeps. -> done for layer 24: memorized share falls
   monotonically with depth; disagreement directions carry no class signature.
 * **Sides and locality:** A-side vs G-side specificity across all layers and
-  attention.
+  attention (the sharp A directions are the general features: removing the
+  top A band hurts typical text more than memorized text).
+* **Redundancy as a signature.** The superadditivity curve (joint minus sum of
+  single-band damage) separates memorized from typical text far better than
+  any single band; test it as a label-free detector of memorized items
+  (per-item superadditivity), and check whether rare-but-general skills
+  (arithmetic, rare relations) look memorized or general under it.
+* **Separate ||a||^2 from ||g||^2** in the leverage signature of memorized
+  prefixes (3x the leverage of typical text at lower loss).
 * **Training dynamics:** OLMo-2 intermediate checkpoints; when do low-breadth
   directions appear relative to memorization of specific sequences.
 * Token weightings as a design space (retain/forget contrast, loss- or
