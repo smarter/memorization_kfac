@@ -121,6 +121,71 @@ windows are recited perfectly).
 * specificity lives on the gradient side: calibration mix and edits reshape
   the G-side marginals, the A-side barely moves.
 
+## 2026-09-03 (evening): where memorized text's curvature goes (layer 24)
+
+Probes: `probe_populations.py` (per-direction curvature attribution, K-FAC
+eigenbases of the dolmino collection, coupled per-token weights, three
+populations: memorized test+val, typical dolmino windows, least-recited
+windows; sampled and true labels), `probe_damage.py` (per-token loss under two
+edited models), `analyze_populations.py`, `plot_populations.py`
+(`populations_summary.png`).
+
+**1. The paper's observation replicates, in curvature terms, and strongly.**
+The normalised share of a direction's curvature that comes from memorized
+text falls monotonically with the direction's curvature: from 0.57 (G side)
+/ 0.65 (A side) in the flattest decile to 0.40-0.42 in the sharpest
+(Spearman share vs depth -0.87 / -0.94 on the G side of gate / up, -0.96 on
+both A sides). Identical with the typical-window control and the
+least-recited control, and identical with sampled-label (Fisher) and
+true-label gradients: not a loss or confidence artifact. The paper's
+activation-energy measure (their Fig. 2) reproduces on the same data:
+memorized activations put 34-38% of their energy in the bottom half of the
+A-eigenspectrum vs 18% for typical text, and 24-29% in the top 10% vs 50%
+(ratios per band top10 / 10-25 / 25-50 / bottom50: 0.55 / 0.95 / 1.28 / 1.84
+prefix, 0.44 / 0.87 / 1.27 / 1.97 suffix).
+
+**2. Breadth adds information at matched depth.** Within depth deciles, the
+memorized share of a direction correlates negatively with its breadth
+(effective number of contributing sequences): -0.1 to -0.3 in most deciles,
+-0.5 to -0.8 in the sharpest G-side deciles; A side -0.2 to -0.45 everywhere.
+Memorized text's curvature goes to directions that fewer sequences use. So the
+conjecture "memorization = high depth from few contexts" holds as a tendency,
+but breadth is strongly collinear with depth (Spearman 0.90-0.97); it is a
+refinement, not an independent axis.
+
+**3. Curvature attribution understates the damage.** The mass rule at
+rho=0.6 removes 43-55% of memorized text's curvature vs 38-39% of typical
+text's (ratio 1.1-1.4), yet the actual edits raise memorized suffix loss by
+0.29 nats (E-Identity 0.75) / 0.62 nats (M-Identity 0.6) per token against
+0.04 / 0.075 on typical windows (ratio 7-8; 7.9% / 15.6% of memorized suffix
+tokens flip from confident to wrong, vs 0.4% / 0.9%). Memorized tokens are
+confidently predicted (suffix loss 0.018), so their gradients, hence their
+curvature contributions, are tiny (true-label leverage 25 vs 102 for typical
+tokens) while their *function* depends on the removed flat directions.
+Flat in the loss landscape and fragile to component removal are the same
+thing here: the support of a confident prediction is spread over many
+low-curvature components. -> functional spectrum probe (band removal) in
+progress to make this quantitative.
+
+**4. Curvature is dominated by a few tokens.** 1% of tokens carry ~50% of the
+coupled leverage (memorized set) / 24-26% (typical); leverage tracks loss
+(Spearman 0.7-0.8). Memorized *prefixes* have 3x the leverage of typical text
+at lower loss: a large activation-norm signature (to be separated into
+||a||^2 and ||g||^2 next).
+
+**5. Plain vs corrected curvature: same ordering, flatter spectrum.**
+Spearman(plain eigenvalue, corrected depth) = 0.99-0.999; the coupling only
+spreads the mass more evenly (60% of mass in 47% of directions instead of
+27%). The end-to-end differences between plain and corrected edits therefore
+come from the pair-level product of two reweighted spectra, not from a
+different ordering of directions. The ~100 directions the two orderings
+disagree on have no token-class or frequency signature.
+
+Open: is the memorized share driven by rare tokens (the class attribution on
+the general population showed no class signature of low-depth directions),
+and how much of the flat-direction preference is layer-specific (layers 23 and
+25 running).
+
 ---
 
 ## Backlog
@@ -130,12 +195,13 @@ Promising (benchmark-agnostic, next):
   breadth (participation entropy of per-sequence contributions). Conjecture:
   memorization = high depth from few contexts; rare skills = moderate depth,
   many contexts; general = both high. Test on held-out memorized vs clean
-  Dolma text (the BSN sets) at matched depth. -> in progress
-  (probe_populations).
+  Dolma text at matched depth. -> done for layer 24 (see 2026-09-03 evening):
+  holds as a tendency, collinear with depth.
 * **Per-direction attribution of curvature to token populations** (memorized
   vs clean, rare vs frequent, numbers / entities / function words), with the
   coupled weights; characterise the directions plain K-FAC drops but the
-  corrected curvature keeps. -> in progress.
+  corrected curvature keeps. -> done for layer 24: memorized share falls
+  monotonically with depth; disagreement directions carry no class signature.
 * **Sides and locality:** A-side vs G-side specificity across all layers and
   attention.
 * **Training dynamics:** OLMo-2 intermediate checkpoints; when do low-breadth
