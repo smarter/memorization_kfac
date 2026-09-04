@@ -425,6 +425,37 @@ forgetting/capability trade-off rather than its cost. Caveat: two points, one
 basis, GSM8K only; the Identity-basis twins and the late-layer runs will say
 whether it generalises.
 
+## 2026-09-05 (early): the side rules measured on arithmetic itself
+
+`eval_models_on_populations.py` (`models_on_populations.png`): edited models
+materialised from the DVC cache, evaluated on the probe populations
+(memorized suffix loss as the forgetting axis; synthetic-arithmetic answers
+fully correct under greedy decoding as the capability axis; typical and
+gsm8k-style window loss as collateral).
+
+| rule | run | mem loss | arith acc | typical loss | two-sided arith at this mem |
+|---|---|---|---|---|---|
+| unedited | base | 0.018 | 0.892 | 2.137 | |
+| two-sided EK-FAC 0.85..0.5 | ahead-fees .. rummy-drum | 0.38 .. 1.21 | 0.79 .. 0.15 | 2.17 .. 2.36 | |
+| G-only 0.8 / 0.6 / 0.45 | varus-flux / stiff-food / lippy-tomb | 0.19 / 0.57 / 0.83 | 0.86 / 0.76 / 0.56 | 2.17 / 2.21 / 2.24 | - / 0.64 / 0.40 |
+| A-only 0.8 / 0.6 | jammy-tils / couth-obit | 0.47 / 1.16 | 0.67 / 0.21 | 2.19 / 2.32 | 0.72 / 0.18 |
+| Identity two-sided 0.6 | gamey-quad, unlet-genu | 0.63 / 0.62 | 0.74 / 0.78 | 2.21 | 0.60 |
+
+* At equal forgetting, the G-only rule keeps 0.11-0.16 more arithmetic
+  accuracy than the two-sided K-FAC rule (0.76 vs 0.64 at mem loss 0.57;
+  0.56 vs 0.40 at 0.83), at the price of ~0.02 nats more typical-text loss.
+  The A-only rule is at or below the two-sided curve (0.67 vs 0.72 at 0.47).
+  This is the mechanism's own quantity, not GSM8K, and it matches the
+  band-removal prediction: arithmetic writes through sharp output directions
+  (kept by G-only) and reads flat input directions (removed by A-only and by
+  the two-sided product).
+* The Identity-basis edits (per-weight, no eigenbasis) sit above the
+  two-sided K-FAC curve on arithmetic too (0.74-0.78 vs 0.60 at mem 0.62),
+  consistent with E-Identity's strong GSM8K in the frontier: the K-FAC
+  A-eigenbasis is what makes the edit hit the number features.
+* gsm8k-style text loss barely moves for any edit (1.12-1.25 vs 1.15), so
+  GSM8K accuracy changes are not about this text's likelihood.
+
 ---
 
 ## Backlog
