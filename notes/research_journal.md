@@ -280,6 +280,62 @@ token rarity predicts. The pending skill probes (functional spectrum for
 arithmetic / gsm8k; per-item damage) will show whether arithmetic's support is
 memorization-like (diffuse, redundant) or rare-token-like (mid-band).
 
+## 2026-09-04 (afternoon): skills on the same footing; a label-free detector
+
+Probes on layer 24 with five populations (memorized; typical dolmino windows;
+least-recited windows; synthetic few-shot arithmetic with the loss on the
+answer digits; gsm8k-style math windows): `probe_band_damage2` (single-band
+and joint-band removal, `band_damage_populations.png`), `probe_populations2`
+(curvature attribution restricted to the target span, `skills_curvature.png`),
+`probe_item_damage` (per-item damage under the two edited models).
+
+**1. Arithmetic is not memorization-like; it is a two-sided object.**
+* G side (output directions): arithmetic's normalised curvature share *rises*
+  with depth (0.26 flattest -> 0.64 sharpest, Spearman +0.78), the opposite
+  of memorized text (0.57 -> 0.38). Functionally, removing the sharpest G
+  band costs arithmetic 0.12 / 0.21 nats (gate / up) against 0.02 for
+  typical text and 0.02-0.03 for memorized; flat G bands cost it nothing;
+  jointly removing the flattest 6 G deciles costs 0.021 (memorized 0.129).
+* A side (input directions): arithmetic's share leans flat (0.57 -> 0.33,
+  Spearman -0.44) and its function depends on the flat A bands *more than
+  memorized text does*: flattest 6 A deciles jointly cost arithmetic 0.30 nats
+  (memorized 0.12, typical 0.02); flattest 9: 0.68 (memorized 0.45).
+* Its answer tokens have half the activation norm of typical tokens
+  (||a||^2 median 618 vs 1221): the number features are low-variance input
+  directions.
+* Reading: arithmetic reads rare-token (number) features from flat input
+  directions and writes through the sharpest, shared output directions.
+  Memorization is diffuse and redundant on both sides. The paper's
+  "arithmetic is brittle under curvature pruning" is therefore an A-side
+  effect, not evidence that arithmetic is memorized. Prediction: pruning
+  along output directions only (G-side flat bulk) removes memorization about
+  as well while sparing arithmetic; pruning the A-side flat bulk destroys it.
+  -> end-to-end test next (a side-restricted importance in the eval).
+
+**2. gsm8k-style text: predictable, but robust.** Its curvature share leans
+flat like memorized text's (G: 0.57 -> 0.46, Spearman -0.94) because its
+tokens are predictable (loss 1.15, tiny gradients on most tokens), yet
+removing flat bands costs it nothing (joint G flattest 9: +0.018 vs typical
++0.045; the real edits change its loss by +0.002). Curvature attribution
+conflates *predictable* with *memorized*; the functional (removal) test does
+not. The least-recited control (high loss) shows no trend at all, so the
+flat-leaning curvature signature is a low-gradient signature, and only the
+memorized population combines it with functional dependence on the flat bulk.
+
+**3. Per-item damage is a usable label-free memorization detector.** Loss
+increase under the rho=0.75 / 0.6 edits separates memorized items from
+ordinary windows with AUC 0.83 / 0.90. Within ordinary text, damage rises with
+how well the base model already recites a window (0.024 nats at greedy
+accuracy < 0.4 -> 0.13 / 0.27 at 0.9-0.999), except for the perfectly recited
+windows (1.4% of ordinary text, damage 0.046 / 0.14): those are predictable
+by rule (tables, boilerplate) rather than memorized, and the edit tells the
+two apart. Arithmetic answers: +0.06 / +0.21 nats; gsm8k text: +0.002.
+
+**4. Norm signatures (true labels, target tokens).** Memorized: ||a||^2 ~0.9x
+typical, ||g||^2 median 3000x smaller (5.6e-6 vs 1.7e-2). Arithmetic answers:
+||a||^2 0.5x, ||g||^2 median 500x smaller. gsm8k text: ||a||^2 0.75x, large
+gradients on its surprising tokens (leverage 5x typical).
+
 ---
 
 ## Backlog
@@ -299,11 +355,14 @@ Promising (benchmark-agnostic, next):
 * **Sides and locality:** A-side vs G-side specificity across all layers and
   attention (the sharp A directions are the general features: removing the
   top A band hurts typical text more than memorized text).
-* **Redundancy as a signature.** The superadditivity curve (joint minus sum of
-  single-band damage) separates memorized from typical text far better than
-  any single band; test it as a label-free detector of memorized items
-  (per-item superadditivity), and check whether rare-but-general skills
-  (arithmetic, rare relations) look memorized or general under it.
+* **Side-restricted pruning (from the arithmetic dissociation).** Test end to
+  end whether pruning the G-side flat bulk only removes memorization while
+  sparing arithmetic / GSM8K, and whether A-side-only pruning destroys it.
+* Rare relations / closed-book facts as a population (the paper's other
+  brittle task): do they look like arithmetic (flat inputs, sharp outputs) or
+  like memorization (diffuse both sides)?
+* Per-item damage as a detector: done at AUC 0.83-0.90; the perfectly
+  recited-by-rule windows are the interesting false negatives to characterise.
 * **Separate ||a||^2 from ||g||^2** in the leverage signature of memorized
   prefixes (3x the leverage of typical text at lower loss).
 * **Training dynamics:** OLMo-2 intermediate checkpoints; when do low-breadth
