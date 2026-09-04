@@ -385,6 +385,11 @@ eigenbases per layer, attribution and band removal; `layers_sweep.png`).
   support is sharp), a late-layer, output-side-weighted edit is the natural
   candidate for "remove memorization, keep arithmetic".
 
+Queued (2026-09-04 night): `model=7b_late` (layers 26-28; commit 61be68b):
+marginal E-Identity at 0.6 / 0.45 (spiny-typo, fired-wont) and marginal EK-FAC
+at 0.8 (twill-kine), to be compared with the 23-25 curves at matched
+perplexity; output-side layer sweep (probe_layers_G) running.
+
 ---
 
 ## Backlog
