@@ -535,6 +535,26 @@ network. Curvature (gradient-weighted usage) defines the split; forward energy
 (activation-weighted routing) says where an item's computation goes; the
 detector is the overlap of the two.
 
+## 2026-09-05: superadditivity is a margin effect (probe_margin, layer 24)
+
+Jointly removing the flattest k input deciles (both modules) and tracking
+confident tokens (base loss < 0.1; 96% of memorized suffix tokens, 20% of
+typical suffix tokens):
+* Memorized: flip fraction (loss > 1 after removal) 0.002 / 0.009 / 0.028 /
+  0.069 for k = 2 / 4 / 6 / 8, i.e. roughly x3 per two deciles; the median
+  loss change stays ~0 while the 90th percentile grows 0.006 -> 0.45. Flips
+  concentrate in the lowest base-margin quartile (k=8: 0.146 vs 0.024 in the
+  highest; k=6: 0.073 vs 0.004).
+* Typical confident tokens: flips 0.000 / 0.001 / 0.005 / 0.031, with no
+  margin structure (0.019-0.046 across quartiles at k=8).
+Reading: a memorized token's prediction is a sum of many small contributions
+from flat directions; removing bands erodes its logit margin gradually and the
+loss jumps only when the margin is crossed, so the population-level damage is
+superadditive and the low-margin items go first. Typical predictions do not
+draw their margin from the flat bulk. This is the "distributed code" account
+of memorization made quantitative, and it suggests the per-item margin drawn
+from private directions as a graded memorization strength.
+
 ---
 
 ## Backlog
