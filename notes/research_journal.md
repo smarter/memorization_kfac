@@ -488,6 +488,13 @@ directions projected out per layer:
 0.590 vs the two-sided E-Identity curve at matched perplexity 0.083 / 0.533:
 same forgetting, +0.057 GSM8K. The output-side rule generalises to the
 per-weight basis (identity rows = output units, columns = input features).
+On the population axes the gain is smaller than for K-FAC: E-Identity's own
+two-sided curve is already arithmetic-friendly (mem loss 0.31 / 0.62 / 0.89 /
+1.03 -> arithmetic accuracy 0.84 / 0.76 / 0.62 / 0.37 for rho 0.75 / 0.6 /
+0.45 / 0.3, vs the K-FAC two-sided curve's ~0.60 at 0.62), and G-only at 0.4
+(mem 0.85 -> 0.67) sits ~0.03 above it. The K-FAC A-eigenbasis is what makes
+the two-sided K-FAC edit hit the number features; per-weight pruning does not
+align with them.
 
 ---
 
