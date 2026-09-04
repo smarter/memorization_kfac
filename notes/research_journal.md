@@ -444,7 +444,9 @@ gsm8k-style window loss as collateral).
 * At equal forgetting, the G-only rule keeps 0.11-0.16 more arithmetic
   accuracy than the two-sided K-FAC rule (0.76 vs 0.64 at mem loss 0.57;
   0.56 vs 0.40 at 0.83), at the price of ~0.02 nats more typical-text loss.
-  The A-only rule is at or below the two-sided curve (0.67 vs 0.72 at 0.47).
+  The A-only rule is at or below the two-sided curve (0.67 vs 0.72 at 0.47;
+  telic-wind at rho 0.45 is a very harsh edit, ppl 24.5, mem loss 1.41,
+  arithmetic 0.14, on the curve's extrapolation).
   This is the mechanism's own quantity, not GSM8K, and it matches the
   band-removal prediction: arithmetic writes through sharp output directions
   (kept by G-only) and reads flat input directions (removed by A-only and by
