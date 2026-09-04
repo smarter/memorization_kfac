@@ -399,6 +399,32 @@ marginal E-Identity at 0.6 / 0.45 (spiny-typo, fired-wont) and marginal EK-FAC
 at 0.8 (twill-kine), to be compared with the 23-25 curves at matched
 perplexity; output-side layer sweep (probe_layers_G) running.
 
+## 2026-09-04 (late): the output-side prediction holds end to end
+
+G-side-only marginal corrections for K-FAC on dolmino (importance
+C^2 x r_o, input directions weighted uniformly), compared with the two-sided
+EK-FAC curve interpolated at the same perplexity:
+
+| run | rho | ppl | mem | quotes | GSM8K | two-sided curve (mem / GSM8K) |
+|---|---|---|---|---|---|---|
+| stiff-food | 0.6 | 18.75 | 0.128 | 0.252 | 0.607 | 0.117 / 0.545 |
+| lippy-tomb | 0.45 | 19.46 | 0.092 | 0.200 | 0.536 | 0.091 / 0.463 |
+
+Same forgetting (mem within 0.01) and +0.061 / +0.073 GSM8K (5 sigma each);
+at matched *forgetting* still +0.045 / +0.07. Pruning along output directions
+only removes memorization as well as the two-sided rule and keeps the
+arithmetic-bearing components, exactly as the band-removal probes predicted
+(arithmetic reads flat input directions but writes through sharp output
+directions; memorization is diffuse on both). A-side-only at 0.8 (jammy-tils,
+18.81 / 0.158 / 0.269 / 0.594) is a milder edit (+0.046 mem at matched ppl)
+with +0.055 GSM8K at matched ppl but only +0.01 at matched forgetting; the
+A-only 0.6 / 0.45 points are running.
+
+This is the first mechanism-derived change to the edit that moves the
+forgetting/capability trade-off rather than its cost. Caveat: two points, one
+basis, GSM8K only; the Identity-basis twins and the late-layer runs will say
+whether it generalises.
+
 ---
 
 ## Backlog
