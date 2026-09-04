@@ -181,8 +181,8 @@ come from the pair-level product of two reweighted spectra, not from a
 different ordering of directions. The ~100 directions the two orderings
 disagree on have no token-class or frequency signature.
 
-Open: is the memorized share driven by rare tokens (the class attribution on
-the general population showed no class signature of low-depth directions).
+Open: rare-token signature -> answered 2026-09-04 (a modest correlate, not
+the explanation).
 Layer-specificity: none within 23-25 (see next entry).
 
 ## 2026-09-03 (night): functional spectrum vs curvature spectrum; layers 23/25
@@ -251,6 +251,34 @@ Conceptual summary of the day (layers 23-25 MLP gate/up of OLMo-2 7B):
 4. Curvature comes from ~1% of tokens; memorized tokens are confident (tiny
    gradients), which is why their curvature share understates their
    functional dependence.
+
+## 2026-09-04: is the curvature spectrum a token-frequency spectrum? (CPU, layer 24)
+
+Attribution of the general population's curvature to token classes and
+frequency deciles per direction (`frequency_spectrum.png`):
+* The flattest decile of directions draws 45% of its curvature from the
+  rarest 30% of token types, the sharpest 37% (G side); top-100 function
+  tokens go from 28% to 34%; capitalised tokens (entity proxy) 16% -> 11%,
+  numeric 3% -> 2.5%. A consistent gradient, so rank correlations are high
+  (depth vs rarest-30% share -0.94), but the effect size is modest: the flat
+  directions are somewhat more rare-token machinery, not exclusively.
+* Memorized share vs rarity: +0.90 (G), +0.66 (A). Partialling out depth
+  leaves nothing (+0.03 / +0.09); partialling out rarity leaves depth at
+  -0.60 (G) / -0.93 (A). Flatness is the primary variable; rarity does not
+  explain the memorized preference for flat directions.
+* Populations (held-out counts from the other half of the general sample):
+  memorized targets are rarer text (8.1% unseen types, 11.5% in the rarest
+  30%) than typical windows (4.2%, 6.6%); synthetic arithmetic answers are
+  the rarest of all (9.2% unseen, 14.7% rarest-30%: specific numbers),
+  gsm8k-style text is typical-like.
+
+So the unifying "the mass rule prunes rare-token machinery, hence
+memorization, arithmetic and rare facts fall together" story is only partly
+right: rare-token use is enriched in the flat bulk, and arithmetic answers
+are rare tokens, but memorized text prefers flat directions beyond what its
+token rarity predicts. The pending skill probes (functional spectrum for
+arithmetic / gsm8k; per-item damage) will show whether arithmetic's support is
+memorization-like (diffuse, redundant) or rare-token-like (mid-band).
 
 ---
 
