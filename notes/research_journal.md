@@ -336,6 +336,20 @@ typical, ||g||^2 median 3000x smaller (5.6e-6 vs 1.7e-2). Arithmetic answers:
 ||a||^2 0.5x, ||g||^2 median 500x smaller. gsm8k text: ||a||^2 0.75x, large
 gradients on its surprising tokens (leverage 5x typical).
 
+## 2026-09-04 (evening): side-restricted edits, first point
+
+`--corrections-side G|A` (commit 7e361c5): with the separable correction,
+use only the output-direction (G) or input-direction (A) marginal and weight
+the other side uniformly. First result, K-FAC dolmino at nominal rho=0.8,
+G-side only (varus-flux): 18.01 ppl / 0.382 mem / 0.427 quotes / 0.658 GSM8K,
+i.e. a very mild edit (GSM8K within 0.02 of the unedited 0.675). A nominal
+rho is not comparable across importance definitions, so the G-only and A-only
+curves are being traced at rho 0.6 / 0.45 (K-FAC) and 0.4 (Identity) to
+compare at matched perplexity or forgetting. Layer sweep (input side, all 32
+layers) in progress; early layers 16-18 show the sharpest input decile costing
+arithmetic up to 1.1 nats, so arithmetic's input features are *sharp* in mid
+layers and flat in layer 24: locality matters.
+
 ---
 
 ## Backlog
