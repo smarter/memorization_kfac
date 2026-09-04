@@ -496,6 +496,45 @@ two-sided curve is already arithmetic-friendly (mem loss 0.31 / 0.62 / 0.89 /
 the two-sided K-FAC edit hit the number features; per-weight pruning does not
 align with them.
 
+## 2026-09-05: forward attribution and an edit-free detector
+
+Curvature attribution is gradient-based and confidence-blind, so it
+understated memorized text's functional dependence (2026-09-03). A second,
+forward quantity: the energy an item's tokens send through each direction of
+the weights, E_G[o] = sum_t (q_o^T W a_t)^2 and E_A[i] = ||W p_i||^2 sum_t
+(p_i^T a_t)^2 (`probe_forward.py`, layer 24).
+
+* Per band, forward-energy share tracks the functional damage of removing
+  that band about as well as curvature share does on the A side (Spearman
+  0.8-0.9) and better where curvature failed (memorized text, gate output
+  side: 0.84 vs 0.24).
+* Population level, input side: memorized text sends 0.35 / 0.44 (gate / up)
+  of its input energy through the flattest 60% of input directions, typical
+  text 0.13 / 0.21, arithmetic answers 0.27 / 0.37, gsm8k text 0.18 / 0.27.
+  Output side: ~0.5-0.6 for everyone (most MLP output energy is in
+  low-curvature output directions, which the downstream network barely reads
+  for typical predictions).
+* **Item level:** the "private share" (input energy in the flattest 60% of
+  directions / total) separates the 1054 memorized items from all 9216
+  ordinary dolmino windows with AUC 0.986 (both modules, layer 24), from a
+  single forward pass: no gradients, no edit, no labels beyond the population
+  eigenbasis. The edit-based detector reached 0.83-0.90. Validation across
+  layers with random-basis and plain-covariance controls and loss/rarity
+  confounds is running (`probe_private_share.py`).
+
+Theory sketch (2026-09-05): a **public/private decomposition of weight space
+by usage**. The population Fisher's sharp directions are shared computation
+(public); its flat bulk is many low-usage, near-orthogonal directions where
+item-specific information can persist because population gradients rarely
+touch them (private). General text routes through public directions on both
+sides; memorized items route a distributed, redundant code through private
+directions on both sides (single-band robustness, bulk fragility,
+superadditivity); rare skills route through private inputs and public
+outputs (arithmetic); the split is functional only in the late third of the
+network. Curvature (gradient-weighted usage) defines the split; forward energy
+(activation-weighted routing) says where an item's computation goes; the
+detector is the overlap of the two.
+
 ---
 
 ## Backlog
