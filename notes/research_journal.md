@@ -385,6 +385,15 @@ eigenbases per layer, attribution and band removal; `layers_sweep.png`).
   support is sharp), a late-layer, output-side-weighted edit is the natural
   candidate for "remove memorization, keep arithmetic".
 
+Side-restricted, nominal-rho points so far (K-FAC 0.8): G-only (varus-flux)
+18.01 / 0.382 / 0.427 / 0.658 (barely an edit); A-only (jammy-tils) 18.81 /
+0.158 / 0.269 / 0.594, i.e. at matched perplexity +0.046 mem and +0.055 GSM8K
+relative to the two-sided EK-FAC curve. Identity 0.6 A-only (fetid-esne):
+mem 0.126 / quotes 0.232 / GSM8K 0.594 (perplexity lost to an OOM caused by
+a probe on GPU 7; requeued as tumid-bang); the G-only twin (spiry-wont) died
+of the same contention and is requeued as bushy-roup. The queue worker now
+runs on GPUs 0-6 only. Verdict on sides waits for the rho sweeps.
+
 Queued (2026-09-04 night): `model=7b_late` (layers 26-28; commit 61be68b):
 marginal E-Identity at 0.6 / 0.45 (spiny-typo, fired-wont) and marginal EK-FAC
 at 0.8 (twill-kine), to be compared with the 23-25 curves at matched
