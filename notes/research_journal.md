@@ -350,6 +350,41 @@ layers) in progress; early layers 16-18 show the sharpest input decile costing
 arithmetic up to 1.1 nats, so arithmetic's input features are *sharp* in mid
 layers and flat in layer 24: locality matters.
 
+## 2026-09-04 (night): layer sweep, input side of all 32 MLP layers
+
+`probe_layers.py` (coupled input covariances for every layer from one pass,
+eigenbases per layer, attribution and band removal; `layers_sweep.png`).
+
+* **Attribution is universal.** In every layer the memorized share of a
+  direction's curvature falls with its depth (Spearman -0.92 to -0.98); the
+  flattest half carries 0.60-0.66 of the normalised memorized share
+  everywhere, rising to 0.71 in the last layer.
+* **Function is local.** Projecting out the flattest 6 input deciles of a
+  layer costs memorized text <= 0.02 nats in layers 0-17 (typical text
+  0.005-0.010, ratio 1-2), then 0.03 -> 0.10 nats from layer 19 on while
+  typical text stays at 0.01 (ratio 3-8, peak at layers 22-25 with 0.09 vs
+  0.01). The memorization-specific support in flat input directions lives in
+  the late third of the network, strongest exactly where the paper edits
+  (22-25). The curvature signature and the functional dependence come apart:
+  the former is everywhere, the latter is late.
+* **Arithmetic is layered.** Its dependence on the *sharpest* input decile
+  peaks in mid layers (layer 16: 1.09 nats; 14-15: 0.24-0.32; 12: 0.15),
+  where typical text loses only 0.07-0.13; its dependence on the *flat* input
+  bulk is late (layers 20-24: 0.15-0.46 nats, peak 0.46 at layer 22), and in
+  layers 25-31 it drops to 0.03-0.07 while memorized text stays at 0.06-0.10.
+  So number/operation features are sharp directions in the middle of the
+  network and flat directions around layers 20-24.
+* **Sharpest decile removal** hurts every population in every layer; in the
+  last two layers it is catastrophic for all (the unembedding pathway).
+  Random deciles cost < 0.01 nats everywhere.
+* Design implication (to test): editing layers >= 26 instead of 23-25 would
+  keep the memorization selectivity (flat-bulk damage ratio mem/typical 5-8)
+  while halving the collateral on arithmetic (mem/arith ~2 instead of ~0.4);
+  conversely the paper's layers 22-24 are the worst choice for arithmetic on
+  the input side. Combined with the side result (arithmetic's output-side
+  support is sharp), a late-layer, output-side-weighted edit is the natural
+  candidate for "remove memorization, keep arithmetic".
+
 ---
 
 ## Backlog
@@ -366,9 +401,11 @@ Promising (benchmark-agnostic, next):
   coupled weights; characterise the directions plain K-FAC drops but the
   corrected curvature keeps. -> done for layer 24: memorized share falls
   monotonically with depth; disagreement directions carry no class signature.
-* **Sides and locality:** A-side vs G-side specificity across all layers and
-  attention (the sharp A directions are the general features: removing the
-  top A band hurts typical text more than memorized text).
+* **Locality:** input side done for all MLP layers (see 2026-09-04 night):
+  memorization's functional support is late (>= 19), arithmetic's flat-input
+  dependence is at 20-24 and its sharp-input dependence at 12-18. Still to do:
+  G side per layer (needs per-layer gradient covariances), attention modules,
+  and an end-to-end edit on layers >= 26.
 * **Side-restricted pruning (from the arithmetic dissociation).** Test end to
   end whether pruning the G-side flat bulk only removes memorization while
   sparing arithmetic / GSM8K, and whether A-side-only pruning destroys it.
