@@ -458,6 +458,37 @@ gsm8k-style window loss as collateral).
 * gsm8k-style text loss barely moves for any edit (1.12-1.25 vs 1.15), so
   GSM8K accuracy changes are not about this text's likelihood.
 
+## 2026-09-05: output-side layer sweep; Identity G-only
+
+**Output side (probe_layers_G, `layers_sweep_both.png`).** Coupled output
+covariances for all 32 layers (both modules), flattest 6 deciles of output
+directions projected out per layer:
+* Memorized text's functional dependence on flat output directions is late,
+  like the input side: ratio to typical text ~0.5-1 in layers 0-12 (flat
+  output removal there hurts typical text *more*), rising from layer 16 to a
+  plateau of 3-5 at layers 20-27 (peak 5.3 at 24-25; absolute 0.13-0.25 nats
+  at 20-24 with typical at 0.02-0.03), then 2-2.5 in the last layers.
+* Arithmetic uses flat output directions at layers 18-23 (0.11-0.31 nats,
+  peak 0.31 at layer 22) but hardly at 24-31 (0.02-0.06). So the earlier
+  layer-24 statement "arithmetic writes through sharp outputs" holds at 24-25
+  and is *not* general: at 20-23 arithmetic sits in the flat output bulk too.
+* The G-only rule's advantage in the 23-25 edits therefore comes from a
+  favourable coincidence at those layers: memorization's output-side support
+  is at its peak while arithmetic's is at its minimum, whereas on the input
+  side arithmetic's flat dependence peaks exactly there (0.23-0.46 nats at
+  22-24). Prediction for the layer-26-28 runs: two-sided editing should already
+  spare arithmetic much better than at 23-25 (both sides have mem/arith >= 1.5
+  there).
+* The sharpest output decile of layers 13, 15 and 17 is critical for every
+  population (0.3-1.2 nats); attribution there is also weakest (Spearman
+  -0.6 to -0.7 at 11-13), so mid-network output geometry is dominated by a few
+  shared directions.
+
+**Identity basis, G-only (zinky-pons, rho 0.4):** 19.47 / 0.082 / 0.187 /
+0.590 vs the two-sided E-Identity curve at matched perplexity 0.083 / 0.533:
+same forgetting, +0.057 GSM8K. The output-side rule generalises to the
+per-weight basis (identity rows = output units, columns = input features).
+
 ---
 
 ## Backlog
