@@ -526,7 +526,8 @@ class KFACTreatmentPairwise(KFACTreatment):
                               variance_ratio: Union[float,
                                                     Dict[str, float]],
                               use_weight_coefficients: bool = False,
-                              marginal_corrections: bool = False):
+                              marginal_corrections: bool = False,
+                              corrections_side: str = ""):
         """
         Project each registered layer onto the span of the largest
         importance scores until the chosen fraction of total mass is kept.
@@ -556,14 +557,23 @@ class KFACTreatmentPairwise(KFACTreatment):
                 assert (eva_A[:-1] >= eva_A[1:]).all(), "eva_A must be sorted desc"
 
                 # Step 1: Compute base importance (curvature estimate)
-                if 'lambda_correction' in info and marginal_corrections:
+                if 'lambda_correction' in info and (marginal_corrections or corrections_side):
                     # Marginal-only correction: the separable (max-entropy)
                     # matrix with the same row/column sums as the full
                     # eigenvalue-correction matrix. Tests whether the
                     # O x I interaction structure of Lambda matters for the edit.
                     L = info['lambda_correction'].to(self.device)
-                    importance = torch.outer(L.sum(1), L.sum(0)) / L.sum()
-                    print(f"  Using marginal-only eigenvalue corrections for pair selection")
+                    rows, cols = L.sum(1), L.sum(0)
+                    if corrections_side == "G":
+                        # output-direction (G-side) marginal only: every input
+                        # direction weighted equally
+                        importance = torch.outer(rows, torch.ones_like(cols)) / rows.sum()
+                    elif corrections_side == "A":
+                        importance = torch.outer(torch.ones_like(rows), cols) / cols.sum()
+                    else:
+                        importance = torch.outer(rows, cols) / L.sum()
+                    print(f"  Using marginal-only eigenvalue corrections for pair selection"
+                          + (f" (side {corrections_side} only)" if corrections_side else ""))
                 elif 'lambda_correction' in info:
                     # Use eigenvalue corrections (EK-FAC)
                     importance = info['lambda_correction'].to(self.device)

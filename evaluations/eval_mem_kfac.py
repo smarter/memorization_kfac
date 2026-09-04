@@ -475,7 +475,8 @@ def apply_kfac_to_layer(model,
                        wanda: bool = False,
                        foof: bool = False,
                        marginal_corrections: bool = False,
-                       corrections_from: Optional[str] = None) -> None:
+                       corrections_from: Optional[str] = None,
+                       corrections_side: str = "") -> None:
     """Apply K-FAC to a single layer's MLP projections.
 
     Args:
@@ -515,6 +516,7 @@ def apply_kfac_to_layer(model,
             f"{'__foof' if foof else ''}"
             f"{'__marg' if marginal_corrections else ''}"
             f"{'__auxcorr' if corrections_from else ''}"
+            f"{'__side' + corrections_side if corrections_side else ''}"
             f"__{proj_layer.weight.dtype.__str__()}.pt"
         )
 
@@ -557,7 +559,7 @@ def apply_kfac_to_layer(model,
 
         kfac.apply_kfac_by_product(variance_ratio=variance,
                                    use_weight_coefficients=use_weight_coefficients,
-                                   marginal_corrections=marginal_corrections)
+                                   marginal_corrections=marginal_corrections, corrections_side=corrections_side)
 
         stats = kfac.compression_stats.get(layer_name, None)
         if stats is not None:
@@ -624,6 +626,11 @@ def main():
                             "edit is applied on top of it (iterative editing). The tokenizer and "
                             "evaluation setup still follow --model-size. Pruned (zero) weights have "
                             "zero importance, so the mass rule acts on the surviving coordinates.")
+    parser.add_argument("--corrections-side", type=str, default="", choices=["", "G", "A"],
+                       help="With --marginal-corrections (or --corrections-from): use only the G-side "
+                            "(output-direction) or only the A-side (input-direction) marginal as the "
+                            "correction, the other side weighted uniformly. Tests which side carries "
+                            "the selectivity of the edit.")
     parser.add_argument("--corrections-from", type=str, default="",
                        help="Path to a second bergson output directory (a Shampoo collection, "
                             "whose covariances are per-sequence gradient moments). Synthesises "
@@ -678,6 +685,8 @@ def main():
         parser.error("--foof and --wanda are mutually exclusive")
     if args.marginal_corrections and not args.eigenvalue_corrections:
         parser.error("--marginal-corrections requires --eigenvalue-corrections")
+    if args.corrections_side and not (args.marginal_corrections or args.corrections_from):
+        parser.error("--corrections-side requires --marginal-corrections or --corrections-from")
     if args.corrections_from and not args.bergson_factors:
         parser.error("--corrections-from requires --bergson-factors")
     if args.corrections_from and (args.eigenvalue_corrections or args.wanda):
@@ -814,6 +823,7 @@ def main():
                 foof=args.foof,
                 marginal_corrections=args.marginal_corrections,
                 corrections_from=args.corrections_from or None,
+                corrections_side=args.corrections_side,
             )
 
     # POST-K-FAC EVALUATION (skipped when --only-baseline)
