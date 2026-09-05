@@ -1544,3 +1544,41 @@ predicting the recall/forgetting curve of removal vs noise from item
 redundancy; (iv) an edit that removes coherently but spares redundant
 content -- e.g. removal restricted to bulk components whose sign structure is
 item-like rather than fact-like, if such a distinction exists at all.
+
+## 2026-09-05: mathematical programme -- three checks of the proposed theory
+
+Proposed formalism (see the message of this afternoon): item and population
+Fisher mass as measures on the reference spectrum; collateral second-order
+(cost ~ sum Lambda Delta^2), forgetting first-order (logit shift vs margin,
+coherent N*eps vs incoherent sqrt(N)*eps), and an accumulation model (item
+residue signal / population random walk) predicting memorized share ~ kappa^-1/2.
+
+**Check 1 -- the exponent** (`analyze_powerlaw.py`, log share vs log depth over
+directions; share = population depth / general depth):
+
+| module side | memorized, all dirs (R^2) | memorized, bulk only | head | clean | typical | null |
+|---|---|---|---|---|---|---|
+| 23 up G | -0.50 (0.82) | -0.50 | -0.06 | +0.08 | +0.07 | +0.01 |
+| 24 up G | -0.51 (0.78) | -0.43 | -0.05 | +0.09 | +0.09 | +0.01 |
+| 25 up G | -0.53 (0.83) | -0.41 | -0.16 | +0.09 | +0.08 | +0.01 |
+| 23/24/25 gate G | -0.34 / -0.37 / -0.31 (0.4-0.5) | -0.15 / -0.15 / -0.08 | ~+0.1 | +0.10..0.21 | +0.17..0.22 | +0.01 |
+| 23/24/25 up A | -0.47 / -0.48 / -0.49 (0.80) | -0.66 / -0.71 / -0.73 | -0.1 | +0.02..0.03 | +0.03 | +0.01 |
+| 23/24/25 gate A | -0.46 / -0.47 / -0.48 (0.78) | -0.65 / -0.70 / -0.73 | -0.1 | +0.03..0.04 | +0.03..0.04 | +0.01 |
+
+* The up-projection output side and both input sides give exponent -0.46 to
+  -0.53 over the whole range with R^2 ~ 0.8: the kappa^-1/2 prediction holds
+  where the spectrum is best behaved. The gate output side is shallower
+  (-0.31 to -0.37, R^2 0.4-0.5) and nearly flat inside its bulk; the input
+  sides are steeper inside the bulk (-0.65 to -0.73) and flatten in the head.
+  Clean and typical text have small *positive* exponents (their share grows
+  toward the head), and the split-half null is +0.01: the effect is not an
+  estimation artifact.
+* Reading: a -1/2 law is the first-order description, with structured
+  deviations -- the gate's output gradients pass through the SiLU gate, which
+  may decorrelate the item signal from the population walk; the input side's
+  steeper bulk suggests item residue there is closer to constant across
+  directions while population variance grows. Both are targets for the
+  derivation, not exceptions to wave away.
+
+Checks 2 (second-order collateral from the factors) and 3 (margin model) are
+running.
