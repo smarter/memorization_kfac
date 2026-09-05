@@ -2270,3 +2270,20 @@ Dolma set (recited ordinary windows 0.946), so this is the trade-off *for a
 memorized distribution one has examples of*, which is the realistic setting
 for unlearning a corpus and not the setting for "remove memorization" in
 general.
+
+**Pipeline result for the norm-38 targeted model (irate-prof):** ppl 18.39,
+Dolma loose 0.084, quotes strict 0.553, GSM8K 0.671 (unedited 17.62 / 0.998 /
+0.967 / 0.675; deletion 23-25: 18.005 / 0.322 / 0.346 / 0.640; noise 90:
+18.36 / 0.254 / 0.375 / 0.662).
+* Quotes -- a third memorized distribution (famous sayings, heavily duplicated
+  on the web) -- lose 43% of their recitation, far more than the recited
+  dolmino windows (5%) and less than the held-out Dolma items (94%). Transfer
+  across memorized distributions is partial and distribution-dependent: the
+  shared direction of the Dolma duplicates overlaps with what web-duplicated
+  quotes use and little with what ordinary recited text uses.
+* GSM8K is untouched (0.671), the best of any edit; Dolma forgetting is by far
+  the deepest (0.084). The perplexity cost (+0.77) equals noise 90's and
+  exceeds deletion's (+0.39): the shape-invariance violation (this direction
+  costs ~3x energy-matched noise at norm 38) shows up on pile10k. The norm-19
+  and norm-10 models are queued for the pipeline; norm 19 should sit at Dolma
+  ~0.2 with a much smaller perplexity cost and is the likely frontier point.
