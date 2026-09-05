@@ -1693,3 +1693,49 @@ out. Testing the second-order theory itself, without factorisation, by measuring
 the exact quadratic form 1/2 E[(sum_m g_m^T dW_m a_m)^2] per token, and the
 first-order term E[g_true^T dW a] which need not vanish for a population the
 model is not at a minimum for (`probe_quadform.py`, running).
+
+**Check 2c -- exact Taylor terms, no factorisation** (`probe_quadform.py`:
+per token s_t = sum_m g_m^T dW_m a_m over the six edited matrices; first order
+E[s] with true-label gradients, second order 1/2 E[s^2] with sampled labels =
+the GGN quadratic form; same tokens and masks as the measured losses):
+
+| edit -> population | first order | second order (GGN) | total | measured |
+|---|---|---|---|---|
+| dolmino bulk -> dolmino | -0.0025 | +0.0209 | +0.0184 | +0.021 |
+| Pile bulk -> dolmino | -0.0040 | +0.0607 | +0.0567 | +0.063 |
+| dolmino bulk -> Pile | -0.0228 | +0.0784 | +0.0556 | +0.027 |
+| Pile bulk -> Pile | -0.0147 | +0.0410 | +0.0263 | +0.015 |
+
+* **In distribution the theory is exact.** Both deletions' costs on dolmino
+  text are predicted within 10-12% by the unfactorised second-order form. The
+  diagonal (K-FAC / EK-FAC) curvature under-predicted these by 2-2.5x: for a
+  structured perturbation (removal of the content itself) the off-diagonal
+  fourth moments add constructively, even in the population's own coupled
+  basis. The band-probe fit in the K-FAC basis (constant 0.57) happened to
+  land near 1/2 with the collection's Lambda; the safe statement is that the
+  *exact* GGN form predicts collateral and the factorised one needs a
+  calibration factor of order 2 for coherent removals.
+* **Out of distribution the second-order form is an upper bound.** On Pile
+  both predictions overshoot by 1.75-2x. The rms logit shift is twice as
+  large on Pile (0.40 vs 0.20 logit units), i.e. Pile leans harder on this
+  content, and cross-entropy saturates: it grows linearly, not quadratically,
+  in large logit shifts. So OOD collateral is sub-quadratic in the edit.
+* **The first-order term is negative.** Removing the reference's bulk content
+  *lowers* the loss to first order for both populations, negligibly for
+  dolmino (-0.0025) but materially for Pile (-0.023, -0.015: about half of its
+  measured cost in magnitude). The population gradient points toward less
+  bulk content: idiosyncratic content stored in the bulk actively interferes
+  with other distributions, and the quadratic cost of removing it is partly
+  offset by that relief. This is the interference reading of "content" made
+  quantitative.
+
+Status of the mathematical programme after the three checks: collateral is a
+solved second-order problem in distribution (exact GGN form, no free
+parameter), sub-quadratic with a first-order interference relief out of
+distribution; forgetting is a margin crossing with a measured mechanism (energy
+for noise, coherent contribution for removal) and a linear regime to half the
+block; the kappa^-1/2 law holds on the up-projection output side and both input
+sides. The remaining theoretical items are the derivation of the exponent (and
+of its deviations on the gate output side and in the input bulk), a saturation
+model for OOD collateral, and a model of the noise mean-shift (the
+"maximum-regression" of a confident correct token).
