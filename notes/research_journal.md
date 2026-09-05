@@ -1826,3 +1826,30 @@ alpha <= 0.5 (`analyze_margin_predict*.py`):
   shift with +0.37 and its removal shift with +0.29: a one-forward-pass
   quantity carries almost half the rank information about fragility under a
   three-layer, two-sided edit.
+
+## 2026-09-05: the facts population's profile, and a confound in the gradient side
+
+`probe_profiles_facts.py` (answer tokens of 316 correctly answered NQ/PopQA
+items vs memorized suffix tokens vs ordinary windows, final K-FAC bases):
+
+| side | exponent memorized | exponent facts | block energy (product G x A) mem/win, facts/win |
+|---|---|---|---|
+| A (activations) | -0.65 .. -0.69 (R2 0.94) | -0.74 .. -0.81 (R2 0.90) | |
+| G (loss gradients) | -0.58 .. -0.69 | -0.69 .. -1.16 | 0.73-0.84, 4.3-5.7 (mem/facts 0.13-0.20) |
+
+* Facts' *activations* are flatter than memorized tokens' (the answer position
+  after "A:" in a few-shot QA prompt is an atypical context) -- so activation
+  flatness alone does not make a population fragile to bulk edits.
+* The product-of-loss-gradient-energies prediction of the block coupling is
+  inverted (0.16 predicted vs 3.7 measured). Cause: the loss gradient scales
+  with (1 - p_y), the token's misfit. Memorized tokens are fit (p_y ~ 0.98),
+  fact tokens are not (margins 1.5-3.8), so the facts' loss-gradient energy is
+  5-8x larger in total for reasons unrelated to how their margins couple to
+  the block. The margin's gradient is the right object for forgetting. Also
+  a caution for the half-whitening exponent on the G side: a population's
+  gradient-energy profile is weighted toward its least-fit tokens.
+* Rerunning with (i) unit-error gradients g/(1-p_y) and (ii) the margin
+  gradient itself, and resolving the bulk energy by side, to predict the
+  coupling ratio and to see whether facts and verbatim differ on the output
+  side (facts written through the head, like arithmetic?) rather than the
+  input side.
