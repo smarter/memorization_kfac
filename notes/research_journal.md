@@ -1089,3 +1089,21 @@ him incomparable scores, and no pinning to old versions. Findings:
   `extract_olmes_metrics.py` reads both schemas (commit 6be7f36). Experiments
   from that commit on carry the olmo-eval GSM8K score; earlier ones the OLMES
   HF-backend score, on the same scale.
+
+## 2026-09-05: batch 10, first result -- deleting the private block of layers 23-25
+
+| run | edit | ppl | Dolma | quotes | GSM8K |
+|---|---|---|---|---|---|
+| sorer-rein | delete private block, layers 23-25 (6 matrices, alpha=1) | 18.005 | 0.322 | 0.346 | 0.640 |
+| manly-sine | E-Identity 0.75 (curvature edit, all 6 matrices + down) | 18.10 | 0.302 | 0.355 | 0.643 |
+| ahead-fees | EK-FAC 0.85 | 18.06 | 0.224 | 0.308 | 0.607 |
+| telic-iota | private noise, norm 90 | 18.36 | 0.254 | 0.375 | 0.662 |
+
+Predicted 18.0-18.1 / 0.26-0.30 / 0.38-0.42 / 0.63-0.66: perplexity and
+GSM8K as predicted, slightly less Dolma forgetting than predicted and better
+quote removal. The deletion sits on the E-Identity 0.75 point on all four
+axes: a label-free, ranking-free, correction-free deterministic edit of six
+matrices matches the best curvature edit at this forgetting level, and beats
+the matched-forgetting noise edit by 0.36 perplexity at a cost of 0.02
+GSM8K. The remaining three deletion runs (half, 23-28, 19-28) run on the new
+olmo-eval benchmark stage.
