@@ -2110,3 +2110,49 @@ Share of total coupling in layers 23-25: memorized 0.19, facts 0.17, windows 0.1
   sweep put arithmetic's flat-input dependence at layers 20-24, so 17-19
   should spare it and 18-20 should not entirely. Both being built and run
   through the recall suite now.
+
+## 2026-09-05: targeted coherent removal -- results (P1 confirmed, P2 refuted, P3 violated)
+
+`make_targeted_edit.py`: direction = bulk-projected margin gradient of the
+train half (527 items). Only 6-19% of the margin gradient's energy lies in the
+private block (most is in the head); alignment of the projected direction with
+the block content itself is ~0.
+
+| norm | train strict (from 0.996) | held-out strict (from 0.983) | typical | Pile | arith | reference at same norm (deletion / noise) |
+|---|---|---|---|---|---|---|
+| 19 | 0.019 | 0.156 | +0.0023 | +0.0001 | 0.892 | strict 0.917 / 0.91; typical +0.001 |
+| 38 | 0.013 | 0.055 | +0.0137 | +0.022 | 0.887 | strict 0.731 / 0.789; typical +0.005 / +0.004 |
+| 57 | 0.011 | 0.025 | +0.046 | +0.067 | 0.871 | 0.433 / 0.532; +0.013 / +0.010 |
+| 76 | 0.008 | 0.013 | +0.106 | +0.143 | 0.838 | 0.180 / 0.282; +0.024 / +0.019 |
+
+* **P1 confirmed, overwhelmingly.** Recitation of the train half falls from
+  0.996 to 0.019 at norm 19, where deletion leaves 0.917. Coherent and aligned
+  beats coherent-unaligned by an order of magnitude in norm.
+* **P2 refuted: the transfer to held-out items is strong.** Items never used
+  in the edit fall from 0.983 to 0.156 at norm 19 and 0.055 at 38. The
+  memorized set shares a direction in the bulk of layers 23-25: the summed
+  margin gradient of half the items has a large common component that removes
+  the other half's recitation. The per-token orthogonality of noise couplings
+  (within-item corr 0.01) coexists with a shared mean direction across items --
+  a "recitation pathway" the set uses in common. This is the more interesting
+  outcome flagged in the predictions, and it changes the theory: memorization
+  is not only an item-specific code, it has a shared component, and the
+  shared component is where the leverage is.
+* **P3 violated: the targeted direction is not a generic bulk direction.** Its
+  in-distribution collateral per unit norm is 2x (norm 19), 3x (38), 5x (76)
+  that of energy-matched noise or deletion, and the Pile cost grows fast
+  beyond norm 38. Shape invariance holds for *random* directions in the bulk
+  and for removal of the content; this direction is special: the shared
+  recitation component is also used by ordinary text (in-context copying?),
+  so it sits on the higher-curvature end of the bulk for the population.
+* **At matched held-out forgetting the edit is an order of magnitude better.**
+  Held-out strict 0.156 at norm 19 vs deletion 0.180 at norm 76 and noise
+  0.159 at norm 90: typical +0.0023 vs +0.024 / +0.026 (10x less), Pile
+  +0.0001 vs +0.027 / +0.047 (~100x less), arithmetic unchanged vs -0.035 /
+  -0.024. Recall (NQ/PopQA/Jeopardy) for the norm-38 and 76 models is running;
+  norm 19 (and 10, 5) are being built and saved for the same test.
+* Overfitting checks still to run: (a) a third memorized population not used
+  anywhere -- the 129 ordinary dolmino windows the model recites; (b) the
+  quotes benchmark (a different memorized distribution) via the pipeline;
+  (c) the cosine between the two halves' gradient directions (how large the
+  shared component is), full and bulk-projected.
