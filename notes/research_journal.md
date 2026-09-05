@@ -1739,3 +1739,53 @@ sides. The remaining theoretical items are the derivation of the exponent (and
 of its deviations on the gate output side and in the input bulk), a saturation
 model for OOD collateral, and a model of the noise mean-shift (the
 "maximum-regression" of a confident correct token).
+
+## 2026-09-05: building the theory -- `tex/theory.pdf`, and the half-whitening measurement
+
+Guillaume: time to build a genuine theory. Written as `theory.tex` (scratchpad
+tex/, ~8 pp): Proposition 1 (two-order collateral) with corollaries -- shape
+invariance / graded price, removal-vs-noise ratio as content-weighted mean
+curvature, failure of the factorised curvature for coherent removals, OOD
+saturation bound (cross-entropy is 2-Lipschitz in the logit sup-norm), the
+negative first-order interference term, reference relativity; Proposition 2
+(removal and noise at the margin) with the selectivity corollary; the
+kappa^-1/2 claim and its mechanism; head and bulk; five open derivations.
+Every statement carries the measurement that pins it.
+
+**Correction to the margin entry above (point 3):** the alignments of the
+memorized code and of the fact code are nearly equal (coherent ratio 2.1 vs
+noise-spread ratio 1.9), so "distributed code with partial cancellation" is
+not supported. The right statement is the linear-vs-quadratic law: removal
+damages a population linearly in its coupling to the block, noise between
+linearly (spread) and quadratically (mean shift, ~ -0.25 x variance per
+logit). A population coupling k times more strongly suffers k x from removal
+and k..k^2 x from noise. That is why noise is the more selective edit.
+
+**Half-whitening** (`probe_halfwhitening.py`): which side carries the
+kappa^-1/2 law? Per direction, E_mem[a~_i^2] and E_mem[g~_o^2] against the
+ordinary-text energies:
+
+| module | side | slope of log(E_mem/E_win) vs log E_win (R^2) | clean control | mean E_mem/E_win |
+|---|---|---|---|---|
+| 23/24/25 gate+up | A (input) | -0.65 / -0.67 / -0.69 (0.94) | -0.09 | 0.87-0.95 |
+| 23/24/25 up | G (output) | -0.62 / -0.66 / -0.69 (0.85) | -0.03..-0.06 | 0.27-0.28 |
+| 23/24/25 gate | G (output) | -0.59 / -0.63 / -0.58 (0.67) | -0.15..+0.02 | 0.32-0.34 |
+
+* Both sides, same power: E_mem ~ E_win^(1/3) along each side (ratio falls as
+  E_win^(-2/3)), R^2 0.94 on the input side. Clean text is flat. Memorized
+  text has normal total activation energy but spreads it far more evenly over
+  the input spectrum; its gradients are 3x weaker in total (fit) and likewise
+  spread.
+* So the location law is *representational*: it is about which texts are
+  memorized and how they are encoded (they engage the reference's principal
+  directions less, in and out), not primarily about SGD accumulation. The
+  depth share, marginalising one side against the other, inherits an exponent
+  near -1/2. The storage model's remaining job: explain why a population with
+  a one-third-power spectral profile is the one that ends up recited, and how
+  much training sharpens the profile (private share rises 0.13 -> 0.25 as an
+  item is memorized, so partly it does).
+* Selectivity in one formula: an item's coupling to the bulk relative to the
+  head is set by its spectral profile; the flatter the profile, the more of its
+  energy and coherent contribution live in the bulk, the more any bulk edit
+  costs it. Verbatim text is the flattest population we have; facts are
+  intermediate (half the block coupling); ordinary text follows the reference.
