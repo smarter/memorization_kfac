@@ -2252,3 +2252,21 @@ why its collateral and recall cost are tiny at small norm -- and (iii) shared
 only within the Dolma set (third-population transfer 5%). Not a generic
 margin direction, not general memorization: the set's common source and style,
 written into the bulk of layers 23-25.
+
+**Recall for the small-norm targeted models:**
+
+| model | held-out Dolma recitation | recited-windows recitation | NQ | PopQA | Jeopardy | HellaSwag | DROP |
+|---|---|---|---|---|---|---|---|
+| targeted 10 | 0.309 | 0.969 | -0.2 | +0.0 | -0.6 | -0.1 | +0.3 |
+| targeted 19 | 0.156 | 0.946 | -0.7 | +0.0 | -0.8 | -0.4 | +1.0 |
+| targeted 38 | 0.055 | (n/a) | -1.4 | -0.4 | -0.6 | -0.1 | +1.2 |
+| deletion 23-25 | 0.180 | -- | -7.9 | -8.0 | -2.7 | -1.3 | -0.1 |
+| private noise 90 | 0.159 | -- | -5.2 | -6.8 | -2.7 | -1.2 | +1.2 |
+
+At matched held-out forgetting (0.156 vs 0.159-0.180) the targeted edit costs
+-0.7/0.0 recall points against -7.9/-8.0 (deletion) and -5.2/-6.8 (noise):
+an order of magnitude, with commonsense and DROP untouched. Its reach is the
+Dolma set (recited ordinary windows 0.946), so this is the trade-off *for a
+memorized distribution one has examples of*, which is the realistic setting
+for unlearning a corpus and not the setting for "remove memorization" in
+general.
