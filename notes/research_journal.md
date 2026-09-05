@@ -2357,3 +2357,10 @@ re-running after an OOM caused by sharing the GPU with the pipeline.)
   cannot be removed coherently for free; memorized text foreign to the
   preserved distribution can. Labels help exactly when the thing to forget is
   unlike the thing to keep -- which is also when a detector can find it.
+* Cosine check (`probe_shared_direction2.py`): recited-windows direction vs
+  ordinary windows' summed margin gradient +0.30 in the bulk (Dolma direction
+  vs ordinary: +0.004); recited vs facts 0.00; recited per-token margin
+  gradient norm 11.4 (Dolma 5.0, ordinary 0.5). The recited dolmino windows'
+  shared direction is one third aligned with the direction that raises
+  ordinary dolmino margins -- which is why subtracting it costs ordinary text
+  so much. Confirms the reading above.
