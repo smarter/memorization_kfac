@@ -1853,3 +1853,36 @@ items vs memorized suffix tokens vs ordinary windows, final K-FAC bases):
   coupling ratio and to see whether facts and verbatim differ on the output
   side (facts written through the head, like arithmetic?) rather than the
   input side.
+
+## 2026-09-05: does flatness precede or follow memorization? (profile dynamics)
+
+`probe_profile_dynamics.py`: spectral exponents (E_pop/E_never vs E_never,
+final K-FAC bases, layers 23-25) at 1.26T tokens and at the final model for
+(i) ordinary windows never recited, (ii) 112 windows not recited at 1.26T
+(acc < 0.75) but recited by the final model ("become"), (iii) the memorized
+Dolma set (95% recited per token already at 1.26T):
+
+| population | side | exponent at 1.26T | exponent at final |
+|---|---|---|---|
+| become | A (activations) | +0.08 | -0.17 |
+| become | G (loss gradients) | +0.24 (R2 0.07) | -0.52 (R2 0.09) |
+| memorized set | A | -0.61 (R2 0.92) | -0.64 (R2 0.93) |
+| memorized set | G | -0.73 (R2 0.75) | -0.56 (R2 0.67) |
+
+* Windows that get memorized between 1.26T and the end start with a *typical*
+  profile (exponents ~0, slightly head-leaning) and end flatter on both sides.
+  Learning flattens the representation of what it memorizes -- but these
+  windows, memorized late and seen few times, end far less flat (A: -0.17)
+  than the Dolma set (A: -0.64), which was already at its final flatness at
+  1.26T and did not change.
+* So: flattening is produced by memorization (not a pre-existing property of
+  the text), and its degree tracks the depth/duration of memorization (the
+  Dolma set is heavily duplicated and long memorized). Whether some flatness
+  precedes memorization for the Dolma set cannot be decided from these
+  checkpoints (it was recited before the first one); the become-windows say
+  the effect is at least partly learned.
+* Theory reading: fitting an item to near-zero loss against the population's
+  restoring force places its representation and its writes where the
+  population's curvature is small; the more an item is fit, the flatter its
+  profile. The private-share detector measures exactly this flatness, which
+  is why it tracks memorization state and rises as items are memorized.
