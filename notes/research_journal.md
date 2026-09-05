@@ -1225,9 +1225,13 @@ Benchmarks (olmo-eval stage for the last two):
 | sorer-rein | delete 23-25 | 18.005 | 0.322 | 0.346 | 0.640 | 18.0-18.1 / .26-.30 / .38-.42 / .63-.66 |
 | dicey-ribs | half 23-25 | 17.597 | 0.826 | 0.681 | 0.660 | 17.6-17.7 / .75-.80 / .68-.72 / .67 |
 | agape-wool | delete 23-28 | 18.881 | 0.134 | 0.213 | 0.625 | 18.9-19.1 / .12-.14 / .24-.27 / .57-.61 |
+| fussy-adze | delete 19-28 (negative control) | 20.136 | 0.068 | 0.128 | 0.522 | 20.0-20.5 / .05-.08 / .12-.16 / .35-.45 |
 | refs at Dolma ~0.13 | EK-FAC 0.8 / E-Id 0.6 / G-only 0.6 / noise 120 | 18.40 / 18.63 / 18.75 / 19.07 | .142 / .144 / .128 / .126 | .242 / .235 / .252 / .250 | .578 / .621 / .607 / .651 | |
 
-* Predictions held (GSM8K of the 6-layer deletion a little above the range).
+* Predictions held (GSM8K of the 6- and 10-layer deletions above the ranges:
+  the benchmark is less sensitive than synthetic arithmetic to the loss of the
+  private input directions of layers 19-22; GSM8K 0.522 is still the worst
+  of any edit at this perplexity).
   The 6-layer deletion removes quotes best of all edits at Dolma ~0.13
   (0.213), keeps GSM8K above the two-sided and per-weight curvature edits
   (0.625 vs 0.578 / 0.621) but below noise (0.651), and costs 0.1-0.5 more
