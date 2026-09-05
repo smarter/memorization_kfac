@@ -2325,3 +2325,35 @@ self-labelled set has one as strong as the homogeneous Dolma set. The
 population-level component is a property of memorized distributions in
 general; only its orientation is distribution-specific. (Edit-transfer part
 re-running after an OOM caused by sharing the GPU with the pipeline.)
+
+**Universal-direction test, part 2 (edit from half of the recited windows):**
+
+| norm | recited A (train) | recited B (held-out) | Dolma held-out | typical | Pile | arith |
+|---|---|---|---|---|---|---|
+| 5 | 0.000 | 0.138 | 0.975 | +0.0455 | 0 | 0.894 |
+| 10 | 0.000 | 0.123 | 0.953 | +0.067 | 0 | 0.897 |
+| 19 | 0.000 | 0.092 | 0.875 | +0.088 | +0.002 | 0.894 |
+| 38 | 0.000 | 0.031 | 0.569 | +0.110 | +0.010 | 0.896 |
+
+* Within-distribution transfer is even stronger than for Dolma (86% of the
+  held-out recited windows forgotten at norm 5), cross-distribution transfer
+  small at small norm (Dolma 0.975 at 5, 0.875 at 19) -- the mirror image of
+  the Dolma-direction edit. Confirms: each memorized distribution has its own
+  direction, and direction edits reach only their own distribution.
+* But the collateral is enormous: +0.045 nats of ordinary dolmino loss at norm
+  5, ~600x the cost per unit energy of isotropic bulk noise, with Pile and
+  arithmetic untouched. Reading: the recited dolmino windows are drawn from
+  the *preserved* distribution itself, so their shared direction is largely
+  the direction that makes dolmino text confident; subtracting it lowers the
+  margins of ordinary dolmino text too. The Dolma direction was cheap (typical
+  +0.002 at norm 19) because Dolma's memorized boilerplate is unlike dolmino
+  text (cosine with ordinary windows 0.004 in the bulk). Per unit forgotten,
+  the recited-direction edit (0.053 nats) is *worse* than block deletion
+  (0.030).
+* General statement for the framework, now with both signs observed: the
+  collateral of a coherent edit is the alignment of the target set's shared
+  direction with the preserved population's gradient structure. Memorized
+  text drawn from the preserved distribution shares its direction with it and
+  cannot be removed coherently for free; memorized text foreign to the
+  preserved distribution can. Labels help exactly when the thing to forget is
+  unlike the thing to keep -- which is also when a detector can find it.
