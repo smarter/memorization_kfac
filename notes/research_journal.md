@@ -1935,3 +1935,34 @@ coupling ratio memorized/facts as the product of the two sides' bulk energies:
   across layers, not across the spectrum. Flatness marks item-specific
   content in general (facts included), which is exactly what the capability
   suite showed: every bulk edit costs recall first.
+
+## 2026-09-05: deriving -- (1) the shape of the whitening law, (2) the noise mean shift
+
+**Shape of the law** (per-quintile local exponents of E_mem/E_win vs E_win,
+layer 24): input side [-0.50, -0.74, -0.78, -0.77, -0.43], output side (up)
+[-0.43, -0.70, -0.79, -0.94, -0.35]; mean log10 ratio by quintile on the input
+side +0.44, +0.34, +0.23, +0.08, -0.21. So the "one-third power" is a global
+fit to a concave curve: memorized text has 2.75x the ordinary energy in the
+flattest fifth of input directions and 0.6x in the head, with the steepest
+reallocation in the middle of the spectrum and shallower slopes at both ends.
+A derivation should target this monotone reallocation of a fixed total energy
+(memorized total activation energy is 0.87-0.95x ordinary), not an exact 1/3.
+Candidate mechanisms and what they predict: additive drive vs curvature
+restoring force under SGD -> U-shaped ratio (flat + 1/mu), refuted by the
+monotone curve; optimiser preconditioning (Adam normalises per-coordinate
+updates by sqrt of the population second moment) -> stored-content ratio
+~ kappa^-1/2 per side, the right direction and the exponent of the curvature
+share, but the activation profile is a property of the representation
+produced by earlier layers, so the link is indirect. Open.
+
+**The noise mean shift, derived.** Gaussian noise sigma G_S Z A_S^T on
+gate_proj adds to unit j's pre-activation a Gaussian eps_j with variance
+sigma^2 ||A_S^T a||^2 rho_j (rho_j = ||G_S^T e_j||^2 ~ 0.6); noise on up_proj is
+independent and averages out at first order. Hence the mean output under
+noise is that of the model with SiLU replaced by its Gaussian smoothing,
+E[silu(h + eps)], which equals silu(h) + 1/2 s^2 silu''(h) for small s (the
+quadratic law) and grows linearly in s for large s (saturation, since silu
+is asymptotically linear). Test running (`probe_smoothed_gate.py`): margins of
+the smoothed-gate model at the seven norms vs the measured mean shifts under
+actual noise, for memorized and fact tokens; then strict recitation
+re-predicted with the derived mean and the measured spread.
