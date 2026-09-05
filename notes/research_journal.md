@@ -759,6 +759,18 @@ each module's input, flat-bulk (60%) and sharpest-decile removal per module.
   key-value-memory view of MLPs) and means attention weights can be left
   alone by unlearning edits.
 
+## 2026-09-05: the private share as a graded memorization strength
+
+Within the memorized set, an item's private share (layer 24 input, or the mean
+over layers 20-28) predicts how much the curvature edits damage it: Spearman
++0.50 with the loss increase and +0.47 with the accuracy drop under the
+rho=0.75 edit (+0.48 / +0.45 under rho=0.6). Over ordinary windows the
+correlation is +0.15 (most have nothing memorized to lose). So the score is not
+only a detector but a per-item measure of how much of the item's support sits in
+the private block, hence of its vulnerability to private-subspace edits.
+Extractability (minimal prefix length that triggers recitation) vs private
+share: running (probe_extractability).
+
 ---
 
 ## Backlog
