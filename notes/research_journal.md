@@ -2016,3 +2016,34 @@ contributions, and saturation f = 1 - 1/sqrt(1 + v/s^2) (at norm 120,
 v/s^2 ~ 1.1 -> f = 0.31 instead of the quadratic 0.44). Testing by running the
 noise-free model with the three post-norm outputs scaled by 1/r_t (measured
 r, then r predicted from sigma to first order).
+
+**Post-norm shrinkage refuted as the mechanism** (`probe_postnorm_predict.py`):
+running the noise-free model with each edited layer's normalised MLP output
+scaled by the measured 1/r (r = 1.185/1.20/1.22 at norm 76, i.e. the 16-18%
+shrink the noise imposes) moves the mean margin by -0.018 (norm 76) and +0.041
+(38), against measured -2.185 and -0.564. Per token the correlation with the
+measured shift is 0.19-0.36. So (a) the first-order variance prediction of r
+from sigma is right (predicted-r and measured-r runs agree), but (b) the
+three layers' MLP outputs have almost no *net* first-order effect on the margin
+when scaled as a whole: their contributions to the target and to the best
+competitor nearly cancel. The block removal shift (-2.9) is a different
+quantity: removing a specific part of the output, not scaling all of it.
+
+Where the systematic shift comes from, then: the zero-mean part n/rms(x+n)
+enters the residual stream (tiny: the final residual RMS changes by 0.09%) and
+the later layers (26-31: attention softmaxes, gates, norms) respond at second
+order. E[dm_t] = 1/2 tr(H_t Sigma_t) with H_t the Hessian of the token's margin
+w.r.t. the edited layers' outputs and Sigma_t the noise covariance there
+(~ sigma^2 x the token's block input energy x the block's output structure).
+Everything measured follows: quadratic in sigma; proportional to the token's
+coupling (corr 0.56 with the removal shift); population coefficients equal
+relative to margin at the population level; saturation once the perturbation
+leaves the quadratic regime. What is not derived is the constant: the mean
+downstream concavity of the margin, measured here as -E[dm]/Var[dm] ~ 0.22-0.32
+per logit, a property of layers 26-31. Locating it (attention vs MLP) is an
+open, cheap experiment (frozen attention patterns); it is not needed for the
+memorization theory, where the shift's role is the noise/removal selectivity,
+which the coupling law already fixes.
+
+Three mechanisms tested for one number, two refuted by construction rather
+than by fitting: this is the kind of test the theory should keep facing.
