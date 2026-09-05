@@ -1,5 +1,12 @@
 # @package _global_
+# WinoGrande through olmo-eval (ranked classification). NOTE: not yet validated
+# against the OLMES winogrande::olmes scale used in the paper (unedited model:
+# olmo-eval winogrande:rc 0.746 vs OLMES 0.77); the alias is kept for the
+# pipeline's metric key, but treat cross-framework comparisons with care.
 benchmark:
   args:
-    task: "winogrande::olmes"
-    batch-size: 128
+    task: "winogrande:rc"
+    alias: "winogrande::olmes"
+    # olmo-eval's task points at the legacy dataset id "winogrande"; override.
+    data_source: "hf://allenai/winogrande?subset=winogrande_xl&split=validation"
+    num_gpus: 1
