@@ -1582,3 +1582,39 @@ directions; share = population depth / general depth):
 
 Checks 2 (second-order collateral from the factors) and 3 (margin model) are
 running.
+
+**Check 2 -- second-order collateral** (`predict_second_order.py`): with the
+EK-FAC diagonal curvature Lambda_oi (dolmino calibration, K-FAC basis) the
+prediction cost = c * sum Lambda Delta^2 reproduces the ten band-ratio
+measurements (five quintile blocks, removal and noise) with log-space R^2 =
+0.97 and a single fitted constant c = 0.57 -- against the theoretical 1/2. So
+the absolute second-order formula holds with no free parameter in the bulk:
+
+| block | removal meas / pred | noise meas / pred | ratio meas / pred |
+|---|---|---|---|
+| Q0 | +0.0013 / +0.0016 | +0.0018 / +0.0016 | 0.73 / 0.99 |
+| Q1 | +0.0020 / +0.0021 | +0.0020 / +0.0021 | 0.99 / 1.00 |
+| Q2 | +0.0022 / +0.0029 | +0.0023 / +0.0029 | 0.95 / 1.00 |
+| Q3 | +0.0041 / +0.0043 | +0.0046 / +0.0043 | 0.91 / 1.00 |
+| Q4 (head) | +0.1188 / +0.0680 | +0.0270 / +0.0245 | 4.40 / 2.78 |
+
+* Bulk: second order is exact to the precision of the measurement, for both
+  removal and noise, and predicts the ratio 1 (content) directly: with
+  Lambda nearly constant across the block, the cost depends on the energy
+  moved, not on its shape -- the shape invariance derived.
+* Head: noise is predicted (0.0245 vs 0.027) but removal is under-predicted
+  by 1.75x (0.068 vs 0.119). Removing the head's learned content is a large
+  functional change with a super-quadratic loss response; the second-order
+  ratio 2.8 already says "computation" (content aligned with high curvature),
+  the remainder is higher order. So the content/computation asymmetry has a
+  second-order part (alignment of content with curvature) and a higher-order
+  part specific to removing what the model computes with.
+* Reference swap with the *separable* (marginal outer-product) curvature of
+  the other population on the coupled bases: predictions off by 2-3x
+  (dolmino->dolmino 0.007 vs 0.021; dolmino bulk->Pile 0.089 vs 0.027;
+  Pile bulk->dolmino 0.030 vs 0.063; Pile->Pile 0.020 vs 0.015). The
+  direction (cross costs exceed own costs) is right, the magnitudes are not:
+  the separable approximation is the K-FAC independence assumption, which we
+  already know misestimates curvature. Computing the true diagonal Lambda of
+  each population in each basis (`compute_lambda_pop.py`, running) to test the
+  cross-population prediction properly.
