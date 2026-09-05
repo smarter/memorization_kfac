@@ -1,5 +1,15 @@
 # @package _global_
+# GSM8K through olmo-eval (vLLM backend). The olmo-eval "gsm8k" task is the
+# OLMES gsm8k::olmes formulation: the same 8 fixed few-shot examples, the same
+# Question/Answer prompt, greedy 512-token generation, exact match on the
+# extracted number. Validated on 2026-09-05 against the OLMES HF-backend
+# scores of the same checkpoints: unedited 0.6748 vs 0.675, public-noise
+# model 0.6672 vs 0.666. The alias keeps the historical metric key.
 benchmark:
   args:
-    task: "gsm8k::olmes"
-    batch-size: 28
+    task: "gsm8k"
+    alias: "gsm8k::olmes"
+    # olmo-eval's task still points at the legacy dataset id "gsm8k", which the
+    # current Hub client rejects; override until fixed upstream.
+    data_source: "hf://openai/gsm8k?subset=main&split=test"
+    num_gpus: 1
