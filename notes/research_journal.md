@@ -768,8 +768,21 @@ rho=0.75 edit (+0.48 / +0.45 under rho=0.6). Over ordinary windows the
 correlation is +0.15 (most have nothing memorized to lose). So the score is not
 only a detector but a per-item measure of how much of the item's support sits in
 the private block, hence of its vulnerability to private-subspace edits.
-Extractability (minimal prefix length that triggers recitation) vs private
-share: running (probe_extractability).
+Extractability (shortest prefix, of 8/16/24/32/48/64 tokens, from which greedy
+decoding recites >= 90% of the suffix): the memorized items spread evenly over
+the range (20% recite from 8 tokens, 16% need all 64). The private share does
+*not* track extractability (Spearman +0.06 with the minimal prefix; -0.15 with
+recitation from an 8-token prefix), while the minimal prefix does correlate
+with edit damage (+0.30; the shallowly triggered items are the fragile ones)
+and the private share correlates with damage more strongly (+0.50). Two
+distinct dimensions of memorization, then: how much context an item needs to
+be triggered, and how much of its support sits in the private block. The
+private share measures storage, not trigger ease.
+
+First benchmark point of the container test (naive-vang, private noise norm
+60 on layers 23-25): 17.92 ppl / 0.604 Dolma loose accuracy / 0.570 quotes
+strict / 0.675 GSM8K, i.e. a mild edit with GSM8K at the unedited level; the
+90 and 120 points are running.
 
 ---
 
