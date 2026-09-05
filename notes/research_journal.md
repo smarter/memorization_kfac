@@ -2313,3 +2313,15 @@ direction, memorization has a universal component the detector can find
 without ground truth; if they are near-orthogonal, direction-based edits can
 never generalise across memorized text and the ceiling for label-free
 isolation is the place-based one, quantified by the coupling ratio.
+
+**Universal-direction test, part 1 (cosines):** the 129 recited ordinary
+dolmino windows (self-labelled by the model's own recitation, diverse content)
+split in halves of 64/65: cosine between the halves' summed margin gradients
++0.909 full, +0.862 bulk-projected. Cosine with the Dolma set's direction:
++0.24 full, +0.01 bulk. So there is *no universal memorization direction* --
+the two memorized distributions' directions are orthogonal in the bulk -- but
+*every* memorized distribution has its own shared direction, and a diverse,
+self-labelled set has one as strong as the homogeneous Dolma set. The
+population-level component is a property of memorized distributions in
+general; only its orientation is distribution-specific. (Edit-transfer part
+re-running after an OOM caused by sharing the GPU with the pipeline.)
