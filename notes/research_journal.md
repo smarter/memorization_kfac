@@ -694,7 +694,11 @@ prediction from the input-side sweep does not hold for the per-weight edit.
 The sweep's own numbers already said 22-25 is where the flat bulk is most
 selective for memorization (ratios 8-9 vs 3-5 at 26-28); what I predicted was a
 better arithmetic/forgetting trade-off there, and that is not what the
-per-weight rule delivers. K-FAC 26-28 (brute-doll) pending.
+per-weight rule delivers. Confirmed by modal-tier (identity 26-28, rho 0.45): 19.59 / 0.200 / 0.238 /
+0.641, i.e. +0.12 mem and +0.12 GSM8K at matched perplexity, but at matched
+forgetting (mem ~0.20) the 23-25 curve already gives GSM8K ~0.63: the late-layer
+per-weight edit just buys less forgetting per unit perplexity. K-FAC 26-28
+(brute-doll) pending.
 
 ## 2026-09-05: the private block as a container (probe_noise_scale, `noise_sweep.png`)
 
