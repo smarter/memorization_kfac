@@ -1340,3 +1340,60 @@ matrices, norm 25-29 per matrix, against isotropic noise of the same norm:
   structure is a smooth price gradient. "Public/private" should be read as
   "head/bulk"; the 40/60 split worked because the head sits inside the
   public 40%.
+
+## 2026-09-05: capability suite, all 16 models (delta vs unedited, points; results scratchpad/suite/, figure capability_profile.png)
+
+| model (Dolma) | NQ | PopQA | Jeop | ARC-C | SciQ | HS | WinoG | CSQA | SQuAD | DROP | CoQA | LAMB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Dolma ~0.13** | | | | | | | | | | | | |
+| EK-FAC 0.8 jowly-mesh (.14) | -8.5 | -9.0 | -3.5 | -0.4 | -2.4 | -2.6 | -0.2 | -0.5 | -0.0 | -5.6 | -1.5 | +3.2 |
+| E-Identity 0.6 unlet-genu (.14) | -10.5 | -9.0 | -3.2 | -0.2 | -2.8 | -2.5 | -1.3 | +0.1 | -0.3 | -1.8 | -0.1 | +1.2 |
+| M-Identity 0.6 gamey-quad (.14) | -10.0 | -9.4 | -4.7 | -0.4 | -3.1 | -2.5 | -1.5 | +0.5 | -0.4 | -2.2 | -0.5 | +0.7 |
+| G-only K-FAC 0.6 stiff-food (.13) | -8.0 | -7.8 | -1.8 | +0.3 | -2.8 | -2.1 | -0.8 | -0.3 | +0.2 | -2.2 | -1.2 | +1.3 |
+| private noise 120 (.13) | -8.3 | -7.6 | -4.6 | -0.6 | -1.2 | -1.4 | -0.8 | -1.6 | -0.5 | +0.8 | -0.9 | -1.6 |
+| delete 23-28 (.13) | -14.7 | -12.4 | -6.4 | -1.1 | -2.9 | -2.5 | -0.9 | -1.8 | -0.2 | -2.2 | -0.6 | +2.1 |
+| **Dolma 0.22-0.32** | | | | | | | | | | | | |
+| EK-FAC 0.85 ahead-fees (.22) | -7.2 | -7.0 | -2.2 | +0.3 | -1.6 | -2.1 | -0.2 | -0.3 | +0.1 | -1.5 | -0.2 | +2.1 |
+| E-Identity 0.75 manly-sine (.30) | -4.9 | -4.8 | -0.4 | +0.1 | -1.6 | -2.1 | -0.7 | -0.7 | -0.4 | -1.1 | -0.8 | +1.0 |
+| private noise 90 (.25) | -5.2 | -6.8 | -2.7 | -0.3 | -0.6 | -1.2 | -0.8 | -0.6 | -0.3 | +1.2 | -0.5 | -1.1 |
+| delete 23-25 (.32) | -7.9 | -8.0 | -2.7 | -0.3 | -1.2 | -1.3 | -0.6 | -0.7 | -0.0 | -0.1 | -0.6 | +1.6 |
+| **mild** | | | | | | | | | | | | |
+| private noise 60 (.60) | -2.3 | -3.2 | -1.4 | +0.3 | -0.2 | -0.5 | -0.2 | -0.7 | -0.1 | -0.4 | -0.5 | -0.2 |
+| half block 23-25 (.83) | -2.9 | -2.4 | +0.0 | +0.0 | -0.3 | -0.6 | -0.4 | -0.2 | -0.0 | -0.6 | +0.0 | +0.4 |
+| public noise 30 (.83) | -2.3 | -0.8 | +0.4 | +0.5 | -0.2 | -0.8 | -1.1 | -0.1 | +0.6 | +0.2 | -1.8 | -1.1 |
+| **deep** | | | | | | | | | | | | |
+| EK-FAC 0.7 joint-kale (.09) | -13.8 | -10.4 | -5.4 | -1.5 | -3.0 | -3.9 | -0.6 | -0.7 | +0.1 | -9.6 | -1.3 | +2.6 |
+| delete 19-28 (.07) | -15.1 | -14.0 | -10.9 | -2.4 | -3.2 | -5.8 | -1.1 | -4.4 | -0.8 | -5.8 | -3.6 | +3.0 |
+
+Findings:
+1. **Closed-book factual recall is the cost of forgetting, for every edit.**
+   NaturalQs and PopQA fall 5-15 points while commonsense, ARC, SciQ, SQuAD
+   and CoQA move by 0-3. The loss tracks the amount of memorization removed
+   (Dolma): a recall/forgetting trade-off exists whatever the method. Facts
+   and verbatim text share the store.
+2. **The curvature ranking protects facts, not general text.** At matched
+   forgetting the private-block deletion costs 3-6 points more recall than
+   the curvature edits and noise (Dolma ~.13: -14.7/-12.4 vs -8..-10.5;
+   Dolma ~.3: -7.9/-8.0 vs -4.9/-4.8 for E-Identity 0.75 and -5.2/-6.8 for
+   noise 90). The noise-shape experiment showed that ordering inside the
+   block does not matter for ordinary or Pile text; it matters for factual
+   knowledge: pruning removes the small components first and facts sit in
+   larger ones than verbatim text (they are reinforced by many paraphrases;
+   verbatim items are not). This is the real cost of the deterministic edit,
+   invisible to perplexity and GSM8K.
+3. **Two-sided EK-FAC damages reading-based numerical reasoning.** DROP:
+   -5.6 (0.8), -9.6 (0.7), -1.5 (0.85) for EK-FAC against -2.2 or better for
+   every other edit at the same forgetting and +0.8/+1.2 for noise. The
+   GSM8K result generalises: the input-side pruning of the K-FAC rule hits
+   number processing wherever it is needed; per-weight, output-only and
+   block-confined edits do not.
+4. Cheapest recall per unit forgetting at Dolma ~.13: noise 120 ~ G-only
+   K-FAC ~ EK-FAC 0.8 (-8) < per-weight edits (-10) < deletion (-14.7); at
+   Dolma ~.3: E-Identity 0.75 (-4.9) < noise 90 (-5.2) < deletion (-7.9).
+   Noise is the only family that leaves DROP and HellaSwag essentially
+   untouched while paying the same recall as the best curvature edits.
+5. LAMBADA improves under every removal-type edit (+0.7 to +3.2) and worsens
+   under noise (-1.1 to -1.6): the removal/addition asymmetry once more, on
+   narrative next-word prediction.
+6. The two deep edits (EK-FAC 0.7, delete 19-28) damage everything; the
+   public-noise control damages CoQA and WinoGrande while barely forgetting.
