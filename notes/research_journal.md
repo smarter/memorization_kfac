@@ -2695,3 +2695,36 @@ recodes toward the bulk as they become recited, at conserved energy.
   (removing the imprint's head block lowers ordinary loss by 0.42, i.e. below
   the original model): the aggressive imprint carries both the items and a
   generic dolmino adaptation. Clean readings need the gentle regime.
+
+## 2026-09-05: same code on OLMo-2 7B -- the recited dolmino windows are NOT bulk-deletable either
+
+`xmodel_probe.py` OLMo-2 7B, layers 23-25, the 129 recited dolmino windows
+(same code as the OLMo-3 run): A exponents -0.30..-0.36 (R2 0.6), G weak;
+activation bulk share 0.26-0.29 -> 0.35-0.40; coupling ratio 14.6; halves
+cosine 0.908 / 0.882 (bulk); vs never 0.11 (bulk). Edits: bulk remove 0.891 |
++0.0195 | +0.027; bulk noise 0.891 | +0.0152 | +0.031; head remove 0.318 |
++0.257 | +0.386; head noise 0.946 | +0.023 | +0.021.
+* So OLMo-2 7B stores these windows like OLMo-3 does (0.891 vs 0.955 left
+  after bulk deletion; exponents -0.33 vs -0.2; share shift +0.1 vs +0.07).
+  The OLMo-3 "surprise" is not a model difference. It is a POPULATION
+  difference within OLMo-2 7B: the Dolma memorized set (1054 items,
+  memorized in pretraining, recited at 1.26T) is flat (-0.67), bulk share
+  0.19 -> 0.45, and bulk deletion at 23-25 leaves 0.18 recited; the 129
+  dolmino windows (midtraining data, memorized in the last 50B tokens at
+  annealing learning rates; globally duplicated boilerplate: 107 shared with
+  OLMo-3, 118 with 1B, 10 with Qwen) are half as flat and survive the same
+  deletion at 0.89. The replication tables' "0.20, +0.021" for OLMo-2 7B
+  referred to the Dolma set; the recited-window value is 0.891. Corrected in
+  the paper.
+* Two readings, both inside the theory: (a) time -- flattening is a
+  dynamical process under continued population training (Law 4: later-
+  memorized items are less flat), and the dolmino windows had almost no
+  training after being memorized; (b) frequency -- globally duplicated text
+  is population content and consolidates toward the head. The imprint
+  experiment's phase 2 (reference-only continuation after memorization,
+  `imprint_decay.py`) tests (a) directly: prediction, the head part of the
+  imprint decays faster than the bulk part and the items' representation
+  flattens further. The Dolma-set scan of OLMo-3 (`xmodel_probe ... dolma`)
+  tests whether OLMo-3 has a flat, bulk-deletable pretraining-era population.
+* In the 1B, bulk deletion at 11-13 removed 100% of the recited windows: a
+  3-of-16-layer band is a larger share of that model's depth.
