@@ -2582,3 +2582,12 @@ noisy and the set's strict recitation at base is only 0.571.
   sum of ten), and possibly real: these are incidental recitations, not a
   memorized distribution of Qwen's. Needs a corpus Qwen memorized at scale.
 * Edits (removal/noise asymmetry) pending in the same run.
+
+Qwen2.5-7B edits (layers 20-22; bulk norm 81.5, head norm 31.9; strict
+recitation | typical d | Pile d): base 0.571. Bulk remove 0.190 | +0.025 |
++0.051; bulk noise 0.143 | +0.019 | +0.025; head remove 0.143 | +0.208 |
++0.199; head noise 0.429 | +0.082 | +0.060. Removal/noise ratio 2.5 in the
+head, 1.3 in the bulk (OLMo-2 7B 4.5 / 1.0; 1B 4.6 / 1.5). Bulk deletion
+removes two thirds of the recitation for a tenth of the head's cost: the
+content sits in the bulk in this family too. Third model, third confirmation
+of the head/bulk asymmetry.
