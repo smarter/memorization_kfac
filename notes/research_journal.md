@@ -1445,3 +1445,60 @@ share is essentially 1 minus the head share). This is consistent with the
 weak timescale effect (curvature x3 cannot separate dynamics), the shape
 invariance (the bulk is homogeneous), and the removal-vs-noise jump (the head
 is computation because it is where gain is concentrated).
+
+## 2026-09-05: magnitude test refutes "facts sit in larger components"; reference relativity confirmed
+
+**Magnitude test** (`make_block_models.py --mode small|large|random --norm 54`,
+half the private block's energy removed from the six matrices of layers
+23-25, by smallest / largest / random |C_oi|; recall via olmo-eval):
+
+| removed (norm 54) | components | mem loss / strict | typical | Pile | arith | NQ | PopQA | Jeop | HS | DROP |
+|---|---|---|---|---|---|---|---|---|---|---|
+| smallest | 87-88% | 0.095 / 0.505 | +0.0079 | +0.0079 | 0.877 | -3.7 | -3.0 | -0.3 | -0.9 | +0.0 |
+| largest | 11-13% | 0.095 / 0.507 | +0.0090 | +0.0091 | 0.878 | -3.3 | -2.4 | -1.1 | -0.4 | -1.1 |
+| random | ~50% | 0.098 / 0.472 | +0.0085 | +0.0093 | 0.877 | -3.1 | -3.8 | -0.7 | -1.1 | -0.5 |
+
+Identical on every metric, recall included. Removing 87% of the block's
+components (the small ones) or 12% (the large ones) at equal energy gives the
+same forgetting, the same collateral and the same factual-recall loss. So the
+conjecture written this morning -- that the curvature edits' lower recall cost
+comes from a magnitude ranking that spares fact-carrying large components --
+is **wrong**, and the sentence "facts sit in larger components than verbatim
+items" must go from the write-ups. Inside the bulk, magnitude is irrelevant
+for everything we can measure, facts included: the bulk is homogeneous also in
+what it stores per unit energy.
+
+What then explains deletion's higher recall cost than noise at matched
+forgetting (-7.9 vs -5.2 NaturalQs)? The remaining candidate is the coherent /
+incoherent distinction itself: verbatim recitation has small margins and falls
+to both removal and random perturbation, factual recall is redundant and
+survives random perturbation better than coherent removal of the components
+it lives in. The curvature edits' footprint (all three MLP matrices, saliency
+selection, identity or K-FAC basis) differs from the block deletion's, so
+their recall cost cannot be attributed to a ranking; the earlier claim is
+withdrawn, not replaced.
+
+**Reference relativity** (`--ref pile`, bases and coupled covariances saved;
+`analyze_reference.py`):
+* The two references agree on *which directions are high-gain*: the Pile
+  curvature of the dolmino eigen-directions has Spearman 0.89-0.98 with their
+  dolmino curvature, on both sides of every module.
+* But the eigen-*subspaces* barely overlap beyond chance (top-10%: 0.13-0.25
+  vs 0.10; top-40%: 0.42-0.52 vs 0.40; bottom-60%: 0.61-0.68 vs 0.60). With a
+  near-degenerate spectrum, eigenvectors are rotated arbitrarily within the
+  bulk and even within the head; subspace overlap is the wrong test, the
+  agreement of quadratic forms is the right one. (This also says the
+  individual "directions" we edit are not canonical objects; only the ordering
+  by gain is.)
+* Functionally the relativity is exact and mirror-symmetric: deleting the
+  *Pile*-defined private block costs dolmino text +0.063 nats (3x the +0.021
+  of the dolmino-defined deletion) and Pile text +0.015 (half of +0.027),
+  forgets the Dolma set more (strict 0.124 vs 0.204; it is dolmino-like text),
+  and costs recall the same (NQ -6.9, PopQA -6.6 vs -7.9/-8.0) with more
+  DROP/HellaSwag damage (-2.0/-2.1 vs -0.1/-1.3).
+* Reading: "private w.r.t. D" is the subspace where D's curvature is low, and
+  whatever *other* distributions need sits partly there. The collateral of a
+  private-block edit on out-of-reference text is intrinsic to the reference
+  choice; the right reference for a memorization edit is the broadest one
+  available (the pretraining mixture), so that "private" means idiosyncratic
+  to no population at all.
