@@ -2240,3 +2240,15 @@ label-free edit we have; it forgets less in total (0.45 of items) because
 memorized coupling is lower there, so reaching the 23-25 level of forgetting
 would need more layers (e.g. 17-19 plus 23-25), which the map can now cost
 before running.
+
+**Specificity of the shared direction** (`probe_shared_direction.py`, cosines
+of summed per-token margin gradients, full | bulk-projected): memorized train
+vs held-out +0.854 | +0.634; memorized vs ordinary windows +0.16 | +0.004; vs
+fact tokens +0.06 | +0.001; vs clean windows 0.00 | 0.00; windows vs facts
++0.05 | 0.00. Per-token margin-gradient norms: memorized 5.0, facts 5.7,
+windows 0.49, clean 0.24. So the direction the two halves share is (i) large,
+(ii) orthogonal in the bulk to what ordinary text and facts use -- which is
+why its collateral and recall cost are tiny at small norm -- and (iii) shared
+only within the Dolma set (third-population transfer 5%). Not a generic
+margin direction, not general memorization: the set's common source and style,
+written into the bulk of layers 23-25.
