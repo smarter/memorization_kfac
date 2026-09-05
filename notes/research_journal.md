@@ -2638,3 +2638,28 @@ contains frequently is population content and consolidates into the head;
 the flat location is for rare items. OLMo-3 saw ~6T tokens with these
 boilerplates; the "consolidation" reading predicts head-heavy profiles and
 low bulk shares for the most duplicated items in any model.
+
+## 2026-09-05: layer map predicts margin-shift variance, parameter-free, in both 7B models
+
+`xmodel_placement.py`: C_l (random-sign trick) for recited and ordinary suffix
+tokens; prediction Var[dm] = sigma^2 sum_band C_l for isotropic gate/up noise
+of per-matrix norm 60; five 3-layer bands.
+
+| model | band | predicted var (rec, ord) | measured (rec, ord) | ratio pred / meas | recited left | ordinary d |
+|---|---|---|---|---|---|---|
+| OLMo-3 7B | 16-18 | 0.348, 0.078 | 0.418, 0.095 | 4.47 / 4.43 | 0.991 | +0.011 |
+| OLMo-3 7B | 22-24 | 0.683, 0.096 | 0.973, 0.101 | 7.12 / 9.61 | 0.982 | +0.011 |
+| OLMo-3 7B | 28-30 | 0.619, 0.114 | 0.700, 0.122 | 5.44 / 5.74 | 0.982 | +0.015 |
+| OLMo-2 7B | 16-18 | 1.815, 0.199 | 3.806, 0.396 | 9.11 / 9.62 | 0.899 | +0.042 |
+| OLMo-2 7B | 22-24 | 2.915, 0.270 | 2.933, 0.313 | 10.8 / 9.36 | 0.922 | +0.025 |
+| OLMo-2 7B | 28-30 | 2.049, 0.269 | 2.780, 0.316 | 7.62 / 8.79 | 0.930 | +0.027 |
+
+(bands 3-5 and 9-11 pending in the log.) The first-order map gives the
+absolute variance within x1-2 (under-predicting where the band's downstream
+nonlinearity is strongest) and the recited/ordinary ratio within 10-30%.
+Cross-model: at matched norm OLMo-3's margins move 3x less than OLMo-2's for
+BOTH populations (0.97 vs 2.93 recited; 0.10 vs 0.31 ordinary), the ratio is
+the same (~9.5). So OLMo-3's weaker forgetting under bulk deletion is not a
+lower coupling ratio; it is either a smaller coherent contribution of the
+bulk block (location) or larger margins. Matched norm is not matched effect
+across models -- compare at matched predicted variance or matched collateral.
