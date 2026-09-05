@@ -1305,3 +1305,38 @@ SI(x) = sum c_oi(x)^2 / (lambda_o mu_i + damp).
   is: an item whose gradient points into the flat bulk.
 * Arithmetic sits between (1.6x the ordinary inverse curvature, 35% private
   share), as its flat-input / sharp-output profile predicts.
+
+## 2026-09-05: band-resolved removal-vs-noise, round 2 -- the character jumps at the head
+
+Full removal (alpha=1) of each quintile block Q_k(G) x Q_k(A) of the six
+matrices, norm 25-29 per matrix, against isotropic noise of the same norm:
+
+| block (depth G) | removal: typical / Pile / mem strict | noise: typical / Pile / mem strict | ratio removal/noise (typical, Pile) |
+|---|---|---|---|
+| Q0 (6.9e3) | +0.0013 / +0.0001 / 0.882 | +0.0018 / +0.0027 / 0.875 | 0.7, 0.04 |
+| Q1 (8.1e3) | +0.0020 / +0.0016 / 0.886 | +0.0020 / +0.0039 / 0.890 | 1.0, 0.4 |
+| Q2 (9.0e3) | +0.0022 / +0.0016 / 0.863 | +0.0023 / +0.0037 / 0.871 | 1.0, 0.4 |
+| Q3 (1.0e4) | +0.0041 / +0.0037 / 0.862 | +0.0046 / +0.0044 / 0.863 | 0.9, 0.8 |
+| Q4 (1.5e4, the head) | +0.1188 / +0.1409 / 0.277 | +0.0270 / +0.0307 / 0.706 | 4.4, 4.6 |
+
+* The content/computation character is *uniform across the bulk and jumps at
+  the head*: removal costs about what noise costs (0.7-1.0 on ordinary text,
+  less on Pile) in every one of the four bulk quintiles, and 4.4-4.6x noise
+  in the top quintile block. There is a qualitative boundary, and it is the
+  head of the spectrum, not our 60/40 line.
+* Inside the bulk the *cost* is graded even though the character is not:
+  the same norm costs 3x more ordinary-text loss in Q3 than in Q0 (+0.0041
+  vs +0.0013), in line with the second-order prediction cost ~ lambda_o mu_i
+  ||dW||^2 (the product of the two sides' curvature ratios across these
+  quintiles is ~3-4). So the bulk is a homogeneous *kind* with a smooth
+  *price*: exactly the "head plus graded bulk" ontology.
+* The head block is 30-90x more expensive to touch than any bulk block at
+  equal norm, and removing it destroys recitation (0.277) along with
+  everything else: computation, not content.
+* Together with the spectrum (x3 across 90% of output directions), the
+  split-half reproducibility (0.99), the shape invariance and the drift test:
+  the model's late MLP weights have a small, sharply distinguished head of
+  shared computation and a large bulk of content whose only internal
+  structure is a smooth price gradient. "Public/private" should be read as
+  "head/bulk"; the 40/60 split worked because the head sits inside the
+  public 40%.
