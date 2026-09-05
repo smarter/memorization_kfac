@@ -2462,3 +2462,40 @@ Three tests, chosen for information per hour:
    cosine matrix and clustering; then per-cluster edits: within-cluster vs
    out-of-cluster transfer and collateral. Tests the premise of the two-stage
    label-free isolation procedure. (`probe_groups.py`)
+
+## 2026-09-05: recoding, not augmentation (checkpoint energy decomposition)
+
+`probe_recoding.py`: per-direction activation (A) and margin-gradient (G)
+energies at 1.26T tokens and at the end, final K-FAC bases, layers 23-25, for
+never-recited windows (1200), windows that became recited in between (112), and
+the Dolma set (1054).
+
+Activation side, ratios final/early by decile of reference energy (0 = flattest):
+
+| population | flattest decile | middle | head decile | total energy | bulk fraction early -> final | head fraction |
+|---|---|---|---|---|---|---|
+| never (ordinary) | 0.77 | ~1.04 | 1.64 | x1.30 | 0.32 -> 0.23 | 0.40 -> 0.50 |
+| become (memorized in the interval) | 0.88 | ~1.21 | 0.99 | x1.07 | 0.29 -> 0.30 | 0.42 -> 0.38 |
+| Dolma set (already memorized) | 1.30 | ~1.41 | 1.82 | x1.48 | 0.51 -> 0.47 | 0.19 -> 0.24 |
+
+* **Ordinary text sharpens.** Between 1.26T tokens and the end the population's
+  representation concentrates into the head: bulk fraction 0.32 -> 0.23, head
+  0.40 -> 0.50, flattest decile loses 23% of its energy, head decile gains 64%.
+  Shared computation consolidates.
+* **Memorized items do not follow, and slightly reverse.** The become-windows
+  keep their bulk fraction (0.29 -> 0.30) and lose head share absolutely
+  (0.42 -> 0.38), at nearly conserved total energy (x1.07 vs x1.30). Relative
+  to the population they gain energy in every bulk decile (excess ratio
+  1.14-1.18) and lose it in the head (0.61 in the top decile). This is
+  **recoding** (redistribution at conserved energy), not augmentation (no
+  extra energy added). The gradient side agrees: the become-windows' excess
+  gain is 19x in the flattest decile against 12.7x in the head.
+* So "learning flattens what it memorizes" decomposes into a passive part --
+  the population sharpens around an item that stops participating in the
+  consolidation of shared features -- and an active part -- the item's own
+  head share falls. The within-set correlation (items memorized later are
+  flatter, Spearman -0.34) says the active part is not negligible; separating
+  the two needs items whose memorization time is known. The parsimonious
+  statement: memorization exempts an item from the consolidation into the
+  head that ordinary text undergoes, and moves it a little further out; its
+  flatness is measured against a population that keeps sharpening.
