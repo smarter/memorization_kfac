@@ -1022,3 +1022,34 @@ public-public ~55 (||W|| ~130).
   private-private block (34% of their energy): recitation 0.99 -> 0.18,
   typical +0.024 nats, Pile +0.027, arithmetic -0.035. Materialising this
   model (and a 10-layer version, 19-28) for the benchmark pipeline.
+
+## 2026-09-05: private-block deletion models for the benchmark pipeline
+
+`make_removal_models.py <name> <layers> [alpha]`: coupled per-token covariances
+(1152 dolmino sequences, sampled labels) for gate/up of the given layers,
+eigenbases, flattest 60% x 60% block deleted (alpha=1) or halved (alpha=0.5).
+Saved under out/aux/model_<name>/model (not DVC deps), evaluated on the
+populations before queueing:
+
+| model | mem loss / strict | typical | Pile | arith |
+|---|---|---|---|---|
+| unedited | 0.018 / 0.990 | 2.137 | 2.348 | 0.892 |
+| remove23_25 (delete, layers 23-25) | 0.295 / 0.204 | +0.021 | +0.027 | 0.827 |
+| remove23_25_half (alpha=0.5) | 0.044 / 0.733 | +0.005 | +0.000 | 0.882 |
+| remove19_28 (delete, layers 19-28) | 1.21 / 0.035 | +0.093 | +0.152 | 0.449 |
+| remove23_28 (delete, layers 23-28) | building | | | |
+
+* The coupled-basis deletion of 23-25 reproduces the K-FAC-basis probe
+  (0.318 / 0.180, +0.024, +0.027, 0.857) to within a few thousandths; the
+  basis construction does not matter either.
+* Deleting the private block of ten layers (19-28) removes recitation almost
+  completely but halves arithmetic (0.892 -> 0.449) and costs Pile +0.15: the
+  private *input* directions of layers 20-24 are where arithmetic reads its
+  number features (layer sweep of 2026-09-04), and deletion takes those
+  out with everything else. Deletion is only safe where the private block
+  holds no skill -- which is what the side and layer results said all along.
+  A 23-28 variant is being built to extend forgetting without touching the
+  arithmetic layers.
+* Queue (batch 10, same pipeline as batch 9: rho=1, start_from_model):
+  remove23_25, remove23_25_half, remove23_28, then remove19_28 as the
+  negative control.
