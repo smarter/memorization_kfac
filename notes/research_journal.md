@@ -1789,3 +1789,40 @@ ordinary-text energies:
   energy and coherent contribution live in the bulk, the more any bulk edit
   costs it. Verbatim text is the flattest population we have; facts are
   intermediate (half the block coupling); ordinary text follows the reference.
+
+## 2026-09-05: predictive tests of the margin model (parsimony and prediction)
+
+Guillaume: a good theory must be parsimonious and predictive. Test: fit the
+margin model per token at noise norms <= 76 (mean shift -beta_t n^2, spread
+gamma_t n, Gaussian), predict strict recitation at norms 90/107/120 measured
+independently (probe_noise_shape), and extrapolate the shrink curve from
+alpha <= 0.5 (`analyze_margin_predict*.py`):
+
+| noise norm | measured strict | independent Gaussian | + mean saturating ~n^1.5 beyond 76 |
+|---|---|---|---|
+| 38 / 57 / 76 (in-sample) | 0.789 / 0.532 / 0.282 | 0.777 / 0.486 / 0.229 | same |
+| 90 / 107 / 120 (out of sample) | 0.159 / 0.098 / 0.083 | 0.121 / 0.062 / 0.040 | 0.141 / 0.084 / 0.060 |
+
+| shrink alpha | measured | linear from alpha<=0.5 | quadratic from alpha<=0.5 |
+|---|---|---|---|
+| 0.75 / 1.0 | 0.430 / 0.179 | 0.584 / 0.430 | 0.351 / 0.112 |
+
+* The two-coefficient-per-token model predicts the noise curve within 5 points
+  absolute in and out of sample, always over-predicting forgetting; the
+  residual is consistent with the mean shift saturating beyond norm 76 (a
+  quadratic law extrapolates to -5.5 logits at 120). The mean law is
+  quadratic to 76 (predicted -0.55/-1.23 vs measured -0.56/-1.27 at 38/57).
+* Within-item correlation of the random shift is nil (rho = 0.01): one weight
+  perturbation moves an item's 48 tokens independently -- their block
+  couplings (u_t, v_t) are nearly orthogonal. A structural fact about the code:
+  per-token, not per-item.
+* Deletion beyond half the block is genuinely nonlinear: linear extrapolation
+  under-predicts forgetting (0.43 vs 0.18 at alpha=1), quadratic over-predicts
+  (0.11). The first-order theory owns the regime alpha <= 0.5; the full-deletion
+  regime needs the nonlinearity (attention re-routing / saturation), which is
+  an open item, not a failure of the two-order picture where it claims to apply.
+* Per item, the edit-free private share (layer 24, input side) predicts the
+  alpha at which an item stops being recited with Spearman -0.44, its noise
+  shift with +0.37 and its removal shift with +0.29: a one-forward-pass
+  quantity carries almost half the rank information about fragility under a
+  three-layer, two-sided edit.
