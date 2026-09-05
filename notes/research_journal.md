@@ -2381,3 +2381,12 @@ and the 17-19 deletion for the pipeline (fishy-corm = remove17_19), plus the
 suite with WinoGrande (the paper's fourth metric, on the olmo-eval scale for
 all our models). The targeted edit is reported separately as the ceiling that
 labels give, not as a competitor in the label-free setting.
+
+**Pipeline result for the norm-19 targeted model (dural-bate):** ppl 17.609
+(unedited 17.62: no perplexity cost), Dolma loose 0.150, quotes 0.791 (18%
+forgotten), GSM8K 0.669 (-0.006). On the paper's axes this point dominates
+every label-free edit: at Dolma 0.15 the best curvature edits sit at ppl
+18.4-18.7 with GSM8K 0.58-0.62. Caveats as before: labelled (half the Dolma
+set), and the Dolma metric includes the train half (held-out strict 0.156,
+consistent with 0.150 loose); quotes transfer is 18% at this norm. The
+norm-10 model (minor-kifs) is running.
