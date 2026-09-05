@@ -2591,3 +2591,12 @@ head, 1.3 in the bulk (OLMo-2 7B 4.5 / 1.0; 1B 4.6 / 1.5). Bulk deletion
 removes two thirds of the recitation for a tenth of the head's cost: the
 content sits in the bulk in this family too. Third model, third confirmation
 of the head/bulk asymmetry.
+
+Qwen2.5-7B, Pile-scan variant (16 recited Pile windows, Pile-defined basis and
+reference; strict | reference d | fixed-Pile d): base 0.812. Bulk remove 0.375
+| +0.088 | +0.051; bulk noise 0.500 | +0.049 | +0.028; head remove 0.438 |
++0.228 | +0.199; head noise 0.500 | +0.067 | +0.060. Head removal/noise 3.4,
+bulk 1.8. Activation bulk share 0.28-0.31 -> 0.42-0.45 (A exponents -0.30 to
+-0.40, R2 0.36-0.51); halves cosine 0.05 in the bulk at 8 items per half.
+Consistent with the dolmino-scan run; steps of 1/16 in the strict fraction, so
+nothing beyond direction should be read from these numbers.
