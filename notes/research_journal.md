@@ -662,6 +662,25 @@ while G-only at the same nominal rho is milder (0.53 -> 0.80). Identity
 A-only 0.4 (sandy-delf): 1.04 -> 0.43 (curve ~0.37). In the identity basis the
 side asymmetry is weaker than for K-FAC but has the same sign.
 
+## 2026-09-05: projected continued training (probe_projected_ft), first pass
+
+Sixty normalised SGD steps on ordinary dolmino text (total update norm 0.3 per
+step across the six gate/up matrices of layers 23-25, ~0.1% of a matrix norm
+per step, ~5% cumulative), restricted to the private-private block, the
+public-public block, or unrestricted, plus matched-norm Gaussian noise in each
+block. Result: nothing moves. Unrestricted SGD improves typical loss
+2.137 -> 2.122 and lowers strict recitation 0.99 -> 0.97; private-only SGD
+leaves recitation at 0.99; public-only 0.97; noise of the same norm in either
+block changes nothing (0.984-0.992). (A first attempt with a raw learning rate
+of 2e-4 had updates below bf16 resolution and did nothing at all.)
+
+Reading: at perturbation norms an order of magnitude below a band removal
+(which zeroes weight energy of order tens per matrix), the memorized code is
+robust in every subspace, as the margin picture predicts; the discriminating
+regime is large perturbations. A graded noise sweep at matched norm (5 to 120
+per matrix, private vs public vs isotropic) is running to map where memorized
+and typical text break.
+
 ---
 
 ## Backlog
