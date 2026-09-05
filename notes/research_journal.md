@@ -2440,3 +2440,25 @@ Conclusions:
    of magnitude for the labelled distribution (targeted 19: 17.61 / 0.150 /
    0.669) while leaving other memorized distributions mostly intact (quotes
    0.79).
+
+## 2026-09-05 (evening): next steps, chosen
+
+Three tests, chosen for information per hour:
+1. **Recoding vs augmentation.** For windows that became recited between 1.26T
+   tokens and the end, the per-direction energy change relative to windows
+   that did not, as a function of curvature, on both sides and in the final
+   bases. Recoding (energy leaves the head, appears in the bulk, total
+   conserved) vs augmentation (bulk added on top of a typical head) predict
+   different signs in the head. Decides the mechanism class behind
+   "learning flattens what it memorizes". (`probe_recoding.py`)
+2. **A second model.** Recitation scan of the 9216 dolmino windows on another
+   model gives a memorized population with no ground truth; then the head/bulk
+   spectrum, the half-whitening exponents, the two-halves cosine, the coupling
+   ratio and the removal/noise asymmetry at that model's late MLP band. Same
+   family (OLMo-2 1B) for scale, a different family if downloadable.
+   (`xmodel_probe.py`)
+3. **Groups within a memorized population.** Per-item bulk-projected margin
+   gradients of the 129 recited windows (random-projection sketches), their
+   cosine matrix and clustering; then per-cluster edits: within-cluster vs
+   out-of-cluster transfer and collateral. Tests the premise of the two-stage
+   label-free isolation procedure. (`probe_groups.py`)
