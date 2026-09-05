@@ -681,6 +681,21 @@ regime is large perturbations. A graded noise sweep at matched norm (5 to 120
 per matrix, private vs public vs isotropic) is running to map where memorized
 and typical text break.
 
+## 2026-09-05: layers 26-28, first point (dotty-orfe: identity, marginal, rho 0.6)
+
+18.94 / 0.260 / 0.307 / 0.663 vs the 23-25 E-Identity curve at matched
+perplexity: mem 0.118, GSM8K 0.590. The late-layer edit keeps GSM8K near the
+unedited 0.675 but removes far less memorization per unit perplexity (+0.14
+mem). On the populations: mem loss 0.39 -> arithmetic 0.815 with typical loss
+2.209, whereas the 23-25 identity curve at the same forgetting has arithmetic
+~0.83 and typical loss ~2.19. So at matched forgetting the 26-28 identity edit
+spares no more arithmetic and costs more clean-text loss: the layer-choice
+prediction from the input-side sweep does not hold for the per-weight edit.
+The sweep's own numbers already said 22-25 is where the flat bulk is most
+selective for memorization (ratios 8-9 vs 3-5 at 26-28); what I predicted was a
+better arithmetic/forgetting trade-off there, and that is not what the
+per-weight rule delivers. K-FAC 26-28 (brute-doll) pending.
+
 ---
 
 ## Backlog
