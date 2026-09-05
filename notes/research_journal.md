@@ -607,6 +607,10 @@ routing (activation-defined) now yields (i) the selectivity of the mass rule,
 memorization score. Next: dynamics (checkpoints, running), and a formal
 statement with predictions.
 
+Write-ups in progress (scratchpad `tex/`): `memorization_notes.tex` (long
+notes, 5 pp.) and `key_findings.tex` (short, 3 pp.); both compile, each with
+one pending item (layer-26-28 edits; checkpoint dynamics).
+
 ---
 
 ## Backlog
