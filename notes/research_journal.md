@@ -1149,3 +1149,61 @@ edit at Dolma >= 0.13; (3) the 19-28 deletion damages reading and recall
 broadly, in line with its arithmetic collapse; (4) at matched forgetting,
 private noise and deletion keep in-context reading (squad/drop) closer to the
 unedited model than two-sided EK-FAC does, as they do GSM8K.
+
+## 2026-09-05: timescale test (checkpoint drift by depth band) and the shape of the spectrum
+
+Guillaume asked whether the private/public distinction is ontologically real
+and which mathematical tools would characterise it better; the first test run
+is the fast/slow-mode (timescale) picture: along a curvature eigen-direction
+the residual decays as (1 - eta*lambda)^T, so sharp directions should be
+settled early and flat directions should keep accumulating item-specific
+content. `probe_drift.py` / `probe_drift2.py` (CPU, 1 min): gate/up of layers
+23-25 at 1.26T, 2.10T, 2.94T, 3.78T tokens and final, in the final model's
+K-FAC eigenbasis, per decile of general-text depth (band 0 = flattest).
+
+Result: the depth dependence is real in rank but weak in magnitude.
+
+| quantity (layer 24 up_proj) | flattest decile | sharpest decile |
+|---|---|---|
+| content norm |C_final| | 39.9 | 40.5 |
+| persistence cos(C_1.26T, C_final) | 0.56 | 0.66 |
+| relative drift 3.78T -> final (the anneal) | 0.275 | 0.244 |
+| relative drift 1.26T -> 2.10T | 0.73 | 0.62 |
+| autocorrelation of consecutive interval changes | -0.14 | -0.08 |
+| anneal change / content, private-private vs public-public block | 1.06 | 0.90 |
+
+* Per direction, the rank correlations are strong: relative drift in the
+  anneal vs depth -0.50 (gate) to -0.89 (up); vs the memorized set's
+  curvature share +0.50 to +0.85; persistence since 1.26T vs depth +0.50 to
+  +0.91. Directions the memorized set uses more changed more during the
+  anneal in which it was learned (recitation 0.64 -> 0.99), and hold less
+  early content. But the effect sizes are ~10-20%: weight change is dominated
+  by direction-independent components (learning-rate schedule: relative
+  drift per interval falls 0.7 -> 0.55 -> 0.45 -> 0.26 in every band), and
+  consecutive interval changes are *anticorrelated* in every band (mean
+  reversion from weight decay / SGD noise), not accumulating. Weight energy
+  per direction is nearly uniform across the spectrum (|C| ~ 40-44 per
+  decile): the weights are almost white in the K-FAC basis.
+* Why the timescale effect is small: the G-side K-FAC spectrum in these
+  layers is nearly flat. log10 eva_G quantiles (1, 10, 50, 90, 99%):
+  -5.36, -5.26, -5.12, -4.85, -4.32 -- a factor 3 across 90% of the
+  directions and 10 across 98%. The A side is wider (-1.18 ... +0.30, x30)
+  but still not the decades of a sloppy-model spectrum. The coupled depth
+  ordering is rank-identical to eva (Spearman 0.998). With curvature varying
+  by x2-3 across the bulk, (1 - eta*lambda)^T cannot separate timescales
+  much, and it does not.
+* Consequence for the ontology: on the output side the model has a small
+  head (top few percent of directions, x3-10 the median curvature) and a
+  near-degenerate bulk. Our 40/60 split falls inside the bulk; the
+  public-block results are carried by the head, and inside the bulk every
+  direction is alike -- which is exactly what the noise-shape invariance
+  said. The memorized share nevertheless declines smoothly across the bulk
+  (0.24 -> 0.13 over eva deciles), so the ordering inside the bulk is not
+  pure noise (split-half test below). The honest description is "head vs
+  bulk" plus a weak gradient inside the bulk, not two kinds of direction,
+  and not a separation of timescales.
+* Status of the fast/slow framing: a real but second-order effect here.
+  What remains to explain where memorization sits is the input side (a
+  wider spectrum: rare features) and the margin/usage picture, not weight
+  dynamics. Next: band-resolved removal-vs-noise ratio (does the
+  content/computation character jump at the head?) and self-influence.
