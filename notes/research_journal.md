@@ -555,6 +555,15 @@ draw their margin from the flat bulk. This is the "distributed code" account
 of memorization made quantitative, and it suggests the per-item margin drawn
 from private directions as a graded memorization strength.
 
+Identity A-only at 0.4 (sandy-delf): 19.87 / 0.068 / 0.170 / 0.494 vs the
+two-sided E-Identity curve at matched ppl 0.071 / 0.484: no GSM8K gain
+(+0.009), unlike G-only (+0.057); on the populations mem loss 1.04 ->
+arithmetic 0.43 (two-sided curve ~0.37 at that forgetting). Side asymmetry
+confirmed in the identity basis too. The three layer-26-28 runs failed at
+collection because the queue worker was restricted to GPUs 0-6 while the
+FSDP collection needs 8; requeued as dotty-orfe / modal-tier / brute-doll,
+worker to restart on all GPUs after the checkpoint probes.
+
 ---
 
 ## Backlog
