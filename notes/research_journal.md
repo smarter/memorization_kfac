@@ -961,3 +961,64 @@ typical +0.047-0.050, Pile +0.081-0.087, arith 0.83-0.85; whole-matrix ratio
   removal, plus sign flip (norm 152), a random permutation of the block
   entries (same energy, no structure), and the same operations on the public
   block as the control.
+
+## 2026-09-05: noise shape, round 2 -- matched norms, and the private/public asymmetry of removal
+
+Same setup, 8 shards, ~6 min wall. Block norms per matrix: private-private ~76,
+public-public ~55 (||W|| ~130).
+
+| condition (private block) | norm | mem loss / strict | typical | Pile | arith |
+|---|---|---|---|---|---|
+| iso noise | 38 | 0.037 / 0.789 | +0.004 | +0.008 | 0.892 |
+| shrink alpha=0.5 | 38 | 0.045 / 0.731 | +0.005 | +0.000 | 0.887 |
+| prune-like removal | 38 | 0.040 / 0.742 | +0.004 | +0.003 | 0.887 |
+| iso noise | 57 | 0.091 / 0.532 | +0.010 | +0.018 | 0.882 |
+| shrink alpha=0.75 | 57 | 0.129 / 0.433 | +0.013 | +0.010 | 0.874 |
+| prune-like removal | 57 | 0.113 / 0.446 | +0.011 | +0.010 | 0.879 |
+| iso noise | 76 | 0.208 / 0.282 | +0.019 | +0.033 | 0.878 |
+| remove block (alpha=1) | 76 | 0.318 / 0.180 | +0.024 | +0.027 | 0.857 |
+| iso noise | 90 | 0.335 / 0.159 | +0.026 | +0.047 | 0.868 |
+| iso noise | 107 | 0.522 / 0.098 | +0.037 | +0.068 | 0.859 |
+| shuffle block entries | 107 | 0.686 / 0.071 | +0.044 | +0.068 | 0.843 |
+| negate block (-2 W) | 152 | 1.254 / 0.049 | +0.089 | +0.153 | 0.695 |
+
+| condition (public block) | norm | mem loss / strict | typical | Pile | arith |
+|---|---|---|---|---|---|
+| iso noise | 45 | 0.087 / 0.538 | +0.032 | +0.029 | 0.868 |
+| shrink alpha=0.5 | 45 | 0.219 / 0.214 | +0.116 | +0.135 | 0.779 |
+| remove block (alpha=1) | 55 | 0.492 / 0.054 | +0.211 | +0.254 | 0.647 |
+| iso noise | 90 | 0.756 / 0.044 | +0.167 | +0.204 | 0.723 |
+
+* **At matched norm, removing private content forgets ~1.5x more than random
+  noise** (mem loss 0.318 vs 0.208 at 76; 0.129 vs 0.091 at 57) at slightly
+  higher in-distribution cost (+0.024 vs +0.019) and lower Pile cost. At
+  matched forgetting (removal 76 vs noise 90): same typical cost, half the
+  Pile cost. Prune-like removal (smallest importance first) sits between
+  shrink and noise -- ordering inside the block is again irrelevant.
+  Reading: removal displaces every memorized item's margin coherently (the
+  block's whole contribution to the item's logit is taken away), noise
+  displaces it with a random sign of the same mean square; and the removal
+  direction -W_pp is a low-Pile-curvature direction, while any random
+  direction of the same norm is not. Shuffling the block entries (remove +
+  add equal random energy) costs Pile exactly what noise of the total norm
+  costs: the Pile cost is set by the random part.
+* Negating the block is as bad as noise of the same norm (slightly worse):
+  the structure helps only when it is removed, not when it is flipped.
+* **The sign of the removal-vs-noise effect flips in the public block.** There,
+  shrinking by half costs 3.6x more typical loss and 4.7x more Pile loss than
+  noise of the same norm (+0.116 vs +0.032), and removing the block outright
+  (+0.211) is worse than noise of 1.6x the norm (+0.167). At matched
+  forgetting the public block's removal costs ~2.3x what noise costs; the
+  private block's removal costs 1.0x (typical) and 0.6x (Pile).
+* This gives an operational distinction between *stored content* and
+  *computation* that does not use labels: a block holds content if removing
+  it costs less than random noise of the same norm (the block's own
+  structure is idiosyncratic, so taking it away harms only its owners); it
+  holds computation if removing it costs more than noise (the structure is
+  what everyone uses). Private = content, public = computation, measured on
+  the same six matrices.
+* Consequence for editing: the best label-free edit is not noise but
+  deterministic removal of the private block. Six matrices, zero their
+  private-private block (34% of their energy): recitation 0.99 -> 0.18,
+  typical +0.024 nats, Pile +0.027, arithmetic -0.035. Materialising this
+  model (and a 10-layer version, 19-28) for the benchmark pipeline.
