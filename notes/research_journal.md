@@ -2364,3 +2364,20 @@ re-running after an OOM caused by sharing the GPU with the pipeline.)
   shared direction is one third aligned with the direction that raises
   ordinary dolmino margins -- which is why subtracting it costs ordinary text
   so much. Confirms the reading above.
+
+## 2026-09-05: can we beat EK-FAC / E-FOOF / E-Shampoo on the paper's metrics?
+
+Theory's answer: not by a better curvature estimate -- inside the bulk the
+cost is energy moved times a constant, which is why the methods' frontiers
+coincide and why plain block deletion lands on the best curvature point
+(E-Identity 0.75). Gains come from the two levers the paper's methods do not
+use: the operation (removal vs noise: at Dolma 0.13, six-layer deletion beats
+EK-FAC on GSM8K 0.625 vs 0.578 and quotes 0.21 vs 0.24, at a perplexity cost)
+and the placement (mem/facts coupling peaks at 17-20; the 17-19 deletion cost
+2.3x less recall per unit forgetting). Predicted frontier candidate: deletion
+spanning 17-19 and 23-25 (12 matrices) -- six-layer forgetting with the
+recall/arithmetic profile of the better layers. Building it and queueing it
+and the 17-19 deletion for the pipeline (fishy-corm = remove17_19), plus the
+suite with WinoGrande (the paper's fourth metric, on the olmo-eval scale for
+all our models). The targeted edit is reported separately as the ceiling that
+labels give, not as a competitor in the label-free setting.
