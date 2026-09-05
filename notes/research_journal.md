@@ -809,8 +809,14 @@ model: ppl 17.62, Dolma loose acc 0.998, quotes strict 0.967, GSM8K 0.675):
   large components. "The subspace matters, not the ranking" is therefore
   half right: the ranking protects out-of-distribution text, the subspace
   choice protects arithmetic/GSM8K. A natural hybrid is noise scaled inversely
-  to component magnitude within the private block. Public-noise control
-  (ovoid-pope) running.
+  to component magnitude within the private block.
+* Public-noise control (ovoid-pope, norm 30 in the public block): ppl 18.00,
+  Dolma 0.832, quotes 0.709, GSM8K 0.666. Against private noise at norm 60
+  (naive-vang): +0.38 vs +0.30 perplexity for a quarter of the forgetting
+  (Dolma -0.17 vs -0.39), i.e. about 3x less forgetting per unit of perplexity
+  cost at half the norm, and it is the only noise model that dents GSM8K
+  (-0.009). The benchmark pipeline reproduces the population-level asymmetry:
+  per unit norm, public noise is the expensive one.
 
 ---
 
