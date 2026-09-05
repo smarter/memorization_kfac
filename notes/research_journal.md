@@ -874,3 +874,30 @@ Open questions:
   directional structure? Compare sampled vs true labels on the memorized set.
 * Why does gsm8k calibration lift GSM8K for every method: which token
   populations shift the marginals?
+
+## 2026-09-05: does the shape of the noise matter? (question from Guillaume)
+
+So far every private-block perturbation was Gaussian and isotropic *within*
+the block. The block is a crude indicator function; inside it, general-text
+curvature spans orders of magnitude and the weight components span orders of
+magnitude, and the noise ignores both. Second-order theory says the expected
+collateral of random noise with per-coordinate variance s_oi is
+(1/2) sum s_oi^2 d_o d_i (d = general-text depth in the K-FAC basis), while
+the hit on a memorized item is the same sum with the item's own depths. The
+best shape at fixed expected collateral therefore concentrates variance where
+mem depth / general depth is largest, not uniformly over the block. Beyond
+second order, the margin mechanism makes the *distribution* of per-item shifts
+matter: low-rank noise of the same Frobenius norm gives heavy-tailed shifts
+across items (a few large, most tiny), full-rank Gaussian gives Gaussian ones.
+And the Pile result suggests a third axis: whether the perturbation adds energy
+to empty coordinates (noise) or only removes existing energy (pruning, shrink).
+
+Probe (`probe_noise_shape.py`, layers 23-25 gate/up, matched norm 90 / 120,
+metrics add Pile loss as the out-of-distribution proxy): iso, inverse-curvature,
+inverse-magnitude, small-components-only, large-components-only, rank-32,
+shrink (deterministic), prune-like (deterministic removal by importance), and
+the oracle ratio shape (mem depth / general depth) inside the block and over
+the whole matrix. Predictions: inverse-magnitude and small-only should recover
+pruning's Pile behaviour; ratio should forget most per unit collateral; shrink
+should forget little (uniform scaling of the block barely crosses margins).
+Queued behind ovoid-pope.
