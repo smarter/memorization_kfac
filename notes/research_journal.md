@@ -2185,3 +2185,17 @@ population-level object, stronger in the head than in the bulk; the edit uses
 its bulk projection. Control needed: is it specific to memorized text or the
 generic "raise any token's margin" direction? -- cosine with the summed margin
 gradient of ordinary windows and of fact tokens (running next).
+
+**Layer placement, population level** (`make_block_models.py --mode delete`):
+
+| deletion | mem strict (from 0.99) | typical | Pile | arith |
+|---|---|---|---|---|
+| layers 17-19 | 0.542 | +0.016 | +0.007 | 0.872 |
+| layers 18-20 | 0.460 | +0.017 | +0.013 | 0.787 |
+| layers 23-25 | 0.204 | +0.021 | +0.027 | 0.827 |
+
+As the coupling map predicted: less forgetting per unit norm at 17-20
+(mem/windows 13-20 vs 24), Pile spared, and arithmetic hit at 18-20 (the
+20-24 flat-input band) but not at 17-19. The recall test (the point of the
+placement prediction: mem/facts 4.2-4.5 vs 3.0-3.3) is running on GPUs 4-5
+after a vLLM start failure on GPUs shared with the DVC eval.
