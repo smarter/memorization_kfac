@@ -1079,14 +1079,13 @@ him incomparable scores, and no pinning to old versions. Findings:
   vs 0.675; public-noise model 0.6672 vs 0.666. Within one question. Wall
   time 5 min per model (vs 24).
 * Two upstream bugs worked around from the command line: the task points at
-  the legacy dataset id  (Hub client now requires ;
-  overridden with ),
-  and the model worker imports  unconditionally (beaker extra added).
+  the legacy dataset id `gsm8k` (the Hub client now requires `openai/gsm8k`;
+  overridden with `-o data_source=hf://openai/gsm8k?subset=main&split=test`),
+  and the model worker imports `beaker` unconditionally (beaker extra added).
   Both are worth an upstream PR.
-* dvc.yaml  stage now runs olmo-eval pinned to a current commit
-  (), keeps the metric key gsm8k::olmes and the output
+* dvc.yaml `benchmark` stage now runs olmo-eval pinned to a current commit
+  (`olmo_eval_commit`), keeps the metric key gsm8k::olmes and the output
   paths, so the notebook and the frontier are unaffected;
-   reads both schemas. Commit: see git log
-  (benchmark stage: replace OLMES...). Experiments from this commit on carry
-  the olmo-eval GSM8K; earlier ones the OLMES HF score, same scale.
-
+  `extract_olmes_metrics.py` reads both schemas (commit 6be7f36). Experiments
+  from that commit on carry the olmo-eval GSM8K score; earlier ones the OLMES
+  HF-backend score, on the same scale.
