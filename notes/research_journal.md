@@ -1397,3 +1397,51 @@ Findings:
    narrative next-word prediction.
 6. The two deep edits (EK-FAC 0.7, delete 19-28) damage everything; the
    public-noise control damages CoQA and WinoGrande while barely forgetting.
+
+## 2026-09-05: theory sprint -- the spectrum across layers, and Hill numbers
+
+Guillaume: forget paper-facing results, get to a sound theory fast. Running
+in parallel: (a) magnitude test (delete the smallest / largest / random
+components of the private block at matched norm 54 -> recall vs recitation),
+(b) reference relativity (Pile-defined bases and private block), (c) spectrum
+shape across all layers, (d) Hill-number breadth profiles. (c) and (d) are in.
+
+**Spectrum across layers** (`analyze_spectrum_layers.py`, G-side coupled
+eigenvalues for all 32 layers, `spectrum_layers.png`): the bulk is flat
+everywhere in the middle and late layers -- p90/p10 = 3.5-5 for layers 4-28,
+p99/p50 = 4-7, and the head above 10x the median holds 0.1-0.5% of the
+directions. The extremes differ: layers 0-3 and 29-31 have larger heads and
+wider spectra (layer 31 up_proj: p99/p50 = 79, max/median 1100, 9% of
+directions above 10x median). The flat-bulk / tiny-head geometry is a property
+of the middle and late MLPs, i.e. exactly the layers where the private-block
+story works (>= 19), and it is *not* the geometry of the first and last few
+layers, which hold high-gain shared machinery (embedding/unembedding-adjacent).
+
+**Hill numbers** (`analyze_hill.py`, `hill_numbers.png`; per direction the
+effective number of sequences N_alpha sharing it, out of 2304): the bulk is
+*not rarely used*. Median N_1 is ~1500 of 2304 sequences (65%) on the G side
+and ~1300 on the A side; the head's top decile has N_1 ~ 1750-1940, the
+flattest 60% ~1450-1540. N_1 correlates with depth (Spearman 0.90-0.98) and
+anticorrelates with the memorized set's curvature share (-0.77 to -0.94), so
+the ordering is right, but the *contrast* is small: head and bulk differ in
+curvature per direction by x2-3 and in breadth by x1.2-1.4. Per item, a
+memorized item's curvature is spread over N_1 ~ 8300-8900 of 11008 output
+directions (general windows 8900-10200) and ~2200-2400 of 4096 input
+directions (general windows 1500-1900): on the input side memorized items are
+*more* distributed than ordinary text, not concentrated on a few private
+features.
+
+**Consequence for the theory statement.** "Private directions carry curvature
+from few tokens" is false in the literal sense; almost every direction is used
+by most sequences. What distinguishes the head is *gain*: a small set of
+directions along which the population's curvature is concentrated (large loss
+sensitivity for everyone). The bulk is the large remainder: shared, low-gain
+capacity in which everything, including item traces, leaves small, evenly
+spread marks. Memorization "in flat directions" is then two things at once: a
+volume effect (the head is a few percent of dimensions; idiosyncratic content
+lands in the rest by counting), and an avoidance effect (memorized items'
+activation energy engages the high-gain shared features less -- the private
+share is essentially 1 minus the head share). This is consistent with the
+weak timescale effect (curvature x3 cannot separate dynamics), the shape
+invariance (the bulk is homogeneous), and the removal-vs-noise jump (the head
+is computation because it is where gain is concentrated).
