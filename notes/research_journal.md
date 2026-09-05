@@ -2222,3 +2222,21 @@ much less than "memorization". The quotes benchmark (pipeline run irate-prof)
 will show the same thing on a third memorized distribution; the gradient
 cosines against ordinary and fact tokens (running) will show how much of the
 shared direction is a generic margin direction.
+
+**Placement prediction confirmed, and exceeded** (recall suites for the
+17-19 and 18-20 deletions):
+
+| deletion | memorized forgotten (1 - strict) | NQ | PopQA | Jeopardy | HellaSwag | DROP | recall cost per unit forgotten (mean NQ/PopQA pts) |
+|---|---|---|---|---|---|---|---|
+| layers 17-19 | 0.45 | -1.8 | -2.2 | -0.3 | -2.0 | +1.2 | 4.4 |
+| layers 18-20 | 0.53 | -3.7 | -3.0 | -1.1 | -2.3 | -0.3 | 6.3 |
+| layers 23-25 | 0.79 | -7.9 | -8.0 | -2.7 | -1.3 | -0.1 | 10.1 |
+
+The coupling map predicted ~1.4x less recall per unit forgetting at 17-19
+(mem/facts 4.4 vs 3.1); measured 2.3x. Layer placement by the coupling ratio
+works and is conservative. The price is HellaSwag (-2.0 vs -1.3) and, at
+18-20, arithmetic (0.787). Per unit forgetting, the 17-19 deletion is the best
+label-free edit we have; it forgets less in total (0.45 of items) because
+memorized coupling is lower there, so reaching the 23-25 level of forgetting
+would need more layers (e.g. 17-19 plus 23-25), which the map can now cost
+before running.
