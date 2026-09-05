@@ -2287,3 +2287,29 @@ Dolma loose 0.084, quotes strict 0.553, GSM8K 0.671 (unedited 17.62 / 0.998 /
   costs ~3x energy-matched noise at norm 38) shows up on pile10k. The norm-19
   and norm-10 models are queued for the pipeline; norm 19 should sit at Dolma
   ~0.2 with a much smaller perplexity cost and is the likely frontier point.
+
+## 2026-09-05: towards label-free isolation of memorized content
+
+Guillaume: we need a theory that isolates memorized data, and labels look bad
+for generalisation. Position: labels generalise as far as the labelled set is
+coherent (right tool for unlearning a held corpus, wrong tool for
+"memorization"). What generalises across memorized distributions is the
+*place* (bulk deletion removed Dolma and quotes alike) not the *direction*
+(94% / 43% / 5% transfer for the Dolma-trained direction). Label-free
+isolation must be built from universal properties: (1) the geometric signature
+(half-whitened profile; the private-share detector finds recited items at
+AUC 0.99 from one forward pass -- a self-labelling device); (2) the place,
+chosen by the coupling ratio; (3) the stated limit: verbatim text and facts
+share spectral character within a layer, so single-layer geometry cannot
+separate them beyond the coupling ratio (3-4.5); separating recitation from
+recall needs sequence-level structure (48-token chain vs 2-token answer).
+
+Decisive test (`probe_universal_direction.py`, running): the 129 recited
+ordinary windows are a diverse, self-labelled memorized set. Split in halves:
+cosine between the halves' bulk-projected margin gradients, cosine with the
+Dolma set's direction, and an edit from half A scored on half B, on the
+held-out Dolma items, on typical text and Pile. If the halves share a
+direction, memorization has a universal component the detector can find
+without ground truth; if they are near-orthogonal, direction-based edits can
+never generalise across memorized text and the ceiling for label-free
+isolation is the place-based one, quantified by the coupling ratio.
