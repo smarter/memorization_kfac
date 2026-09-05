@@ -2175,3 +2175,13 @@ super-linearly, as the typical/Pile costs showed, so the useful regime is the
 small-norm one, where the theory's first-order account applies. Pending:
 the third memorized population and the two-half cosine (running), the quotes
 benchmark (queued), and the layer-placement deletions.
+
+**How large is the shared component?** (`make_targeted_edit2.py`, first
+output): cosine between the summed margin gradients of the two disjoint halves
+of the memorized set, per matrix: full 0.74-0.92, bulk-projected 0.62-0.65,
+complement (head) 0.76-0.94. Two sets of 527 unrelated documents produce
+nearly the same weight-gradient direction. The shared recitation pathway is a
+population-level object, stronger in the head than in the bulk; the edit uses
+its bulk projection. Control needed: is it specific to memorized text or the
+generic "raise any token's margin" direction? -- cosine with the summed margin
+gradient of ordinary windows and of fact tokens (running next).
