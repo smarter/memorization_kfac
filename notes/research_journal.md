@@ -1502,3 +1502,45 @@ withdrawn, not replaced.
   choice; the right reference for a memorization edit is the broadest one
   available (the pretraining mixture), so that "private" means idiosyncratic
   to no population at all.
+
+## 2026-09-05: sharp-but-narrow directions are negligible; the theory statement, revised
+
+`probe_outliers.py`: directions in the top 5% of depth with breadth below the
+bulk median number 3-9 per module on the G side and 0-1 on the A side, hold
+0.1-0.7% of the depth, and their memorized share (0.06-0.21) is *not* elevated
+over the bulk's (0.22-0.32). Projecting them out costs nothing (recitation
+0.99 -> 0.976, ordinary text +0.001). The matched control -- the same number
+of the broadest head directions -- costs +0.018 (G) and +0.124 nats (A) and
+destroys recitation along with everything else (strict 0.454). No
+"memorization neurons" hide in the head; the scatter's coloured outliers were
+one or two directions. Closed.
+
+**Theory statement, revised (written into the notes and key findings):**
+Fix a weight matrix of a middle-or-late MLP and the Fisher of the loss on a
+reference population D. Its eigen-directions differ in *gain* (curvature per
+direction) far more than in *breadth* (how many contexts use them). A head of
+a few percent of directions concentrates the population's loss sensitivity;
+the remaining bulk is near-degenerate (x3 across 90% of directions) and
+homogeneous: inside it, which components an edit touches does not matter,
+only how much energy is moved and whether the change is coherent (removal) or
+incoherent (noise). Memorized items are items whose activation energy and
+gradient avoid the head; their signal is spread evenly over the bulk, on both
+sides. Item-specific content -- verbatim text and facts alike -- lives in the
+bulk by volume (the head is a few percent of dimensions) and by avoidance,
+not because the bulk's directions are rarely used (they are used by ~65% of
+sequences) or slowly learned (timescale differences are 10-20%). The head is
+computation (removal costs 4-5x equal-norm noise), the bulk is content
+(removal costs about what noise costs). Which subspace is the bulk depends on
+the reference, exactly and symmetrically. Verbatim text differs from facts in
+robustness, not location: small margins fall to any perturbation, redundant
+facts fall only to coherent removal. The right edit is therefore a coherent
+removal confined to the bulk of the broadest available reference, on the
+output side where skills do not read.
+
+Open after today: (i) why the head is so small and the spectrum so flat in
+layers 4-28 (a training-dynamics or architecture question); (ii) whether the
+same geometry holds in other model families; (iii) a quantitative margin model
+predicting the recall/forgetting curve of removal vs noise from item
+redundancy; (iv) an edit that removes coherently but spares redundant
+content -- e.g. removal restricted to bulk components whose sign structure is
+item-like rather than fact-like, if such a distinction exists at all.
