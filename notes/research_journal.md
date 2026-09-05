@@ -1107,3 +1107,45 @@ matrices matches the best curvature edit at this forgetting level, and beats
 the matched-forgetting noise edit by 0.36 perplexity at a cost of 0.02
 GSM8K. The remaining three deletion runs (half, 23-28, 19-28) run on the new
 olmo-eval benchmark stage.
+
+## 2026-09-05: capability suite beyond arithmetic (Guillaume's request)
+
+Purpose: see what the edits preserve or damage along axes other than
+arithmetic, and test the theory's sharpest prediction: item-specific
+knowledge should live in the private directions, so deleting the private block
+should hurt closed-book factual recall while sparing in-context reading and
+commonsense reasoning. The prediction is not obvious: factual recall is a
+capability one might expect to be "general".
+
+Suite (olmo-eval, vLLM, `run_suite.py`, ~9.4k instances, ~8 min per model at
+two vLLM instances per GPU; fixed seed so every model sees the same subsets):
+
+| axis | tasks (cap) |
+|---|---|
+| closed-book factual recall | naturalqs (500), jeopardy (500), popqa (500; long-tail entities) |
+| knowledge + reasoning, ranked classification | arc_challenge, sciq (full) |
+| commonsense / language, ranked classification | hellaswag (1000), winogrande, csqa (full) |
+| in-context reading (generation) | squad (500), drop (500), coqa (200) |
+| language modelling | lambada (1000) |
+
+Dropped: mmlu (57 uncapped sub-tasks, 14k instances, too slow for a profile
+run), piqa and socialiqa (Hub repos only have legacy loading scripts). The
+first attempt (full sizes, one instance) ran at 3-8 items/s = 2-3 h per model;
+the client batches requests in small sequential groups, so the GPU idles.
+Capping and running two model instances per GPU (`-P 2`, memory 0.42 each)
+gives ~19 items/s.
+
+Models: unedited; private noise 60/90/120; public noise 30; deletion 23-25,
+half, 23-28, 19-28; curvature edits at matched forgetting: EK-FAC 0.85
+(ahead-fees), 0.8 (jowly-mesh), 0.7 (joint-kale); E-Identity 0.75
+(manly-sine), 0.6 (unlet-genu); G-only K-FAC 0.6 (stiff-food); M-Identity
+0.6 (gamey-quad).
+
+Predictions: (1) every edit costs closed-book recall more than in-context
+reading, and the private-block deletion costs recall at least as much as the
+curvature edits at matched forgetting (it removes item-specific content
+wholesale); (2) commonsense ranked-classification tasks move little for any
+edit at Dolma >= 0.13; (3) the 19-28 deletion damages reading and recall
+broadly, in line with its arithmetic collapse; (4) at matched forgetting,
+private noise and deletion keep in-context reading (squad/drop) closer to the
+unedited model than two-sided EK-FAC does, as they do GSM8K.
