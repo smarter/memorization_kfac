@@ -2396,3 +2396,47 @@ norm-10 model (minor-kifs) is running.
 benchmark), Dolma 0.246, quotes 0.897, GSM8K 0.669. The three targeted points
 (norms 10/19/38) trace: ppl 17.57 / 17.61 / 18.39, Dolma 0.25 / 0.15 / 0.08,
 quotes 0.90 / 0.79 / 0.55, GSM8K 0.669 / 0.669 / 0.671.
+
+## 2026-09-05: the paper-metric comparison, all candidates (queue drained 19:41)
+
+| edit | labels | ppl | Dolma | quotes | GSM8K | recall NQ / PopQA (suite) |
+|---|---|---|---|---|---|---|
+| unedited | | 17.62 | 0.998 | 0.967 | 0.675 | 0 / 0 |
+| EK-FAC 0.85 (paper's best family) | no | 18.06 | 0.224 | 0.308 | 0.607 | -7.2 / -7.0 |
+| EK-FAC 0.8 | no | 18.40 | 0.142 | 0.242 | 0.578 | -8.5 / -9.0 |
+| E-Identity 0.75 | no | 18.10 | 0.302 | 0.355 | 0.643 | -4.9 / -4.8 |
+| private noise 90 | no | 18.36 | 0.254 | 0.375 | 0.662 | -5.2 / -6.8 |
+| delete 23-25 | no | 18.01 | 0.322 | 0.346 | 0.640 | -7.9 / -8.0 |
+| delete 23-28 | no | 18.88 | 0.134 | 0.213 | 0.625 | -14.7 / -12.4 |
+| delete 17-19 (placement) | no | 17.77 | 0.672 | 0.469 | 0.644 | -1.8 / -2.2 |
+| delete 17-19 + 23-25 | no | 18.39 | 0.202 | 0.211 | 0.609 | -10.0 / -8.8 |
+| targeted, norm 10 | half of Dolma set | 17.57 | 0.246 | 0.897 | 0.669 | -0.2 / 0.0 |
+| targeted, norm 19 | half of Dolma set | 17.61 | 0.150 | 0.791 | 0.669 | -0.7 / 0.0 |
+| targeted, norm 38 | half of Dolma set | 18.39 | 0.084 | 0.553 | 0.671 | -1.4 / -0.4 |
+
+Conclusions:
+1. **Label-free, no edit dominates the paper's curvature edits on all four
+   axes.** The deletions and the noise edit reach the same frontier and move
+   along it: at matched Dolma they trade perplexity for GSM8K and quotes
+   (e.g. delete 23-28 vs EK-FAC 0.8 at Dolma ~0.14: +0.48 ppl, +0.047 GSM8K,
+   -0.03 quotes; combined 17-19+23-25 vs interpolated EK-FAC at Dolma 0.20:
+   +0.23 ppl, +0.01 GSM8K, -0.08 quotes). This is what the theory predicts:
+   inside the bulk the cost is energy moved, so every label-free edit pays
+   the same in-distribution price per unit of forgetting; the levers move
+   *where* the price is paid (perplexity vs skills), not its size.
+2. **Placement helps at low forgetting and converges at high forgetting.**
+   Delete 17-19 alone: 4.4 recall points per unit forgotten (vs 10 at 23-25),
+   and it forgets *quotes* far more than Dolma (0.47 vs 0.67) -- the two
+   memorized distributions have different layer profiles. But to reach Dolma
+   <= 0.2 the strong layers are needed, and the combined edit's marginal
+   recall cost returns to ~10 per unit. GSM8K at 17-19 fell 3 points despite
+   arithmetic being spared: GSM8K reads more than number features there.
+3. **The contribution to the paper is therefore not a better point but a
+   better explanation and a simpler edit:** the frontier is reachable with
+   the eigenbasis alone (no eigenvalue corrections, no saliency ranking, no
+   calibration passes -- the deletion needs one collection), and it cannot be
+   beaten by approximating curvature better. What beats it is information
+   the paper's setting excludes: labels, which lift the frontier by an order
+   of magnitude for the labelled distribution (targeted 19: 17.61 / 0.150 /
+   0.669) while leaving other memorized distributions mostly intact (quotes
+   0.79).
