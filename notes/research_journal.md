@@ -2499,3 +2499,36 @@ Activation side, ratios final/early by decile of reference energy (0 = flattest)
   statement: memorization exempts an item from the consolidation into the
   head that ordinary text undergoes, and moves it a little further out; its
   flatness is measured against a population that keeps sharpening.
+
+## 2026-09-05: replication in OLMo-2 1B (layers 11-13 of 16; self-labelled recited set)
+
+`xmodel_probe.py`: recitation scan of the 9216 dolmino windows -> 127 recited
+(acc == 1; the 7B had 129), 1200 never-recited. Coupled covariances on 1152
+dolmino sequences; everything else as in the 7B probes.
+
+| quantity | OLMo-2 1B (11-13) | OLMo-2 7B (23-25) |
+|---|---|---|
+| G-spectrum p90/p10 | 4.2-10.3 | 3.5-5 |
+| head (>10x median) share of directions | 0.3-2.9% | 0.1-0.5% |
+| half-whitening exponent, A side (R2) | -0.30..-0.38 (0.6-0.7) | -0.65..-0.69 (0.94) |
+| half-whitening exponent, G side | -0.02..-0.32 (weak) | -0.58..-0.69 |
+| bulk share of activation energy, never -> recited | 0.17-0.21 -> 0.27-0.34 | 0.19 -> 0.45 |
+| product-law coupling ratio recited/never | 29 | ~24 (layer map, mem/windows) |
+| two-halves cosine of recited margin gradient (full / bulk) | 0.965 / 0.90 | 0.91 / 0.86 |
+| cosine recited vs ordinary (bulk) | 0.09 | 0.30 |
+| bulk deletion: recited strict, never d, Pile d | 0.000, +0.070, +0.095 | 0.204, +0.021, +0.027 |
+| bulk noise (matched norm) | 0.008, +0.048, +0.098 | 0.282, +0.019, +0.033 |
+| removal/noise cost ratio: bulk / head | 1.5 / 4.6 | 1.0-1.3 / 4.4 |
+
+* Replicates: the head/bulk asymmetry of removal vs noise (4.6 in the head,
+  ~1.5 in the bulk), the geometric signature (recited items route 1.7x more
+  of their input energy through the bulk; a monotone half-whitening law on the
+  input side, shallower than the 7B's), the shared direction per memorized
+  distribution (0.90 in the bulk), and the strong coupling of recited margins
+  to the bulk (29x).
+* Differences: the 1B's late band carries essentially all of its recitation
+  (bulk deletion removes 100%; in the 7B, three layers of 32 remove 80%), its
+  head is larger and its spectrum wider, and the half-whitening is shallower.
+  The signature scales with the model: the smaller model concentrates
+  memorization in fewer layers and separates it less cleanly from ordinary
+  text in the spectrum.
