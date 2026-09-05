@@ -784,6 +784,34 @@ First benchmark point of the container test (naive-vang, private noise norm
 strict / 0.675 GSM8K, i.e. a mild edit with GSM8K at the unedited level; the
 90 and 120 points are running.
 
+## 2026-09-05: container test on the benchmarks (batch 9)
+
+Private-block noise on layers 23-25 through the standard pipeline (unedited
+model: ppl 17.62, Dolma loose acc 0.998, quotes strict 0.967, GSM8K 0.675):
+
+| run | norm | ppl | Dolma | quotes | GSM8K | nearest curvature edits at similar forgetting |
+|---|---|---|---|---|---|---|
+| naive-vang | 60 | 17.92 | 0.604 | 0.570 | 0.675 | (milder than any) |
+| telic-iota | 90 | 18.36 | 0.254 | 0.375 | 0.662 | EK-FAC 0.85: 18.06 / 0.224 / 0.308 / 0.606; E-Identity 0.75: 18.10 / 0.302 / 0.355 / 0.643 |
+| funky-cere | 120 | 19.07 | 0.126 | 0.250 | 0.651 | EK-FAC ~0.78: ~18.6 / 0.13 / 0.22 / ~0.56; E-Identity 0.6: 18.63 / 0.144 / 0.235 / 0.621; G-only K-FAC 0.6: 18.75 / 0.128 / 0.252 / 0.607 |
+
+* At matched forgetting the private-noise edit keeps GSM8K higher than every
+  curvature edit (0.651 vs 0.56 two-sided, 0.61 G-only, 0.62 E-Identity at
+  Dolma ~0.13) and stays within 0.03 of the unedited model.
+* It costs more pile10k perplexity: +0.3-0.45 relative to the curvature edits
+  at matched forgetting (19.07 vs 18.6-18.75). This contradicts the
+  population-level result, where the noise edit had *less* in-distribution
+  (dolmino) loss than the curvature edits (+0.050 vs +0.076 nats): the noise
+  hurts out-of-distribution text (Pile) more and in-distribution text less.
+  Reading: pruning removes only components that are both flat and small
+  (C^2-weighted), leaving large private components that other distributions
+  rely on; noise perturbs the whole private block indiscriminately, including
+  large components. "The subspace matters, not the ranking" is therefore
+  half right: the ranking protects out-of-distribution text, the subspace
+  choice protects arithmetic/GSM8K. A natural hybrid is noise scaled inversely
+  to component magnitude within the private block. Public-noise control
+  (ovoid-pope) running.
+
 ---
 
 ## Backlog
