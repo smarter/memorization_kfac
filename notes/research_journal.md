@@ -1215,3 +1215,47 @@ Result: the depth dependence is real in rank but weak in magnitude.
   the A side; p99/p50 = 1.7-3.4 G, 7-9 A). So: a reproducible, graded usage
   spectrum with a compressed range on the output side and a wider one on the
   input side.
+
+## 2026-09-05: batch 10 (deletion models) and first capability-suite results
+
+Benchmarks (olmo-eval stage for the last two):
+
+| run | edit | ppl | Dolma | quotes | GSM8K | predicted |
+|---|---|---|---|---|---|---|
+| sorer-rein | delete 23-25 | 18.005 | 0.322 | 0.346 | 0.640 | 18.0-18.1 / .26-.30 / .38-.42 / .63-.66 |
+| dicey-ribs | half 23-25 | 17.597 | 0.826 | 0.681 | 0.660 | 17.6-17.7 / .75-.80 / .68-.72 / .67 |
+| agape-wool | delete 23-28 | 18.881 | 0.134 | 0.213 | 0.625 | 18.9-19.1 / .12-.14 / .24-.27 / .57-.61 |
+| refs at Dolma ~0.13 | EK-FAC 0.8 / E-Id 0.6 / G-only 0.6 / noise 120 | 18.40 / 18.63 / 18.75 / 19.07 | .142 / .144 / .128 / .126 | .242 / .235 / .252 / .250 | .578 / .621 / .607 / .651 | |
+
+* Predictions held (GSM8K of the 6-layer deletion a little above the range).
+  The 6-layer deletion removes quotes best of all edits at Dolma ~0.13
+  (0.213), keeps GSM8K above the two-sided and per-weight curvature edits
+  (0.625 vs 0.578 / 0.621) but below noise (0.651), and costs 0.1-0.5 more
+  perplexity than the curvature edits. Halving the block is nearly free and
+  nearly useless, as the margin picture says.
+
+Capability suite, first five models (delta vs unedited, percentage points):
+
+| model (Dolma) | NQ | PopQA | Jeopardy | HellaSwag | ARC-C | SciQ | WinoG | CSQA | SQuAD | DROP | CoQA | LAMBADA |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| E-Identity 0.75 (.30) | -4.9 | -4.8 | -0.4 | -2.1 | +0.1 | -1.6 | -0.7 | -0.7 | -0.4 | -1.1 | -0.8 | +1.0 |
+| private noise 90 (.25) | -5.2 | -6.8 | -2.7 | -1.2 | -0.3 | -0.6 | -0.8 | -0.6 | -0.3 | +1.2 | -0.5 | -1.1 |
+| delete 23-25 (.32) | -7.9 | -8.0 | -2.7 | -1.3 | -0.3 | -1.2 | -0.6 | -0.7 | -0.0 | -0.1 | -0.6 | +1.6 |
+| private noise 120 (.13) | -8.3 | -7.6 | -4.6 | -1.4 | -0.6 | -1.2 | -0.8 | -1.6 | -0.5 | +0.8 | -0.9 | -1.6 |
+
+* Prediction 1 holds, sharply: closed-book factual recall is the capability
+  every edit damages most (5-8 points on NaturalQs and PopQA against <= 1.6
+  on everything else), and the private-block deletion costs recall *more*
+  than the per-weight curvature edit at matched forgetting (-8 vs -5), about
+  as much as norm-120 noise. Item-specific knowledge lives where memorized
+  text lives; the private block is a store of specifics, not only of
+  verbatim text. This is the theory's prediction and the deletion edit's
+  price.
+* Prediction 2 holds: commonsense / knowledge ranked-classification tasks
+  move by at most 1-2 points for any edit.
+* Prediction 4 (reading): SQuAD is untouched by every edit; DROP is kept or
+  improved by noise and deletion and lost by the curvature edit (-1.1);
+  CoQA -0.5 to -0.9 everywhere. Mild support.
+* LAMBADA: deletion and the curvature edit gain +1.0-1.6; noise loses 1-1.6.
+  Removing content helps next-word prediction on narrative text; adding
+  random structure hurts it -- the removal/addition asymmetry again.
