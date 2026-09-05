@@ -2074,3 +2074,39 @@ Predictions before running:
 * P4 (coupling law): recall cost at equal norm below deletion's (facts couple
   weakly to the train items' directions), and at matched *train* forgetting far
   below it.
+
+## 2026-09-05: per-layer coupling map (item 1 of the plan)
+
+`probe_layer_coupling.py`: first-order sensitivity of a population's margins to
+an isotropic perturbation of layer l's gate/up weights,
+C_l = mean over targets of sum_s ||a_{l,s}||^2 sum_t ||dm_t/d(h,u)_{l,s}||^2
+(all positions, random-sign trick for the sum over targets), for memorized
+suffix tokens, fact answer tokens and ordinary windows (600 / 316 / 600).
+
+| layer | mem/windows | mem/facts | facts/windows |
+|---|---|---|---|
+| 0-3 | 7-13 | 2.0-6.3 | 2-4 |
+| 8-13 | 6.7-7.8 | 2.7-3.1 | 2.2-2.7 |
+| 14-16 | 8.8-11.1 | 3.3-3.7 | 2.7-3.1 |
+| 17 / 18 / 19 | 13.4 / 15.0 / 17.0 | 4.21 / 4.40 / 4.51 | 3.2 / 3.4 / 3.8 |
+| 20 / 21 / 22 | 20.6 / 22.6 / 24.1 | 4.14 / 3.92 / 3.64 | 5.0 / 5.8 / 6.6 |
+| 23 / 24 / 25 | 24.2 / 24.3 / 23.4 | 3.31 / 3.01 / 2.70 | 7.3 / 8.1 / 8.7 |
+| 26 / 27 / 28 | 20.4 / 17.3 / 14.1 | 2.13 / 1.81 / 1.51 | 9.6 / 9.6 / 9.4 |
+| 29 / 30 / 31 | 11.2 / 7.9 / 3.5 | 1.34 / 1.54 / 1.41 | 8.4 / 5.1 / 2.5 |
+
+Share of total coupling in layers 23-25: memorized 0.19, facts 0.17, windows 0.10.
+
+* The mem/facts ratio at 23-25 (3.0-3.3) reproduces the 3x output-side
+  difference found on the block (probe_profiles_facts2), so the map is
+  consistent with the block measurement.
+* Memorized margins are most sensitive at layers 20-25; fact margins at
+  24-28. The verbatim/facts separation therefore peaks *earlier* than the
+  layers we have been editing: 4.2-4.5 at layers 17-20 against 3.0-3.3 at
+  23-25 and < 2 at 27-31. Layers 26-31 are the worst place to edit for recall.
+* Prediction (theory-driven placement): a private-block deletion at layers
+  17-19 or 18-20 should cost ~1.4x less closed-book recall per unit of
+  memorized-text forgetting than the 23-25 deletion, while forgetting less
+  per unit norm (mem/windows 13-20 vs 24). Arithmetic is the risk: the layer
+  sweep put arithmetic's flat-input dependence at layers 20-24, so 17-19
+  should spare it and 18-20 should not entirely. Both being built and run
+  through the recall suite now.
