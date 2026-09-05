@@ -1207,3 +1207,11 @@ Result: the depth dependence is real in rank but weak in magnitude.
   wider spectrum: rare features) and the margin/usage picture, not weight
   dynamics. Next: band-resolved removal-vs-noise ratio (does the
   content/computation character jump at the head?) and self-influence.
+* Split-half test of the ordering (2304 general sequences split at random,
+  depth recomputed in each half): Spearman between halves 0.994-0.999 over
+  all directions and 0.985-0.995 *within the flattest 60%* on both sides of
+  every module. The ordering inside the bulk is statistically real; it is the
+  dynamic range that is small (p90/p10 = 1.5-2.2 on the G side, 3.0-3.6 on
+  the A side; p99/p50 = 1.7-3.4 G, 7-9 A). So: a reproducible, graded usage
+  spectrum with a compressed range on the output side and a wider one on the
+  input side.
