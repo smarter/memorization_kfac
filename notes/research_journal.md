@@ -1898,3 +1898,40 @@ flatter. Reading: flattening accompanies *saturated* fit (recitation), not
 partial predictability -- the same threshold the margin picture puts on
 memorization. "Flat" and "fit to saturation" are the same state seen from the
 representation and from the loss.
+
+## 2026-09-05: the coupling law, predicted -- and where facts differ from verbatim
+
+`probe_profiles_facts2.py`: per-direction energies on the final K-FAC bases for
+ordinary windows, memorized suffix tokens and fact answer tokens, with three
+definitions of the output-side gradient (loss gradient; unit-error gradient
+g/(1-p_y); the margin gradient dm/dy), and the prediction of the private-block
+coupling ratio memorized/facts as the product of the two sides' bulk energies:
+
+| gradient used | predicted coupling ratio mem/facts | measured (noise-shift variance ratio) |
+|---|---|---|
+| loss gradient | 0.16 | 3.7 |
+| unit-error gradient | 1.72 | 3.7 |
+| margin gradient | **3.04** | 3.7 |
+
+* The margin gradient is the right object and the product law works: coupling
+  of a token's margin to a block = (margin-gradient energy in the block's
+  output directions) x (activation energy in its input directions), predicted
+  within 20% across populations with no free parameter. Together with
+  Proposition 2 this makes per-token fragility computable from one
+  forward-and-backward pass.
+* Side decomposition (bulk energies relative to ordinary windows): input side
+  memorized 2.0-2.2x, facts 2.15x -- identical; bulk share of activation energy
+  0.45 vs 0.48. Output side (margin gradient): memorized 29-31x, facts 9-10x.
+  The entire difference between verbatim text and facts is on the output side
+  and it is one of *magnitude*, not shape: bulk shares of the margin gradient
+  are 0.50-0.56 vs 0.47-0.56, and the profile exponents are alike (mem
+  -0.55..-0.63, facts -0.46..-0.74). Memorized tokens' margins are three times
+  more sensitive to the outputs of layers 23-25 overall; fact answers are
+  produced more by other parts of the network.
+* So facts and verbatim text have the *same* spectral character within these
+  layers -- both item-specific, both half-whitened on the input side (facts
+  even more: -0.73..-0.81) -- and differ in how much of their computation
+  passes through these layers. "Location" in the sense that matters is
+  across layers, not across the spectrum. Flatness marks item-specific
+  content in general (facts included), which is exactly what the capability
+  suite showed: every bulk edit costs recall first.
