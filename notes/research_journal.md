@@ -1057,5 +1057,36 @@ populations before queueing:
   lever of 2026-09-05. Deletion's advantage over noise is a three-layer
   result so far.
 * Queue (batch 10, same pipeline as batch 9: rho=1, start_from_model):
-  sorer-rein = remove23_25, sural-weal = remove23_25_half, mesne-bias =
-  remove23_28, dingy-nine = remove19_28 (negative control).
+  sorer-rein = remove23_25 (ran on the old OLMES benchmark stage), then,
+  re-queued on the new olmo-eval stage: dicey-ribs = remove23_25_half, agape-wool =
+  remove23_28, fussy-adze = remove19_28 (negative control).
+
+## 2026-09-05: benchmark stage moved from OLMES (HF backend) to olmo-eval (vLLM)
+
+Guillaume: OLMES is slow and unmaintained; switching its own vLLM backend gave
+him incomparable scores, and no pinning to old versions. Findings:
+
+* The old stage ran oe-eval with the HF backend, model-parallel over all
+  GPUs: 23 min for 1319 GSM8K generations, i.e. half of each pipeline run.
+  vLLM inside that environment is impossible without pins (the fork pins
+  vllm==0.11.0 with transformers>=5, which vllm 0.11 cannot load).
+* allenai/olmo-eval (main, 2026-09-03) installs cleanly with vllm 0.19.1 and
+  transformers 5.4 via uvx, takes a local checkpoint directory as -m, and its
+  gsm8k task is the gsm8k::olmes formulation: the same 8 fixed few-shot
+  examples (identical text), the same Question/Answer prompt, greedy 512-token
+  generation with the same stop sequences, exact match on the extracted number.
+* Comparability check on checkpoints with known OLMES scores: unedited 0.6748
+  vs 0.675; public-noise model 0.6672 vs 0.666. Within one question. Wall
+  time 5 min per model (vs 24).
+* Two upstream bugs worked around from the command line: the task points at
+  the legacy dataset id  (Hub client now requires ;
+  overridden with ),
+  and the model worker imports  unconditionally (beaker extra added).
+  Both are worth an upstream PR.
+* dvc.yaml  stage now runs olmo-eval pinned to a current commit
+  (), keeps the metric key gsm8k::olmes and the output
+  paths, so the notebook and the frontier are unaffected;
+   reads both schemas. Commit: see git log
+  (benchmark stage: replace OLMES...). Experiments from this commit on carry
+  the olmo-eval GSM8K; earlier ones the OLMES HF score, same scale.
+
