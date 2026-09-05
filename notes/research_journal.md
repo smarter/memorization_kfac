@@ -564,6 +564,49 @@ collection because the queue worker was restricted to GPUs 0-6 while the
 FSDP collection needs 8; requeued as dotty-orfe / modal-tier / brute-doll,
 worker to restart on all GPUs after the checkpoint probes.
 
+## 2026-09-05: the private-share detector validated (probe_private_share)
+
+Private share of an item = fraction of its target tokens' input activation
+energy (weighted by ||W p_i||^2, both modules) that flows through the flattest
+60% of a layer's input directions, directions ordered by the coupled
+population covariance. One forward pass; no gradients, labels or edits.
+`private_share_detector.png`.
+
+| layer | AUC coupled | AUC plain cov. | AUC random basis | mean share mem / windows / arith |
+|---|---|---|---|---|
+| 4 | 0.876 | 0.880 | 0.311 | 0.26 / 0.20 / 0.17 |
+| 12 | 0.906 | 0.893 | 0.250 | 0.21 / 0.14 / 0.14 |
+| 18 | 0.984 | 0.978 | 0.269 | 0.22 / 0.12 / 0.18 |
+| 20-28 | 0.992-0.995 | 0.986-0.992 | 0.32-0.44 | 0.24-0.36 / 0.12-0.18 / 0.22-0.33 |
+| 30 | 0.960 | 0.944 | 0.244 | 0.15 / 0.07 / 0.11 |
+| 20-28 combined | 0.994 | | | |
+
+* AUC 0.994 against all 9216 ordinary dolmino windows; the edit-based
+  detector reached 0.83-0.90. Plain (unweighted) covariance ordering is
+  nearly as good; a random orthonormal basis gives 0.25-0.44 (memorized
+  activations are more anisotropic, so the control is not neutral, but it is
+  nowhere near the coupled ordering).
+* Confounds: in layers 20-28 the score over ordinary windows is uncorrelated
+  with base loss (0.00-0.02) and greedy accuracy (~0), weakly negatively
+  correlated with token frequency (-0.13 to -0.19). Early layers' score
+  partly tracks difficulty (+0.24 with loss at layer 4): the detector is a
+  late-layer property, like the functional support.
+* Ordinary windows the model recites (greedy accuracy >= 0.9, 2.7% of text)
+  score 0.22-0.25 vs 0.16 for the rest and 0.34 for the memorized set: the
+  score grades recitation within ordinary text too. (Contrast the damage
+  detector, which found the perfectly recited windows robust: they route
+  through private inputs yet survive the edit, presumably via public outputs.)
+* Arithmetic answers score 0.29-0.33 in late layers, close to memorized
+  text: "reads rare features from private input directions" is exactly what
+  the score measures; the two are told apart by the output side (and by
+  function).
+
+Theory status: the public/private split (curvature-defined) plus forward
+routing (activation-defined) now yields (i) the selectivity of the mass rule,
+(ii) the side/layer structure of skills, (iii) a graded, edit-free
+memorization score. Next: dynamics (checkpoints, running), and a formal
+statement with predictions.
+
 ---
 
 ## Backlog
