@@ -1998,3 +1998,21 @@ logits, hence margins, proportionally (coef k1 sigma^2 ~ 0.09 at norm 76);
 MLP output and shrinks that layer's genuine contribution -- whose effect on the
 margin is the removal shift -- by a factor f ~ 0.41 at norm 76. Variance-budget
 probe running to check both factors against the measured RMS ratios.
+
+**Variance budget** (`probe_norm_shrink.py`, norm 76, memorized suffix tokens):
+final residual RMS +0.09%, logit RMS unchanged -> the final norm is not the
+mechanism (implied shrink 0.001 vs 0.20 needed). The edited layers' MLP
+outputs gain 40/44/48% variance (RMS x1.185/1.20/1.22 at layers 23/24/25); the
+post-feedforward RMSNorm therefore scales each layer's genuine contribution by
+1/r = 0.84/0.83/0.82 (shrink 16-18% per layer). Three layers' MLP contributions
+to a memorized token's margin shrunk by ~17% is the right size for the
+measured -2.2 if those contributions total ~13 logits, and it explains the
+regression on the removal shift (the block's contribution is a proxy for the
+layer's). Mechanism: RMSNorm(x + n) = x/rms(x+n) + n/rms(x+n): the noise
+enters as extra variance in the normaliser's denominator and shrinks the
+signal it rides on. Predicts quadratic scaling (shrink ~ v/2s^2 ~ sigma^2),
+identical coefficients for facts and memorized text relative to their layer
+contributions, and saturation f = 1 - 1/sqrt(1 + v/s^2) (at norm 120,
+v/s^2 ~ 1.1 -> f = 0.31 instead of the quadratic 0.44). Testing by running the
+noise-free model with the three post-norm outputs scaled by 1/r_t (measured
+r, then r predicted from sigma to first order).
