@@ -1886,3 +1886,15 @@ Dolma set (95% recited per token already at 1.26T):
   population's curvature is small; the more an item is fit, the flatter its
   profile. The private-share detector measures exactly this flatness, which
   is why it tracks memorization state and rises as items are memorized.
+
+**Dose-response is a threshold.** Over the 9216 ordinary windows, the layer-24
+private share is flat at 0.18-0.19 for final recitation accuracy anywhere in
+[0, 0.9) and jumps to 0.257 in [0.9, 1) and 0.273 at 1.0 (n = 120 and 129);
+the memorized set sits at 0.37. Rank correlations at the window level are
+~0 overall because most windows are in the flat regime; within the memorized
+set, higher final share goes with lower final loss (Spearman -0.36 at layer
+28) and with *lower* recitation at 1.26T (-0.34): items memorized later ended
+flatter. Reading: flattening accompanies *saturated* fit (recitation), not
+partial predictability -- the same threshold the margin picture puts on
+memorization. "Flat" and "fit to saturation" are the same state seen from the
+representation and from the loss.
