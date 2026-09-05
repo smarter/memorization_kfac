@@ -739,6 +739,26 @@ block (sharpest 40% x 40%; ~55) or isotropic:
   30) saved under out/aux and run through the pipeline's eval + GSM8K with
   --start-from-model and rho = 1 (no further edit).
 
+## 2026-09-05: attention projections (probe_attention; layers 20, 24, 28)
+
+Coupled input covariances and eigenbases for q/k/v/o, private-share detector on
+each module's input, flat-bulk (60%) and sharpest-decile removal per module.
+* Detector: the residual stream read by q/k/v carries the signature (AUC
+  0.98-0.99, mean private share mem 0.27-0.47 vs windows 0.10-0.29); the
+  attention output read by o_proj does not (AUC 0.51-0.86, shares ~0.04-0.15).
+* Function: projecting out the flattest 60% of any attention projection's
+  input costs memorized text only +0.003-0.006 nats (typical +0.001;
+  arithmetic +0.01-0.03, except o_proj at layer 20: +0.16), against
+  0.13-0.25 nats for the MLP inputs of the same layers. The sharpest decile
+  matters for everyone (mem 0.12-0.49, typical 0.06-0.27, arithmetic up to
+  0.48 at layer 20).
+* Reading: the private-direction *signature* is a property of the residual
+  stream and is visible wherever it is read, but the memorized *function*
+  lives in the MLP weights, not in the attention projections' flat input
+  directions. This localises the container to the MLPs (consistent with the
+  key-value-memory view of MLPs) and means attention weights can be left
+  alone by unlearning edits.
+
 ---
 
 ## Backlog
@@ -755,11 +775,10 @@ Promising (benchmark-agnostic, next):
   coupled weights; characterise the directions plain K-FAC drops but the
   corrected curvature keeps. -> done for layer 24: memorized share falls
   monotonically with depth; disagreement directions carry no class signature.
-* **Locality:** input side done for all MLP layers (see 2026-09-04 night):
-  memorization's functional support is late (>= 19), arithmetic's flat-input
-  dependence is at 20-24 and its sharp-input dependence at 12-18. Still to do:
-  G side per layer (needs per-layer gradient covariances), attention modules,
-  and an end-to-end edit on layers >= 26.
+* **Locality:** done on both sides for all MLP layers and for the attention
+  projections of layers 20/24/28: memorization's functional support is late
+  and in the MLPs; attention inputs carry the signature but no memorized
+  function in their flat directions; late-layer edits are a weak lever.
 * **Side-restricted pruning (from the arithmetic dissociation).** Test end to
   end whether pruning the G-side flat bulk only removes memorization while
   sparing arithmetic / GSM8K, and whether A-side-only pruning destroys it.
