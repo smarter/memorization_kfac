@@ -696,6 +696,39 @@ selective for memorization (ratios 8-9 vs 3-5 at 26-28); what I predicted was a
 better arithmetic/forgetting trade-off there, and that is not what the
 per-weight rule delivers. K-FAC 26-28 (brute-doll) pending.
 
+## 2026-09-05: the private block as a container (probe_noise_scale, `noise_sweep.png`)
+
+Gaussian noise of matched Frobenius norm per matrix, applied to all six gate/up
+matrices of layers 23-25 at once, confined to the private-private block
+(flattest 60% x 60%; it holds ~76 of each matrix's ~128 norm), the public
+block (sharpest 40% x 40%; ~55) or isotropic:
+
+| norm | private: strict / typical dloss / arith | public: strict / dloss / arith | isotropic |
+|---|---|---|---|
+| 30 | 0.84 / +0.003 / 0.887 | 0.77 / +0.014 / 0.882 | 0.82 / +0.007 / 0.892 |
+| 60 | 0.43 / +0.012 / 0.887 | 0.28 / +0.059 / 0.850 | 0.40 / +0.026 / 0.873 |
+| 90 | 0.18 / +0.028 / 0.874 | 0.04 / +0.147 / 0.751 | 0.11 / +0.060 / 0.823 |
+| 120 | 0.07 / +0.050 / 0.833 | 0.03 / +0.312 / 0.591 | 0.05 / +0.120 / 0.738 |
+
+* Per unit norm, public noise breaks everything faster, memorization
+  included; but per unit *collateral*, private noise is far more selective:
+  at ordinary-text damage ~+0.03 nats, private noise leaves strict recitation
+  at 0.18, isotropic at ~0.40, public at ~0.6.
+* Random private noise at norm 120 reaches the same recitation removal as the
+  rho=0.6 curvature edit (strict 0.07 vs 0.075; memorized loss 0.70 vs 0.63)
+  with *less* collateral: typical loss +0.050 vs +0.076 and arithmetic 0.833
+  vs 0.742 (identity edit) / ~0.60 (K-FAC two-sided at that forgetting).
+* Reading: the subspace is what matters, not the ranking within it. Zeroing
+  the flat components (pruning) removes memorization but also systematically
+  removes arithmetic's flat-input components; random perturbation of the same
+  block scrambles the memorized code (which needs many coordinates to agree)
+  while leaving any individual public-facing computation mostly intact. This
+  is the theory's container prediction in a graded, data-free form, and a
+  candidate method: label-free, no correction pass, no C^2 ranking.
+* End-to-end check queued: the perturbed models (private 60 / 90 / 120, public
+  30) saved under out/aux and run through the pipeline's eval + GSM8K with
+  --start-from-model and rho = 1 (no further edit).
+
 ---
 
 ## Backlog
