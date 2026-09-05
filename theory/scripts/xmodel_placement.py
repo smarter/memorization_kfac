@@ -38,17 +38,20 @@ def coupling(seqs, mask, bs=8):
             del logits, grads
         ntar += int(mk_.sum()); cap.clear()
     return (acc_ / ntar).cpu()
-Cr = coupling(R, Rm); Cn = coupling(N_, Nm)
+import os
+mf = f"{S}/xmodel_{tag}_placement_map.pt"
+if os.path.exists(mf): M = torch.load(mf); Cr, Cn = M["Cr"], M["Cn"]; print("loaded map", flush=True)
+else: Cr = coupling(R, Rm); Cn = coupling(N_, Nm); torch.save({"Cr": Cr, "Cn": Cn}, mf)
 print(f"\n[{tag}] layer | C recited (x1e3) | C ordinary (x1e3) | ratio")
 for l in range(NL): print(f"[{tag}] {l:5d} | {1e3 * Cr[l]:9.3f} | {1e3 * Cn[l]:9.3f} | {Cr[l] / Cn[l]:6.2f}")
 # test: isotropic noise on five bands
 m0 = token_stats(model, R, Rm, want_margins=True)["margins"][:, PRE - 1:]; n0 = token_stats(model, N_, Nm, want_margins=True)["margins"][:, PRE - 1:]
 basep = token_stats(model, pile[:160], torch.ones(160, 511, dtype=torch.bool), bs=4)["loss"]; basen = token_stats(model, N_, Nm)["loss"]
-bands = [(l, l + 2) for l in np.linspace(3, NL - 4, 5).round().astype(int)]
+bands = [(int(l), int(l) + 2) for l in np.linspace(3, NL - 4, 5).round().astype(int)]
 print(f"\n[{tag}] band noise (per-matrix norm {NU}): band | predicted var recited, ordinary | measured var recited, ordinary | pred ratio | meas ratio | strict recited | ordinary d | pile d", flush=True)
 for lo, hi in bands:
     ms = modules(model, range(lo, hi + 1)); W0 = {k: m.weight.detach().clone() for k, m in ms.items()}; O, I = next(iter(W0.values())).shape; sig2 = NU ** 2 / (O * I)
-    g = torch.Generator(device=dev).manual_seed(lo); dW = {}
+    g = torch.Generator(device=dev).manual_seed(int(lo)); dW = {}
     for k in W0: n = torch.randn(W0[k].shape, device=dev, generator=g, dtype=torch.float32); dW[k] = n * (NU / n.norm())
     set_weights(ms, W0, dW)
     r = token_stats(model, R, Rm, want_margins=True); rn = token_stats(model, N_, Nm, want_margins=True); rp = token_stats(model, pile[:160], torch.ones(160, 511, dtype=torch.bool), bs=4)
