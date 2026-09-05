@@ -1037,7 +1037,7 @@ populations before queueing:
 | remove23_25 (delete, layers 23-25) | 0.295 / 0.204 | +0.021 | +0.027 | 0.827 |
 | remove23_25_half (alpha=0.5) | 0.044 / 0.733 | +0.005 | +0.000 | 0.882 |
 | remove19_28 (delete, layers 19-28) | 1.21 / 0.035 | +0.093 | +0.152 | 0.449 |
-| remove23_28 (delete, layers 23-28) | building | | | |
+| remove23_28 (delete, layers 23-28) | -- / 0.074 | +0.048 | +0.083 | 0.759 |
 
 * The coupled-basis deletion of 23-25 reproduces the K-FAC-basis probe
   (0.318 / 0.180, +0.024, +0.027, 0.857) to within a few thousandths; the
@@ -1050,6 +1050,12 @@ populations before queueing:
   holds no skill -- which is what the side and layer results said all along.
   A 23-28 variant is being built to extend forgetting without touching the
   arithmetic layers.
+* remove23_28 lands at the forgetting of norm-120 private noise (strict
+  0.074 vs 0.083) with the same typical/Pile cost (+0.048/+0.083 vs
+  +0.047/+0.087) but lower arithmetic (0.759 vs 0.843): layers 26-28 add
+  forgetting only at the price of arithmetic, in line with the weak late-layer
+  lever of 2026-09-05. Deletion's advantage over noise is a three-layer
+  result so far.
 * Queue (batch 10, same pipeline as batch 9: rho=1, start_from_model):
-  remove23_25, remove23_25_half, remove23_28, then remove19_28 as the
-  negative control.
+  sorer-rein = remove23_25, sural-weal = remove23_25_half, mesne-bias =
+  remove23_28, dingy-nine = remove19_28 (negative control).
