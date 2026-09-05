@@ -698,7 +698,13 @@ per-weight rule delivers. Confirmed by modal-tier (identity 26-28, rho 0.45): 19
 0.641, i.e. +0.12 mem and +0.12 GSM8K at matched perplexity, but at matched
 forgetting (mem ~0.20) the 23-25 curve already gives GSM8K ~0.63: the late-layer
 per-weight edit just buys less forgetting per unit perplexity. K-FAC 26-28
-(brute-doll) pending.
+(brute-doll, marginal 0.8): 18.55 / 0.286 / 0.366 / 0.644, i.e. +0.155 mem and
++0.08 GSM8K at matched perplexity; on the populations mem loss 0.34 ->
+arithmetic 0.840 with typical loss 2.186, vs the 23-25 EK-FAC curve's ~0.81 /
+~2.165 at that forgetting: +0.03 arithmetic for +0.02 nats of clean-text loss.
+modal-tier on the populations: 0.62 -> 0.754 / 2.242 vs the identity curve's
+0.76-0.78 / 2.213. Verdict: moving the edit to layers 26-28 is a weak lever at
+best (K-FAC) and a loss (identity); the side rule is the effective one.
 
 ## 2026-09-05: the private block as a container (probe_noise_scale, `noise_sweep.png`)
 
