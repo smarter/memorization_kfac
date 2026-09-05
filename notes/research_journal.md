@@ -1259,3 +1259,45 @@ Capability suite, first five models (delta vs unedited, percentage points):
 * LAMBADA: deletion and the curvature edit gain +1.0-1.6; noise loses 1-1.6.
   Removing content helps next-word prediction on narrative text; adding
   random structure hurts it -- the removal/addition asymmetry again.
+
+## 2026-09-05: band-resolved removal-vs-noise (round 1) and self-influence
+
+**Band ratio, round 1** (`probe_band_ratio.py`, quintile blocks Q_k(G) x
+Q_k(A), shrink alpha=0.5 vs matched-norm noise, norms 12.5-14.7 per matrix):
+
+| block | shrink: typical / Pile / mem strict | noise: typical / Pile / mem strict | ratio (typical, Pile) |
+|---|---|---|---|
+| Q0-Q3 (flattest 80%) | +0.0003..0.0009 / ~0 / 0.947-0.953 | +0.0005..0.0013 / +0.0007..0.0010 / 0.942-0.960 | ~1 but at the noise floor |
+| Q4 (sharpest 20% x 20%) | +0.0248 / +0.0394 / 0.822 | +0.0060 / +0.0071 / 0.909 | 4.1, 5.5 |
+
+The computation signature (removal several times dearer than noise) appears
+only in the head block; in the four bulk blocks a perturbation of norm 13 does
+nothing measurable either way (the margin picture: small perturbations are
+free). Round 1 is therefore uninformative about the bulk; round 2 (running)
+removes each band block fully (alpha=1, norms ~26-29) against matched noise.
+
+**Self-influence** (`probe_self_influence.py`, gate/up of layers 23-25,
+K-FAC eigenbasis, damping 0.1 x mean eigenvalue, 600 items per population):
+SI(x) = sum c_oi(x)^2 / (lambda_o mu_i + damp).
+
+| population | SI median | grad norm^2 median | SI / grad^2 (mean inverse curvature along the gradient) | private-private share of SI |
+|---|---|---|---|---|
+| memorized | 8.4e7 | 180 | 5.0e5 | 0.497 |
+| ordinary windows | 4.2e9 | 1.9e4 | 2.4e5 | 0.303 |
+| arithmetic | 3.5e5 | 0.96 | 3.8e5 | 0.346 |
+
+* Raw self-influence is a poor memorization detector for an already-trained
+  model (AUC memorized vs windows 0.16, i.e. inverted): it is dominated by
+  gradient magnitude, and memorized items are fit (loss 0.018), so their
+  gradients are 100x smaller. Feldman-Zhang-style scores measure fit as much
+  as privacy.
+* Normalising by the gradient norm isolates the *direction*: the mean inverse
+  curvature along a memorized item's gradient is 2.1x that of an ordinary
+  window (AUC 0.978), and 50% of its H^-1-weighted gradient energy sits in
+  the private-private block against 30% for ordinary text. This is the
+  gradient-side twin of the forward private-share detector (AUC 0.99; rank
+  correlation between the two 0.40 raw, 0.67 for the private-block share).
+  Influence functions and the forward detector agree on what memorization
+  is: an item whose gradient points into the flat bulk.
+* Arithmetic sits between (1.6x the ordinary inverse curvature, 35% private
+  share), as its flat-input / sharp-output profile predicts.
