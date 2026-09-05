@@ -2199,3 +2199,26 @@ As the coupling map predicted: less forgetting per unit norm at 17-20
 20-24 flat-input band) but not at 17-19. The recall test (the point of the
 placement prediction: mem/facts 4.2-4.5 vs 3.0-3.3) is running on GPUs 4-5
 after a vLLM start failure on GPUs shared with the DVC eval.
+
+**Third-population control: the transfer is set-level.** (`make_targeted_edit2.py`)
+
+| norm | train (from 0.996) | held-out Dolma (from 0.983) | recited dolmino windows (from 1.00) | clean | typical | Pile | arith |
+|---|---|---|---|---|---|---|---|
+| 5 | 0.049 | 0.480 | 0.984 | 0 | 0 | 0 | 0.892 |
+| 10 | 0.027 | 0.309 | 0.969 | 0 | +0.0005 | 0 | 0.893 |
+| 19 | 0.019 | 0.156 | 0.946 | 0 | +0.0023 | +0.0001 | 0.892 |
+
+The edit removes 84% of the held-out *Dolma* items' recitation at norm 19 but
+only 5% of the recitation of the 129 ordinary dolmino windows the model
+recites -- a memorized population never used in the edit and drawn from a
+different distribution. So the shared component of the memorized set's
+margin gradient is shared by *that set* (source, format, style of the Dolma
+duplicates), not by memorized text in general. Transfer across items within a
+distribution is nearly complete; transfer across memorized distributions is
+small. This is overfitting at the level of the distribution, as Guillaume
+anticipated, and it bounds what a labelled edit buys: it removes what the
+labelled examples share, which is much more than the examples themselves and
+much less than "memorization". The quotes benchmark (pipeline run irate-prof)
+will show the same thing on a third memorized distribution; the gradient
+cosines against ordinary and fact tokens (running) will show how much of the
+shared direction is a generic margin direction.
