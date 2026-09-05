@@ -611,6 +611,43 @@ Write-ups in progress (scratchpad `tex/`): `memorization_notes.tex` (long
 notes, 5 pp.) and `key_findings.tex` (short, 3 pp.); both compile, each with
 one pending item (layer-26-28 edits; checkpoint dynamics).
 
+## 2026-09-05: dynamics across training checkpoints (`probe_checkpoint`, `dynamics.png`)
+
+Stage-1 checkpoints at 1.26T / 2.10T / 2.94T / 3.78T tokens (the hub's
+step-101k and step-300k branches serve byte-identical weights, an upstream
+mislabel, so only four distinct stage-1 points) plus the final model; each
+checkpoint's own coupled covariances define its eigenbases.
+
+| tokens | mem strict recitation | mem suffix acc | arith acc | L24 AUC | private share mem / windows |
+|---|---|---|---|---|---|
+| 1.26T | 0.53 | 0.952 | 0.47 | 0.987 | 0.343 / 0.156 |
+| 2.10T | 0.52 | 0.958 | 0.58 | 0.988 | 0.350 / 0.164 |
+| 2.94T | 0.56 | 0.969 | 0.63 | 0.990 | 0.354 / 0.169 |
+| 3.78T | 0.64 | 0.980 | 0.66 | 0.990 | 0.358 / 0.180 |
+| final | 0.99 | 1.000 | 0.89 | 0.990 | 0.366 / 0.189 |
+
+* The memorized set is already 95% recited per token at 1.26T (strict
+  recitation only 0.53 because a few tokens per item are missed); verbatim
+  completion happens mostly in stage 2 (0.64 -> 0.99). Arithmetic keeps
+  improving through stage 1 and jumps in stage 2.
+* The public/private split and the detector are fully formed at 1.26T (AUC
+  0.987) and barely change afterwards.
+* Per-item private share is a stable property (Spearman 0.90 for memorized
+  items, 0.91 for windows, between 1.26T and final) and does **not** predict
+  which items will be recited later (Spearman with recitation gain -0.06 /
+  -0.10; items not yet recited at 1.26T have slightly *lower* share).
+* But it tracks the memorization state: ordinary windows that are not recited
+  at 1.26T and are recited by the final model (n=209) move from share 0.13
+  (typical) to 0.25; never-recited windows move 0.16 -> 0.19; already-recited
+  ones 0.30 -> 0.33. Memorizing an item during training means routing its
+  inputs into the private subspace; the private share is a consequence of
+  memorization, not a precursor.
+
+Theory reading: the private subspace exists from early in training (it is a
+property of the population geometry), and items enter it as they are
+memorized. Which items get memorized is decided by something else (exposure,
+duplication); where they are stored is decided by the geometry.
+
 ---
 
 ## Backlog
