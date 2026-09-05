@@ -907,3 +907,57 @@ the whole matrix. Predictions: inverse-magnitude and small-only should recover
 pruning's Pile behaviour; ratio should forget most per unit collateral; shrink
 should forget little (uniform scaling of the block barely crosses margins).
 Queued behind ovoid-pope.
+
+## 2026-09-05: noise shape, round 1 -- the shape inside the block does not matter, removal does
+
+`probe_noise_shape.py`, layers 23-25 gate/up, private block = flattest 60% x
+60% (general-text depth), matched Frobenius norm per matrix, run as 8 shards
+(one GPU each, ~8 min wall). Base: mem loss 0.018 / strict 0.99, typical
+2.137, Pile 2.348, arith 0.892. Block norms: ||W|| ~ 130, ||W_priv-priv|| ~ 76
+(34% of the energy in 36% of the coordinates), median |W~| 0.013.
+
+| shape (norm 90) | mem loss / strict | typical | Pile | arith |
+|---|---|---|---|---|
+| iso | 0.335 / 0.159 | +0.026 | +0.047 | 0.868 |
+| inverse-curvature | 0.329 / 0.183 | +0.027 | +0.044 | 0.862 |
+| inverse-magnitude | 0.348 / 0.153 | +0.028 | +0.045 | 0.869 |
+| small components only | 0.344 / 0.176 | +0.026 | +0.045 | 0.870 |
+| large components only | 0.334 / 0.185 | +0.027 | +0.045 | 0.869 |
+| rank 32 | 0.334 / 0.177 | +0.027 | +0.046 | 0.884 |
+| oracle ratio (mem/general depth), in block | 0.353 / 0.165 | +0.027 | +0.046 | 0.871 |
+| oracle ratio, whole matrix | 0.401 / 0.110 | +0.045 | +0.066 | 0.849 |
+| remove the whole block (shrink alpha=1, norm 76) | 0.318 / 0.180 | +0.024 | **+0.027** | 0.857 |
+
+Norm 120 tells the same story (Gaussian shapes: mem 0.66-0.70 / 0.07-0.08,
+typical +0.047-0.050, Pile +0.081-0.087, arith 0.83-0.85; whole-matrix ratio
+0.804 / +0.090 / +0.148 / 0.776).
+
+* **Every Gaussian shape confined to the block is equivalent**, to within
+  noise: inverse-curvature, inverse-magnitude, small-only, large-only, rank 32
+  and even the oracle shape targeted by the memorized set's own depth all give
+  the same forgetting and the same collateral as isotropic noise of the same
+  norm. Second-order reasoning: an item's logit shift under noise with
+  per-coordinate variance s_oi^2 has variance sum s_oi^2 u_o^2 v_i^2 (u, v =
+  the item's coordinates); if the item's energy is spread evenly over the
+  block, every shape with the same total variance gives the same shift.
+  The invariance is therefore direct evidence that the memorized code has
+  no preferred sub-directions inside the private block -- the distributed
+  code of the band-removal experiments, seen from the noise side. It also
+  says the "magnitude ranking protects OOD text" explanation from batch 9 is
+  wrong: inverse-magnitude and small-only noise cost Pile exactly what
+  isotropic noise costs.
+* Leaving the block hurts: the same oracle shape over the whole matrix has
+  1.7x the typical and 1.4x the Pile collateral for less forgetting. The
+  block, not the shape, is the lever.
+* **Removal is different from addition.** Zeroing the entire private-private
+  block of six matrices (34% of their energy) gives the same forgetting and
+  the same in-distribution collateral as norm-90 noise but *half* the Pile
+  collateral (+0.027 vs +0.047), with arithmetic at 0.857. So the reason
+  pruning spares out-of-distribution text is not the ranking but that it
+  removes existing structure instead of adding random structure: Pile text
+  (private relative to dolmino) has little function in W_priv-priv but is
+  exposed to any random content placed there. Round 2 (running) matches the
+  norms: noise at 38/57/76 vs shrink at alpha 0.25/0.5/0.75 vs prune-like
+  removal, plus sign flip (norm 152), a random permutation of the block
+  entries (same energy, no structure), and the same operations on the public
+  block as the control.
