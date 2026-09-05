@@ -1978,3 +1978,23 @@ per token, 0.76 per item; median measured/predicted 0.75, mean 0.0233 vs
 error from 8 observations, so 0.60 is near its ceiling. The first-order law
 gives the scale of the random shift to ~20% and ranks tokens and items, with a
 mild overshoot consistent with saturation of the largest shifts.
+
+**Gate smoothing refuted; the mean shift is normalisation shrinkage.**
+`probe_smoothed_gate.py`: replacing SiLU by its Gaussian smoothing (the exact
+mean of the gate under the block noise) shifts margins by +0.002 to +0.005,
+against measured -0.136 (norm 19) and -0.564 (38). The convexity of the gate
+is *not* the mechanism. Per-token analysis of the measured noise shifts
+(`probe_margins.pt`): the coefficient c = -E[dm]/m is 0.0122, 0.0508, 0.1155,
+0.2006 at norms 19/38/57/76, i.e. c/n^2 = 3.4-3.6e-5 constant (exactly
+quadratic), and identical for facts (0.0124, 0.0502, 0.1094, 0.1836) -- but per
+token the shift correlates weakly with the margin (corr -0.03..-0.13; deciles
+at norm 76: margin 3 -> shift -1.2, margin 17 -> -2.6, sub-proportional) and
+better with the token's *removal* shift (corr 0.21 -> 0.56 with norm; coef
+0.53 at 76). Joint regression at 76: shift = -0.089 m_t + 0.41 x removal_t.
+Two-term reading, both normalisation effects of OLMo-2's architecture:
+(i) the final RMSNorm sees extra variance from the noise and shrinks all
+logits, hence margins, proportionally (coef k1 sigma^2 ~ 0.09 at norm 76);
+(ii) each edited layer's post-feedforward RMSNorm sees extra variance in the
+MLP output and shrinks that layer's genuine contribution -- whose effect on the
+margin is the removal shift -- by a factor f ~ 0.41 at norm 76. Variance-budget
+probe running to check both factors against the measured RMS ratios.
