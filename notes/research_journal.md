@@ -656,7 +656,11 @@ zinky-pons (0.4: +0.057 GSM8K at equal forgetting) the identity G-only gain is
 real at stronger edits only. The requeued A-only 0.6 (tumid-bang) hit DVC's
 run-cache and reused fetid-esne's eval output, so its perplexity is still
 missing (mem 0.126 / quotes 0.232 / GSM8K 0.594); the model is the same and
-its population metrics will be taken from that.
+its population metrics are fetid-esne's: mem loss 0.644 -> arithmetic 0.72,
+i.e. on or slightly below the two-sided identity curve (0.74-0.78 at 0.62-0.63),
+while G-only at the same nominal rho is milder (0.53 -> 0.80). Identity
+A-only 0.4 (sandy-delf): 1.04 -> 0.43 (curve ~0.37). In the identity basis the
+side asymmetry is weaker than for K-FAC but has the same sign.
 
 ---
 
