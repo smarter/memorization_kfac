@@ -2532,3 +2532,35 @@ dolmino sequences; everything else as in the 7B probes.
   The signature scales with the model: the smaller model concentrates
   memorization in fewer layers and separates it less cleanly from ordinary
   text in the spectrum.
+
+## 2026-09-05: groups within the recited set (per-cluster edits)
+
+`probe_groups.py`: per-item bulk gradient coefficients of the 129 recited
+dolmino windows (100k-coefficient sketches per matrix), cosine matrix, average
+linkage into 4 clusters (sizes 23 / 30 / 34 / 42; within-cosines 0.66 / 0.54
+/ 0.56 / 0.04, between 0.03-0.06), then coherent edits per cluster at norms 5
+and 10 vs the union direction (strict recitation remaining per cluster):
+
+| direction (norm 5) | c1 | c2 | c3 | c4 | Dolma held-out | typical | Pile |
+|---|---|---|---|---|---|---|---|
+| cluster 1 | 0.00 | 0.00 | 0.94 | 0.88 | 0.970 | +0.0225 | 0 |
+| cluster 2 | 0.00 | 0.00 | 1.00 | 0.90 | 0.968 | +0.0195 | 0 |
+| cluster 3 | 1.00 | 1.00 | 0.00 | 0.57 | 0.975 | +0.0261 | 0 |
+| cluster 4 (incoherent) | 1.00 | 1.00 | 0.00 | 0.00 | 0.966 | +0.0361 | 0 |
+| union | 0.00 | 0.00 | 0.00 | 0.12 | 0.975 | +0.0506 | 0 |
+
+* Two super-groups: {1, 2} and {3, 4}. A direction from either member of a
+  super-group removes the whole super-group's recitation and leaves the other
+  super-group intact (0.88-1.00). Selectivity within a memorized distribution
+  is real and clean; Dolma and Pile are untouched throughout.
+* Collateral per item forgotten is *not* reduced by grouping: cluster 2 forgets
+  53 items for +0.0195 (0.00037 per item), the union 129 for +0.0506
+  (0.00039). Each sub-direction is about as aligned with ordinary dolmino
+  text as the union is; the cost of removing memorized text drawn from the
+  preserved distribution is proportional to how much of it one removes, at a
+  rate set by that alignment. Grouping buys *choice*, not a discount.
+* For the two-stage procedure: detect, group, then remove the groups one
+  wants; expect near-zero cost for groups foreign to the preserved
+  distribution (Dolma-like) and a fixed per-item cost for groups drawn from
+  it, predictable from the cosine of the group's direction with the preserved
+  population's.
