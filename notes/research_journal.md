@@ -648,6 +648,16 @@ property of the population geometry), and items enter it as they are
 memorized. Which items get memorized is decided by something else (exposure,
 duplication); where they are stored is decided by the geometry.
 
+Identity-basis side rules, remaining points (2026-09-05): G-only at 0.6
+(bushy-roup) 18.66 / 0.202 / 0.253 / 0.632 is a milder edit than the two-sided
+0.6 (+0.061 mem at matched ppl, +0.015 GSM8K); on the populations it sits on
+the two-sided identity curve (mem loss 0.53 -> arithmetic 0.80). Together with
+zinky-pons (0.4: +0.057 GSM8K at equal forgetting) the identity G-only gain is
+real at stronger edits only. The requeued A-only 0.6 (tumid-bang) hit DVC's
+run-cache and reused fetid-esne's eval output, so its perplexity is still
+missing (mem 0.126 / quotes 0.232 / GSM8K 0.594); the model is the same and
+its population metrics will be taken from that.
+
 ---
 
 ## Backlog
