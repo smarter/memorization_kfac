@@ -2390,3 +2390,9 @@ every label-free edit: at Dolma 0.15 the best curvature edits sit at ppl
 set), and the Dolma metric includes the train half (held-out strict 0.156,
 consistent with 0.150 loose); quotes transfer is 18% at this norm. The
 norm-10 model (minor-kifs) is running.
+
+**Pipeline result for the norm-10 targeted model (minor-kifs):** ppl 17.569
+(*below* the unedited 17.62 -- the first-order interference relief in the
+benchmark), Dolma 0.246, quotes 0.897, GSM8K 0.669. The three targeted points
+(norms 10/19/38) trace: ppl 17.57 / 17.61 / 18.39, Dolma 0.25 / 0.15 / 0.08,
+quotes 0.90 / 0.79 / 0.55, GSM8K 0.669 / 0.669 / 0.671.
