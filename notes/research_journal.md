@@ -1966,3 +1966,15 @@ is asymptotically linear). Test running (`probe_smoothed_gate.py`): margins of
 the smoothed-gate model at the seven norms vs the measured mean shifts under
 actual noise, for memorized and fact tokens; then strict recitation
 re-predicted with the derived mean and the measured spread.
+
+**First-order forgetting law, per token** (`probe_spread_predict.py`, 120
+memorized items x 48 tokens, exact autograd of each token's margin with respect
+to the gate pre-activations and up outputs of layers 23-25 at *all* positions,
+so that Var(dm_t) = sigma^2 sum_l sum_s ||G_S^T dm_t/dh_s||^2 ||A_S^T a_s||^2
+includes the paths through attention from earlier positions): predicted vs
+measured per-token spread (two seeds, four norms) -- log-log correlation 0.60
+per token, 0.76 per item; median measured/predicted 0.75, mean 0.0233 vs
+0.0273 predicted (17% high). The measured per-token spread has ~35% sampling
+error from 8 observations, so 0.60 is near its ceiling. The first-order law
+gives the scale of the random shift to ~20% and ranks tokens and items, with a
+mild overshoot consistent with saturation of the largest shifts.
