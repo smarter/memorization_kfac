@@ -2156,3 +2156,22 @@ the block content itself is ~0.
   quotes benchmark (a different memorized distribution) via the pipeline;
   (c) the cosine between the two halves' gradient directions (how large the
   shared component is), full and bulk-projected.
+
+**P4 confirmed: recall cost of the targeted edit** (olmo-eval, same subsets):
+
+| model | held-out recitation | NQ | PopQA | Jeopardy | HellaSwag | DROP |
+|---|---|---|---|---|---|---|
+| targeted, norm 38 | 0.055 | -1.4 | -0.4 | -0.6 | -0.1 | +1.2 |
+| targeted, norm 76 | 0.013 | -7.8 | -4.8 | -4.9 | -1.3 | -1.6 |
+| deletion 23-25 (norm 76) | 0.180 | -7.9 | -8.0 | -2.7 | -1.3 | -0.1 |
+| private noise 90 | 0.159 | -5.2 | -6.8 | -2.7 | -1.2 | +1.2 |
+
+At norm 38 the targeted edit removes three times more held-out recitation than
+deletion or noise and costs a fifth to a twentieth of their closed-book recall
+(-1.4/-0.4 vs -7.9/-8.0 and -5.2/-6.8), with commonsense and DROP untouched.
+At norm 76 its recall cost catches up with deletion's while forgetting is
+essentially complete (0.013): the shared direction's collateral grows
+super-linearly, as the typical/Pile costs showed, so the useful regime is the
+small-norm one, where the theory's first-order account applies. Pending:
+the third memorized population and the two-half cosine (running), the quotes
+benchmark (queued), and the layer-placement deletions.
