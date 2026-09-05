@@ -2663,3 +2663,35 @@ the same (~9.5). So OLMo-3's weaker forgetting under bulk deletion is not a
 lower coupling ratio; it is either a smaller coherent contribution of the
 bulk block (location) or larger margins. Matched norm is not matched effect
 across models -- compare at matched predicted variance or matched collateral.
+
+## 2026-09-05: causal imprint experiment (OLMo-2 1B) -- first pass, aggressive regime
+
+`imprint_experiment.py`: memorize 96 never-recited dolmino windows (from
+sequences outside the reference pool) by training gate/up of layers 9-13 on
+mixed batches (8 items + 4 reference sequences, equal loss weights) until
+recited; population K-FAC bases from 576 reference sequences. Predictions
+written before running: SGD imprint follows the item gradient (population-
+like, head-heavy); Adam partially whitened; natural gradient fully whitened
+(Prop. 3); the items' representation at the inputs of later trained layers
+recodes toward the bulk as they become recited, at conserved energy.
+* This regime is too aggressive: memorizing costs +0.15-0.35 nats on ordinary
+  text (Adam and SGD alike). Real memorization happens at far lower item
+  weight. A gentle regime (item weight 0.2, 4 items + 8 reference sequences
+  per step, up to 3000 steps) is running for adam/sgd; ng needs lr 1e-1 (at
+  1e-2 the preconditioned step is too small: no learning in 200 steps).
+* SGD (lr 1e-2, 0.885 recited at step 225, ordinary +0.19): imprint energy vs
+  population eigenvalue has POSITIVE exponents, G +0.35..+0.62, A +0.65..+0.71
+  (R2 0.97); imprint bulk share 0.07-0.13 vs 0.36 uniform: the SGD imprint is
+  head-heavy, as predicted. Removing the imprint's bulk block leaves 0.917
+  recited; removing its head block removes all recitation.
+* Recoding under SGD despite the head-heavy imprint: the items' activation
+  profile at the inputs of layers 11/12/13 goes from exponent -0.08 (typical)
+  to -0.18/-0.27/-0.33, bulk share 0.23 -> 0.33 at layer 13 (ordinary 0.21),
+  total energy x0.86-1.02. The representational flattening appears with the
+  fit and grows with the number of trained layers upstream. (Caveat: the
+  ordinary profile used as reference was measured before training; the
+  patched script now also measures it after.)
+* Edits of the final SGD model are confounded by the reference fine-tuning
+  (removing the imprint's head block lowers ordinary loss by 0.42, i.e. below
+  the original model): the aggressive imprint carries both the items and a
+  generic dolmino adaptation. Clean readings need the gentle regime.

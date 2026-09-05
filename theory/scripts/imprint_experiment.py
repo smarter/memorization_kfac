@@ -11,6 +11,8 @@ import sys, math, time, numpy as np, torch
 sys.path.insert(0, "/tmp/claude-1002/-home-guillaume-memorization-kfac/a39940c3-dcc5-4714-8566-58fa7889e391/scratchpad")
 from xmodel_common import *
 OPT, LR = sys.argv[1], float(sys.argv[2]); MAX_STEPS = int(sys.argv[3]) if len(sys.argv) > 3 else 600
+ITEM_W = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0; NI, NR = (int(v) for v in (sys.argv[5].split(",") if len(sys.argv) > 5 else ("8,4",)))
+RUN = OPT + (f"_w{ITEM_W:g}" if len(sys.argv) > 4 else "")
 P1B = "/home/guillaume/.cache/huggingface/hub/models--allenai--OLMo-2-0425-1B/snapshots"
 import glob; P1B = glob.glob(P1B + "/*")[0]
 TRAIN_LAYERS = (9, 10, 11, 12, 13); PROBE_LAYERS = (11, 12, 13); NITEM = 96; tag = "olmo1b_band"
@@ -68,18 +70,18 @@ if OPT == "ng":
         lam = Q[k][2][:, None] * Q[k][3][None, :]; PRE_[k] = lam.mean() / (lam + 0.05 * lam.mean())
 gi = torch.Generator().manual_seed(2); step = 0; t0 = time.time(); order = torch.randperm(NITEM, generator=gi); ptr = 0
 while step < MAX_STEPS:
-    if ptr + 8 > NITEM: order = torch.randperm(NITEM, generator=gi); ptr = 0
-    xi = items[order[ptr:ptr + 8]].to(dev); ptr += 8; xr = gen[ref_pool[torch.randint(len(ref_pool), (4,), generator=gi)]].to(dev)
+    if ptr + NI > NITEM: order = torch.randperm(NITEM, generator=gi); ptr = 0
+    xi = items[order[ptr:ptr + NI]].to(dev); ptr += NI; xr = gen[ref_pool[torch.randint(len(ref_pool), (NR,), generator=gi)]].to(dev)
     li = torch.nn.functional.cross_entropy(model(input_ids=xi).logits[:, :-1].reshape(-1, model.config.vocab_size), xi[:, 1:].reshape(-1))
     lr_ = torch.nn.functional.cross_entropy(model(input_ids=xr).logits[:, :-1].reshape(-1, model.config.vocab_size), xr[:, 1:].reshape(-1))
-    (li + lr_).backward()
+    (ITEM_W * li + lr_).backward()
     if opt is not None: opt.step(); opt.zero_grad()
     else:
         with torch.no_grad():
             for k, m in mods.items():
                 D = Q[k][0].T @ m.weight.grad @ Q[k][1]; m.weight -= LR * (Q[k][0] @ (D * PRE_[k]) @ Q[k][1].T); m.weight.grad = None
     step += 1
-    if step % 25 == 0 or step == 1:
+    if step % 50 == 0 or step == 1:
         for p in params: p.requires_grad_(False)
         ev = evaluate(); upd = math.sqrt(sum(float(((m.weight - W0[k]) ** 2).sum()) for k, m in mods.items()))
         print(f"[{OPT}] step {step:4d} ({time.time() - t0:5.0f}s): item loss {li.item():.3f} ref loss {lr_.item():.3f} | items recited {ev['item_strict']:.3f} (loss {ev['item_loss']:.3f}) | ordinary d {ev['ord_loss'] - base['ord_loss']:+.4f} pile d {ev['pile_loss'] - base['pile_loss']:+.4f} | band update norm {upd:.1f}", flush=True)
@@ -95,7 +97,7 @@ with torch.no_grad():
         dW = m.weight - W0[k]; D[k] = Q[k][0].T @ dW @ Q[k][1]; Eo = (D[k] ** 2).sum(1); Ei = (D[k] ** 2).sum(0)
         bo, r2o = fit(Q[k][2].cpu(), Eo.cpu()); bi, r2i = fit(Q[k][3].cpu(), Ei.cpu()); gs, as_ = band_slices(Q, k, "bulk")
         print(f"[{OPT}]   {k}: G {bo:+.3f} (R2 {r2o:.2f}) A {bi:+.3f} (R2 {r2i:.2f}) | bulk {float((D[k][gs, as_] ** 2).sum() / (D[k] ** 2).sum()):.3f} (0.36 if uniform) | {float(dW.norm()):.2f}", flush=True)
-Pi1 = profiles(items, IM); report_profiles("after ", Pi1, Po)
+Pi1 = profiles(items, IM); report_profiles("after (vs ordinary before)", Pi1, Po); Po1 = profiles(ordinary, OM); report_profiles("after (vs ordinary after) ", Pi1, Po1)
 # ---- edits of the final model
 Wf = {k: m.weight.detach().clone() for k, m in mods.items()}
 def edit_test(label, dW):
@@ -108,4 +110,4 @@ for band in ("bulk", "head"):
         gs, as_ = band_slices(Q, k, band); Gs, As = Q[k][0][:, gs], Q[k][1][:, as_]; dWi[k] = -Gs @ D[k][gs, as_] @ As.T
     edit_test(f"remove imprint's {band} block", dWi)
     edit_test(f"remove full {band} block", {k: block_delta("remove", band, Q, Wf)[0][k] for k in mods})
-torch.save({"D": {k: v.cpu() for k, v in D.items()}, "final": final, "base": base, "steps": step, "items_idx": items_idx}, f"{S}/imprint_{OPT}.pt"); print("done", flush=True)
+torch.save({"D": {k: v.cpu() for k, v in D.items()}, "Wf": {k: v.cpu() for k, v in Wf.items()}, "final": final, "base": base, "steps": step, "items_idx": items_idx, "Pi0": {k: (a.cpu(), b.cpu()) for k, (a, b) in Pi0.items()}, "Pi1": {k: (a.cpu(), b.cpu()) for k, (a, b) in Pi1.items()}, "Po": {k: (a.cpu(), b.cpu()) for k, (a, b) in Po.items()}, "Po1": {k: (a.cpu(), b.cpu()) for k, (a, b) in Po1.items()}}, f"{S}/imprint_{RUN}.pt"); print("done", flush=True)
