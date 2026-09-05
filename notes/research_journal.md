@@ -1618,3 +1618,50 @@ the absolute second-order formula holds with no free parameter in the bulk:
   already know misestimates curvature. Computing the true diagonal Lambda of
   each population in each basis (`compute_lambda_pop.py`, running) to test the
   cross-population prediction properly.
+
+**Check 3 -- the margin model** (`probe_margins.py`; per-token margins = target
+logit minus best other, for 1054 memorized items x 48 suffix tokens and for the
+answer tokens of 316 NaturalQs/PopQA items the model answers correctly, under
+shrink alpha in {0.1..1} and isotropic noise at norms {19, 38, 57, 76}, two
+seeds; the block is the K-FAC private block of layers 23-25 gate/up):
+
+| quantity | memorized suffix tokens | fact answer tokens |
+|---|---|---|
+| baseline margin: per-token median / item-min median | 9.94 / 2.26 | 3.75 / 1.49 |
+| shift at norm 76, removal: mean (std) | -2.92 (3.70) | -1.38 (2.18) |
+| shift at norm 76, noise: mean (std) | -2.19 (3.17) | -0.82 (1.65) |
+| |mean removal| / std noise | 0.92 | 0.83 |
+| outcome at norm 76: removal / noise | strict 0.179 / 0.287 | acc 0.627 / 0.783 |
+| linearity of shrink response (slope, corr): alpha .25 / .5 / .75 / 1 | 0.96, 0.92 / 0.90, 0.75 / 0.79, 0.57 / 0.67, 0.42 | |
+
+Three corrections to the story told this afternoon:
+1. **The coherent-vs-incoherent (N vs sqrt N) picture is wrong.** The block's
+   coherent contribution to a memorized token's logit (removal shift -2.9) is
+   about equal to the noise-induced spread (std 3.2), not much larger, and
+   noise has a large *systematic* negative mean shift (-2.2), because a
+   confident correct token sits at a maximum: perturbing the logits raises the
+   best competitor on average. Removal beats noise per unit norm by only ~1.3x
+   in mean margin loss, which is enough for 0.18 vs 0.29 strict recitation.
+2. **Facts are not more robust by margin; they are less located here.** Fact
+   answer tokens have *smaller* margins than verbatim tokens (median 3.75 vs
+   9.94; minimum over the answer 1.49 vs 2.26 over the 48-token chain). They
+   survive because the block carries half as much of their logit: removal
+   shifts them by -1.38 against -2.92. "Robustness, not location" must be
+   withdrawn; it is location -- how much of the token's margin the private
+   block of these three layers carries -- and facts are spread over more of
+   the network.
+3. **Why noise is the more selective edit (less recall per unit forgetting).**
+   Noise damage scales with a token's *energy* in the block (variance of the
+   induced shift: memorized/facts = (3.17/1.65)^2 = 3.7x); removal damage
+   scales with the *coherent* block contribution (2.92/1.38 = 2.1x). Memorized
+   tokens route relatively more energy through the block than they extract as
+   aligned contribution -- their code has mixed signs, a distributed code with
+   partial cancellation -- so an edit that acts through energy (noise) is more
+   selective for them than one that acts through the coherent sum (removal).
+   This is the mechanism behind the capability-suite asymmetry, and it is a
+   second-order-vs-first-order distinction after all, just not the one I wrote.
+4. The first-order (linear-in-alpha) model of the shrink response holds to
+   alpha ~ 0.5 (slope 0.90, corr 0.75) and degrades beyond: for large edits the
+   margin response saturates and re-orders (slope 0.67 at alpha = 1). Forgetting
+   curves are therefore predictable from a small-alpha probe up to about half
+   the block, and the full-deletion regime needs the nonlinearity.
