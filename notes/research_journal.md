@@ -2564,3 +2564,21 @@ and 10 vs the union direction (strict recitation remaining per cluster):
   distribution (Dolma-like) and a fixed per-item cost for groups drawn from
   it, predictable from the cosine of the group's direction with the preserved
   population's.
+
+## 2026-09-05: Qwen2.5-7B (different family, different tokenizer) -- partial replication
+
+`xmodel_probe.py` with text re-tokenisation; layers 20-22 of 28. Qwen recites
+little of our corpora: 13 of 9216 dolmino windows at acc == 1 (21 at >= 0.95,
+used), 14 of the Pile windows. With 21 items the population statistics are
+noisy and the set's strict recitation at base is only 0.571.
+* Geometric signature replicates across families: bulk share of activation
+  energy ordinary 0.19-0.20 -> recited 0.43 (OLMo-2 7B: 0.19 -> 0.45); input-
+  side half-whitening exponent -0.52 (R2 0.67-0.69), between the OLMo 1B
+  (-0.35) and 7B (-0.67). Gradient-side exponents (-0.9 to -1.2) and the
+  coupling ratio (58x) are inflated by the misfit confound (43% of the set is
+  not fully recited), so the input side is the clean comparison.
+* Shared direction: two-halves cosine 0.15 full / 0.09 bulk -- inconclusive
+  at 10-11 items per half (the per-item orthogonal components dominate a
+  sum of ten), and possibly real: these are incidental recitations, not a
+  memorized distribution of Qwen's. Needs a corpus Qwen memorized at scale.
+* Edits (removal/noise asymmetry) pending in the same run.
