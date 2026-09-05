@@ -2047,3 +2047,30 @@ which the coupling law already fixes.
 
 Three mechanisms tested for one number, two refuted by construction rather
 than by fitting: this is the kind of test the theory should keep facing.
+
+## 2026-09-05: targeted coherent removal (the theory's edit), with a held-out split
+
+Guillaume: do the targeted edit, then the per-layer coupling map, mindful of
+overfitting. Design (`make_targeted_edit.py`): split the 1054 memorized items
+50/50 (seed 0). Direction = the margin gradient of the *train* half summed over
+suffix tokens, projected onto the private block of gate/up in layers 23-25
+(G_S G_S^T grad A_S A_S^T), sign chosen to reduce margins, per-matrix norm
+matched to the deletion / noise runs (19, 38, 57, 76). Evaluate memorized
+train and held-out halves separately, plus typical, Pile, arithmetic; then
+recall (NQ/PopQA/Jeopardy) and HellaSwag/DROP through olmo-eval for the norm-38
+and norm-76 models.
+
+Predictions before running:
+* P1 (coherence): forgetting of *train* items per unit norm far exceeds block
+  deletion's (coherent AND aligned): strict recitation of the train half well
+  below 0.18 at norm 76, and already low at norm 38 where deletion gives 0.73.
+* P2 (orthogonal per-token code): transfer to *held-out* items is weak --
+  their strict recitation at equal norm close to what isotropic noise of that
+  norm gives (0.79 at 38, 0.28 at 76), not to what the train half shows. If
+  transfer is strong instead, the memorized set shares directions the
+  per-token picture missed, and that would be the more interesting outcome.
+* P3 (shape invariance): in-distribution collateral equals that of any bulk
+  edit of the same energy: typical +0.005 at 38, +0.02 at 76.
+* P4 (coupling law): recall cost at equal norm below deletion's (facts couple
+  weakly to the train items' directions), and at matched *train* forgetting far
+  below it.
