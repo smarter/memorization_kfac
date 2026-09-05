@@ -2600,3 +2600,41 @@ bulk 1.8. Activation bulk share 0.28-0.31 -> 0.42-0.45 (A exponents -0.30 to
 -0.40, R2 0.36-0.51); halves cosine 0.05 in the bulk at 8 items per half.
 Consistent with the dolmino-scan run; steps of 1/16 in the strict fraction, so
 nothing beyond direction should be read from these numbers.
+
+## 2026-09-05: OLMo-3 7B -- first results, and a surprise
+
+Branch `theory-paper` (new). `xmodel_probe.py` on Olmo-3-1025-7B (32 layers,
+same tokenizer), layers 23-25, recitation scan 111 windows (acc == 1).
+* Spectrum: G p90/p10 4.4-5.3, head > 10x median 0.05-0.45%: same shape as
+  OLMo-2 7B.
+* Shared direction replicates strongly: two-halves cosine 0.909 full / 0.893
+  bulk; vs never 0.07.
+* Whitening much weaker than OLMo-2 7B: A exponents -0.17 to -0.27 (R2
+  0.3-0.4), G -0.13 to -0.49; activation bulk share 0.26-0.28 -> 0.32-0.36
+  (OLMo-2: 0.19 -> 0.45). Product-law coupling ratio 8.3 (OLMo-2 ~24).
+* Edits at 23-25 (base recited 1.000, loss 0.003): bulk remove 0.955 |
+  +0.0099 | +0.021; bulk noise 0.964 | +0.0079 | +0.018; head remove 0.568 |
+  +0.109 | +0.144; head noise 0.982 | +0.0164 | +0.015. Removal/noise ratio
+  bulk 1.25, head 6.7 (the asymmetry law holds), but the bulk block of 23-25
+  holds almost none of the recitation (4.5% forgotten vs 80% in OLMo-2 7B),
+  and head removal forgets 43% at 10x the cost -- per unit collateral the
+  two are equal (~4 %/0.01 nats): nothing at 23-25 is selective in OLMo-3.
+* Layer map (xmodel_placement, recited vs ordinary margin sensitivity):
+  OLMo-3's recited/ordinary ratio rises from 1.3 at layer 10 to a peak of
+  7.2 at layers 23-24 and stays ~7 to layer 27; OLMo-2's ratio is 5-11
+  everywhere with a peak of 11 at 23-24. So 23-25 IS the most coupled band
+  in OLMo-3; the recitation is not elsewhere -- it is stored differently.
+* Same items: 107 of OLMo-3's 111 recited windows are among OLMo-2 7B's
+  129 (118 of 1B's 127). These are globally duplicated dolmino texts
+  (Qwen recites 10 of OLMo-2's 129). Different models store the same
+  memorized items with different flatness: OLMo-2 7B in the bulk, OLMo-3
+  much less so.
+Hypotheses to separate with the running fp32 theory tests: (H1) location --
+in OLMo-3 the content is not in the flat directions (weak whitening says so);
+(H2) margins -- same coupling, larger margins (base loss 0.003). The
+margin-shift variances under matched noise and the base margins decide.
+Candidate explanation inside the theory: content the population itself
+contains frequently is population content and consolidates into the head;
+the flat location is for rare items. OLMo-3 saw ~6T tokens with these
+boilerplates; the "consolidation" reading predicts head-heavy profiles and
+low bulk shares for the most duplicated items in any model.
