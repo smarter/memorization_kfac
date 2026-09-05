@@ -1665,3 +1665,31 @@ Three corrections to the story told this afternoon:
    margin response saturates and re-orders (slope 0.67 at alpha = 1). Forgetting
    curves are therefore predictable from a small-alpha probe up to about half
    the block, and the full-deletion regime needs the nonlinearity.
+
+**Check 2b -- cross-population costs with the true diagonal curvature**
+(`compute_lambda_pop.py`: Lambda^P_Q = E_t[g~^2 a~^2] of population P in the
+coupled basis of reference Q, sampled labels, 1152 sequences each):
+
+| edit -> population | predicted 1/2 sum Lambda C^2 | measured |
+|---|---|---|
+| dolmino bulk -> dolmino | +0.0082 | +0.021 |
+| dolmino bulk -> Pile | +0.090 | +0.027 |
+| Pile bulk -> dolmino | +0.030 | +0.063 |
+| Pile bulk -> Pile | +0.0225 | +0.015 |
+
+Still off by 1.5-3.3x, and the asymmetry is wrong in both directions (predicted
+11x cross/own for the dolmino deletion, measured 1.3x; predicted 1.3x for the
+Pile deletion, measured 4.2x). The own-population noise curve is also
+under-predicted by a constant 2.3x here, whereas the same formula in the K-FAC
+basis with the collection's EK-FAC Lambda fitted the band probe with constant
+0.57 -- so absolute constants differ by ~2x between the two curvature
+estimates (normalisation / token positions), but the cross-population *pattern*
+is the real failure. Suspect: the diagonal approximation
+E[g~_o g~_o' a~_i a~_i'] ~ delta delta E[g~_o^2 a~_i^2] is justified only in the
+population's own eigenbasis (where second moments are diagonal); for another
+population expressed in this basis the off-diagonal fourth moments are O(1),
+and for a structured perturbation (removal of C itself) they do not average
+out. Testing the second-order theory itself, without factorisation, by measuring
+the exact quadratic form 1/2 E[(sum_m g_m^T dW_m a_m)^2] per token, and the
+first-order term E[g_true^T dW a] which need not vanish for a population the
+model is not at a minimum for (`probe_quadform.py`, running).
