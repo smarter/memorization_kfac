@@ -2973,3 +2973,18 @@ the gentle regime still converging (step 600: item loss 1.19, ordinary
 -0.006, Pile +0.011). The 424B-token checkpoint scan failed (no fast
 tokenizer in that snapshot; sentencepiece missing) -- not needed.
 Paper draft: theory/paper/main.tex (17 pp with appendix), branch theory-paper.
+
+## 2026-09-06: natural gradient in the gentle regime -- minimum-interference storage costs the population least
+NG (lr 1e-1, item weight 0.25, big pool): 0.969 recited at 2450 steps.
+Imprint A exponents -0.60..-0.89, G -0.65..-1.08, bulk share 0.59-0.70;
+imprint's bulk block carries the recitation (0.062 left when removed, head
+block 0.896); recoding at layer 13 -0.26 (0.318 vs 0.222), energy x1.02.
+Collateral trajectory: ordinary +0.012 at step 1500, then falling to -0.005
+at the end while recitation completes; Pile +0.032 -> +0.000. Against the
+650-step control (-0.0155 / -0.002): net at most +0.011 / +0.002, vs Adam's
++0.028 / +0.020. Caveat: 4x more steps, and population training between
+exposures repairs damage while the items keep recurring -- which is itself
+the mechanism the theory describes (imprint and key co-adapt under
+recurrence; the population's gradient removes what interferes).
+Paper draft updated (theory/paper/main.tex, branch theory-paper) and sent.
+All GPUs free.
