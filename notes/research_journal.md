@@ -2833,3 +2833,29 @@ bulk noise 0.482 | +0.0084 | +0.016; head remove 0.412 | +0.109 | +0.144;
 head noise 0.776 | +0.018 | +0.016. Removal/noise cost ratio 1.2 bulk, 6.1
 head. Bulk removal forgets as much of this population as head removal at a
 tenth of the cost -- the opposite of the dolmino windows in the same model.
+
+## 2026-09-06: when were the two populations memorized? (OLMo-2 7B checkpoints)
+`scan_ckpt.py` at stage1-step300000 (1.26T tokens): of the final model's 129
+recited dolmino windows, 7 are recited (mean suffix acc 0.11; 12 above 0.5);
+of the 1054 Dolma windows, 558 are recited verbatim (mean acc 0.70). The
+Dolma set was memorized in the first third of pretraining and then trained
+over for ~2.7T tokens plus midtraining; the dolmino windows were memorized
+after 1.26T -- the remaining checkpoints (424B, 2.1T, 2.9T, 3.8T = end of
+stage 1) will say whether in late stage 1 or in the 50B-token midtraining.
+This is the time axis behind the flatness/deletability split (Law 5 in the
+paper) and the selective-decay corollary.
+
+## 2026-09-06: natural-gradient imprint (aggressive regime, lr 1e-1)
+Memorized at step 500 (0.948 recited): ordinary +0.072, Pile +0.197. At
+matched recitation Adam cost +0.15..+0.21 and SGD +0.19 on ordinary text:
+the minimum-interference direction is 2-3x cheaper for the population that
+defined it, and no cheaper for the Pile (reference relativity, now causal).
+Imprint profile and decay pending. Cross-optimizer decay controls: under
+SGD phase 2 the Adam imprint keeps 0.48 recited (item loss 0.30) where the
+SGD imprint keeps 0.09 (0.7); under Adam phase 2 the Adam imprint keeps
+0.9 (0.06) where the SGD imprint keeps 0.6 (0.19). Same ordering under
+either optimizer: the bulk-heavier imprint survives the population better.
+Erasure is partial in every case (item loss stays far below the unmemorized
+2.5): the filter removes the head part of the imprint and leaves the rest.
+Control run (Adam, item weight 0, big pool) launched to separate item
+collateral from the pool's distribution shift.
