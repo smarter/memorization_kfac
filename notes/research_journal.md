@@ -3033,3 +3033,31 @@ Gradient ascent / NPO on the train half (lr 2e-5, retain loss): the train
 half drops (0.996 -> 0.86 in 40 steps) while the held-out half does not
 move (0.98): item-specific methods do not transfer at this rate. Relaunched
 at lr 1e-4 with snapshots at held-out 0.6 / 0.35 for pipeline evaluation.
+
+## 2026-09-06: unlearning baselines on the Dolma forget set (train half -> held-out half), layers 23-25 gate/up
+Gradient ascent (Adam lr 1e-4, retain CE weight 1): step 90 train 0.205 /
+held-out 0.400 / ordinary +0.057 / Pile +0.077; step 100 train 0.000 /
+held-out 0.002 / ordinary +0.518 / Pile +0.477 -- the classical collapse.
+Snapshots h0.6 (step 90) and h0.35 (step 100) queued for the pipeline
+(sewed-mene, north-tale). NPO (beta 0.1, same lr): step 120 train 0.222 /
+held-out 0.594 / ordinary -0.031 (retain term dominates) / Pile +0.002;
+snapshot h0.6 queued (broad-moit). For reference the coherent step at norm
+19 gives held-out 0.156 at ordinary +0.002, Pile +0.000.
+Windows population: coherent 2.5 models saved for both 7B models (OLMo-2
+held-out 0.138 at +0.0069; OLMo-3 0.089 at +0.0051); GA on the windows
+launched (target held-out 0.14). The olmo-eval/vLLM suite fails to load
+Olmo3ForCausalLM (engine init error) -- suite comparison limited to OLMo-2
+unless fixed.
+
+## 2026-09-06: attention projections and the Dolma set at 23-25 (probe v2)
+Attention q/k/v/o of layers 23-25, recited windows: input-side exponents
+q -0.32 (OLMo-2) / -0.29 (OLMo-3), o -0.03 / -0.24; bulk removal of the
+attention block (norm 38-41) forgets 4% / 0% at +0.003 / -0.000; the
+recitation of these windows is not in the attention projections' bulk
+either. Head lines pending.
+Dolma set at 23-25 (same code as the other bands): OLMo-2 bulk removal 0.202
+left at +0.020 (noise 0.277 at +0.016; head removal 0.088 at +0.259); OLMo-3
+0.400 at +0.010 (noise 0.482; head 0.412 at +0.109). First-order prediction
+from alpha = 0.25: OLMo-3 0.529 vs 0.400 (super-linear response in the
+forgetting regime), consistent with the shrink curve's saturation beyond
+alpha ~ 0.5 seen in the margin study.
