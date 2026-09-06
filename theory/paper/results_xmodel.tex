@@ -1,14 +1,14 @@
-% numbers from xmodel_theory.py / xmodel_placement.py / imprint_experiment.py; pending values are grey dashes
 \newcommand{\pending}{\textcolor{gray}{--}}
 \newcommand{\oiiiDolmaRatios}{6.1 / 1.2}
 \newcommand{\xmodelCollateralRows}{}
-\newcommand{\xmodelForgettingRows}{\multicolumn{6}{c}{\pending}\\}
-\newcommand{\xmodelNarrative}{\pending}
-\newcommand{\ngImprint}{\pending}
-\newcommand{\ngBulk}{\pending}
-\newcommand{\ngRatio}{\pending}
-\newcommand{\ngSteps}{\pending}
+\newcommand{\xmodelForgettingRows}{OLMo-2 7B & shrink $\alpha=0.5$ / $0.75$ / $1$ & predicted $0.969$ / $0.961$ / $0.922$ & measured $0.961$ / $0.930$ / $0.891$ & &\\
+OLMo-3 7B & shrink $\alpha=0.5$ / $0.75$ / $1$ & predicted $0.991$ / $0.982$ / $0.982$ & measured $0.991$ / $0.982$ / $0.955$ & &\\
+\xmodelNoiseRows}
+\newcommand{\xmodelNoiseRows}{}
+\newcommand{\xmodelNoiseNarrative}{}
 \newcommand{\ngDecay}{\pending}
-\newcommand{\ngExp}{\pending}
-\newcommand{\crossDecay}{\pending}
-\newcommand{\regimeNote}{}
+\newcommand{\crossDecay}{under SGD the Adam imprint keeps $0.48$ recited at item loss $0.30$ where the SGD imprint keeps $0.09$ at $0.7$; under Adam the Adam imprint keeps $0.9$ at $0.06$ where the SGD imprint keeps $0.6$ at $0.19$}
+\newcommand{\regimeNote}{The regime is aggressive, with items at $8\%$ of the training tokens, and the $1152$-sequence reference pool overfits after two epochs, so the collateral figures of this section compare optimizers at matched steps rather than measure the cost of memorization; a gentler regime on a $35$k-sequence pool with an item-free control is reported in \cref{app:gentle}.}
+\newcommand{\timelineNote}{by $2.1$T tokens still only $8$}
+
+ewcommand{\gentleSection}{Items at one quarter of the loss weight, four item windows and eight reference sequences per step from a pool of {,}795$ sequences (under one epoch), with an item-free control run of the same optimizer and length. \pending}
