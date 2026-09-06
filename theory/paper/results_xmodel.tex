@@ -14,5 +14,28 @@
 \newcommand{\gentleResults}{Adam reaches $0.97$ recited in $650$ steps with the same imprint profile as in the aggressive regime (input-side exponents $+0.50$ to $+0.58$, bulk share $0.17$--$0.22$) and the same recoding of the items' representation at layer 13 ($-0.24$ against ordinary text on the same final model, bulk share $0.315$ against $0.225$, energy $0.98$--$1.05\times$); removing the imprint's head block leaves $0.03$ recited and removing its bulk block $0.84$. \gentleMore}
 \newcommand{\gentleMore}{SGD reaches $0.98$ in $1100$ steps with input-side imprint exponents $+0.65$ to $+0.77$ and bulk share $0.07$--$0.13$, recodes the items to $-0.27$ at layer 13 ($0.326$ against $0.219$), and again stores the recitation in the imprint's head block ($0.00$ left when it is removed, $0.84$ when the bulk block is). The optimizer sets the imprint's location and the regime does not. \gentleControl}
 \newcommand{\detectorAUC}{\pending}
-\newcommand{\baselineCost}{\pending}
-\newcommand{\baselineTable}{\pending}
+\newcommand{\baselineTable}{\begin{tabular}{llcccccc}\toprule
+model & edit & held-out recited & ordinary & Pile & NaturalQs & PopQA & HellaSwag\\\midrule
+OLMo-2 7B & coherent step, norm 2.5 & 0.138 & $+0.007$ & $+0.000$ & \suiteCohNQ & \suiteCohPQ & \suiteCohHS\\
+OLMo-2 7B & gradient ascent, 70 steps & 0.123 & $+0.111$ & $+0.045$ & \suiteGaNQ & \suiteGaPQ & \suiteGaHS\\
+OLMo-2 7B & gradient ascent, 40 steps & 0.538 & $-0.003$ & $+0.001$ & \suiteGahNQ & \suiteGahPQ & \suiteGahHS\\
+OLMo-2 7B & NPO & \npoW & \npoWo & \npoWp & \suiteNpoNQ & \suiteNpoPQ & \suiteNpoHS\\
+OLMo-3 7B & coherent step, norm 2.5 & 0.089 & $+0.005$ & $+0.000$ & \multicolumn{3}{c}{\oiiiSuite}\\\bottomrule
+\end{tabular}}
+\newcommand{\baselineCost}{sixteen times as much on ordinary text (gradient ascent: $+0.111$ nats at held-out recitation $0.123$ in OLMo-2 7B, against $+0.007$ at $0.138$)}
+\newcommand{\suiteCohNQ}{\pending}
+\newcommand{\suiteCohPQ}{\pending}
+\newcommand{\suiteCohHS}{\pending}
+\newcommand{\suiteGaNQ}{\pending}
+\newcommand{\suiteGaPQ}{\pending}
+\newcommand{\suiteGaHS}{\pending}
+\newcommand{\suiteGahNQ}{\pending}
+\newcommand{\suiteGahPQ}{\pending}
+\newcommand{\suiteGahHS}{\pending}
+\newcommand{\suiteNpoNQ}{\pending}
+\newcommand{\suiteNpoPQ}{\pending}
+\newcommand{\suiteNpoHS}{\pending}
+\newcommand{\npoW}{\pending}
+\newcommand{\npoWo}{\pending}
+\newcommand{\npoWp}{\pending}
+\newcommand{\oiiiSuite}{suite not run (the vLLM release used does not load OLMo-3)}
