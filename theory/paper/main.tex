@@ -1,0 +1,334 @@
+\documentclass{article}
+\usepackage[preprint]{neurips_2026}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{multirow}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}\newtheorem{law}{Empirical law}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\D}{\mathcal{D}}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Var}{Var}
+\input{results_xmodel}
+
+\title{Memorized Text Lives in the Flat Directions:\\ A Two-Order Theory of Curvature-Based Weight Editing}
+
+\author{%
+  Anonymous\\
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Curvature-based weight editing removes memorized text from a language model by deleting or shrinking weight components ranked by an approximate Hessian. In practice no approximation dominates, and a plain identity metric is hard to beat. We explain why, and we say what does move the trade-off. Seen through the loss curvature of a reference population, a trained MLP matrix has a small \emph{head} of high-gain directions and a large, near-degenerate \emph{bulk}. In four models from two families (OLMo-2 7B and 1B, OLMo-3 7B, Qwen2.5-7B) we find that memorized text is stored in the bulk to a degree that varies by population and predicts what an edit can do: populations memorized during pretraining are strongly \emph{whitened} relative to ordinary text on both sides of the matrix and are forgotten when the bulk is deleted, while globally duplicated boilerplate memorized late in training is half as whitened, survives the same deletion, and is reached only by a coherent step along the bulk direction its items share. A theory in two Taylor orders of the token loss, whose only object is the population Fisher, accounts for these facts and makes parameter-free predictions that hold in two models with identical code: the collateral of block edits within $2$--$10\%$, the margin-shift variance of a layer perturbation within a factor two and its ratio between populations within $30\%$, and forgetting curves from per-token margins. A minimum-interference argument gives the storage cost of an item as the inverse product of its whitened energies on the two sides, which predicts that flat items are cheap to store and that learning should flatten what it memorizes by redistribution. A causal experiment confirms the mechanism: a fresh imprint written by SGD is head-heavy and is erased within fifty steps of continued population training, the imprint written by a preconditioned optimizer sits in the bulk and persists, and the items' representation recodes toward the bulk as they are fit. Inside the bulk the cost of a label-free edit depends only on the energy it moves, so curvature fidelity cannot matter there, which is why editing methods share one frontier; placement across layers and coherent set-level directions are the levers that move it, and the collateral of a coherent edit is the alignment of its direction with the preserved population.
+\end{abstract}
+
+\section{Introduction}
+
+Large language models reproduce training text verbatim \citep{carlini2023quantifying,nasr2023scalable}, and a growing family of methods removes such text by editing weights rather than by retraining \citep{eldan2023whos,jang2023knowledge,maini2024tofu}. One line of work ranks weight components by an approximate loss Hessian, on the intuition that memorized content and general capability occupy different parts of the curvature spectrum, and deletes the components with low curvature \citep{goodfire2025memorization,habo2026}. The approximations in use, K-FAC \citep{martens2015optimizing}, its eigenvalue-corrected form \citep{george2018fast}, Shampoo \citep{gupta2018shampoo} and others, differ in fidelity, and one would expect the more faithful ones to edit better. They do not: their trade-off frontiers between forgetting and retained capability coincide, and an identity metric, which ignores curvature altogether, sits on the same frontier \citep{habo2026}. Nothing in the intuition explains this, nor says what the frontier is, nor whether anything can move it.
+
+This paper gives the missing account. Its object is a single MLP weight matrix seen through the curvature of the token loss on a reference population, in the Kronecker-factored eigenbasis. The spectrum of that curvature has a small \emph{head} of high-gain directions and a large \emph{bulk} that is nearly degenerate: across $80\%$ of the directions of a middle layer the curvature varies by a factor of three to five. Our first contribution is a set of empirical laws relating where a memorized population sits in that spectrum to what an edit can do to it (\cref{sec:laws}). Populations the model memorized during pretraining are \emph{whitened} relative to ordinary text: their activation and gradient energies per direction fall relative to the reference as a power of the reference energy, on both the input and the output side of the matrix, and deleting the bulk block forgets them at the price of random noise of the same norm. Globally duplicated boilerplate that the same model memorized late in training is half as whitened and survives the same deletion, in two 7B models from different generations. Yet every memorized population, flat or not, shares a bulk direction of its own, orthogonal across populations and to what ordinary text uses, and a coherent step along it removes the population at a small fraction of the deletion's cost. Removing the head, in every model, costs several times what noise of the same norm costs; removing the bulk costs the same as noise. And an item becomes flat only when training fits it to saturation, by redistributing rather than adding representational energy.
+
+The second contribution is a theory that predicts these laws and the outcome of edits from two Taylor orders of the token loss, with the population Fisher as its only object (\cref{sec:theory}). Collateral damage to a population is first order plus one half the Fisher quadratic form of the induced logit shift; the form predicts the collateral of block deletions and of matched noise within $2$--$10\%$ in OLMo-2 7B and OLMo-3 7B with identical code and no free parameter, and is an upper bound where cross-entropy saturates. Inside the bulk the form is a constant times the energy moved, so noise shape cannot matter, the removal-to-noise cost ratio is one, and the head's excess ratio measures how much of the head's content is what the model computes with. Forgetting is first order at a margin: a recited token survives while its logit margin stays positive, and the margin shift under removal is linear in the token's coupling to the block while its shift under noise has a spread linear and a systematic part quadratic in it, so noise is at least as selective as removal. The coupling factors into an output-side and an input-side energy, which predicts the relative sensitivity of two populations without a free parameter and extends to a layer map whose parameter-free prediction of the margin-shift variance under a layer perturbation holds within a factor two in both 7B models. A minimum-interference argument closes the loop: the cheapest way to store an item under the population metric is the natural-gradient direction of its margin, whose cost is the inverse product of the item's whitened energies on the two sides. Flat items are cheap to store, the two sides enter symmetrically, and lowering the cost at fixed energy means redistribution toward flat directions. A causal experiment on OLMo-2 1B tests the mechanism directly (\cref{sec:causal}): a fresh imprint written by SGD follows the item gradient and is head-heavy, one written by Adam has five times more bulk energy, one written by the natural gradient is in the bulk by construction; under continued training on the population alone the head-heavy imprint is erased within fifty steps while the bulk-heavy one persists; and the items' representation at later layers recodes toward the bulk as they are fit, whatever the optimizer.
+
+The third contribution is what this says about editing (\cref{sec:editing}). Every label-free edit that acts inside the bulk pays the same price per unit of energy moved, so better curvature cannot beat the identity there; the frontier is a genuine trade-off surface set by energy, reachable with the eigenbasis alone. Two levers move it. Placement: the layer map predicted that deleting the bulk at layers 17--19 of OLMo-2 7B instead of 23--25 would cost $1.4\times$ less closed-book recall per unit of forgetting, and it cost $2.3\times$ less. Coherence: a step along the shared bulk direction of a memorized set, built from half the set, removes the recitation of the other half at a tenth of the ordinary-text cost, a hundredth of the out-of-distribution cost, and a fifth of the recall cost of the best label-free edit; on the late boilerplate that no bulk deletion reaches, a step of norm $2.5$ removes $86$--$91\%$ of the held-out half in both 7B models at half a percent of a nat. The collateral of such an edit is the alignment of its direction with the preserved population's gradient structure, near zero for memorized text foreign to what is preserved and one third for memorized text drawn from it. Grouping the items of a memorized set gives clean selectivity over what is forgotten but no discount per item forgotten.
+
+\section{Setting}\label{sec:setting}
+
+\paragraph{Curvature of a layer.} Fix a linear layer $y=Wa$, $W\in\R^{O\times I}$, inside a network with token loss $\ell_t$. Write $g_t=\partial\ell_t/\partial y_t$ for the output gradient and $a_t$ for the input at token $t$. For a population $\D$ of tokens the Kronecker factors are $A=\E_\D[aa^\top]$ and $B=\E_\D[gg^\top]$, with eigenbases $P$ (eigenvalues $\mu_i$) and $Q$ (eigenvalues $\lambda_o$); coefficients are $C=Q^\top WP$, $\tilde a=P^\top a$, $\tilde g=Q^\top g$. We use the \emph{coupled} factors, in which each side is weighted by the other's squared norm, and sampled labels, so that the per-coefficient curvature $\Lambda_{oi}=\E_\D[\tilde g_o^2\tilde a_i^2]$ is the diagonal of the Fisher in this basis \citep{george2018fast}. The \emph{depth} of an output direction is $d_o=\sum_i\Lambda_{oi}$, and symmetrically for inputs. \emph{Head} and \emph{bulk} are the top and bottom of the depth ordering; the bulk block of a matrix is the flattest $60\%\times60\%$ of directions and the head block the top $20\%\times20\%$, unless stated otherwise. The joint first-order logit shift of a perturbation $\Delta$ of several matrices at token $t$ is $s_t(\Delta)=\sum_m g_{t,m}^\top\Delta W_m a_{t,m}$.
+
+\paragraph{Models, populations, edits.} The primary model is OLMo-2 7B \citep{olmo2024olmo2}, edited at the gate and up projections of layers 23--25 of 32; the reference population is $1152$ sequences of $512$ tokens from its mid-training mix \citep{dolmino2024}. The memorized set is $1054$ windows of $112$ tokens from a deduplicated Dolma split that the model recites (prefix $64$, greedy suffix $48$), so its provenance is known; ordinary text is the reference's never-recited windows; out-of-distribution text is the Pile; facts are the answer tokens of $316$ NaturalQuestions and PopQA items the unedited model answers correctly. For any model a \emph{recitation scan} of the $9216$ reference windows yields a memorized population without ground truth: the windows recited verbatim ($129$ for OLMo-2 7B, $127$ for OLMo-2 1B, $111$ for OLMo-3 7B, $21$ at $\ge0.95$ suffix accuracy for Qwen2.5-7B, which was not trained on this corpus). Edits are block deletion ($\Delta=-C_S$ on a block $S$, possibly scaled by $\alpha$), noise of matched Frobenius norm in the same block, and coherent steps along a chosen direction. Forgetting is the fraction of items still recited (all $48$ suffix tokens argmax-correct); collateral is the mean loss increase in nats on ordinary and out-of-distribution text; capabilities are a $12$-task suite (closed-book recall, reading comprehension, commonsense, arithmetic) evaluated with olmo-eval.
+
+\section{Where memorized content sits}\label{sec:laws}
+
+\paragraph{The spectrum.} In layers 4--28 of OLMo-2 7B the coupled curvature spectrum of each gate and up projection has a near-degenerate bulk and a small head: the middle $80\%$ of directions span a factor of $3$--$5$ in depth, and the directions above ten times the median depth are $0.1$--$0.5\%$ of the total. The first and last three layers have wide spectra and large heads. Within the bulk the depth \emph{ordering} is reproducible (rank correlation $0.99$ between independent halves of the reference data) but the eigenvectors are not: two references agree on which directions are high-gain (rank correlation $0.89$--$0.98$) while their bulk eigen-subspaces overlap barely above chance. This is the signature of a near-degenerate spectrum, and it matters for what follows: a direction in the bulk is not canonical, its gain is. The bulk is not rarely used, either. The effective number of reference sequences contributing to a bulk direction is $\sim1500$ of $2304$, against $1750$--$1940$ for the head: the head is gain, not breadth. The same structure, bulk plus outliers, is familiar from the Hessian spectra of small networks \citep{sagun2017empirical,papyan2019measurements,ghorbani2019investigation}; here it is resolved per layer and per side.
+
+\begin{law}[Removal versus noise]\label{law:asym}
+Deleting the bulk block of a layer costs ordinary text what noise of the same norm in the same block costs; deleting the head block costs several times more than noise.
+\end{law}
+Measured on the quintile blocks of the depth ordering in OLMo-2 7B, the ratio of the deletion cost to the matched-noise cost is $0.73,0.99,0.95,0.91$ on the four bulk quintiles and $4.4$ on the head quintile; on the bulk and head blocks of the late MLP band of the other models it is $1.5/4.6$ (OLMo-2 1B), $1.3/2.5$ (Qwen2.5-7B), $1.3/6.7$ (OLMo-3 7B) and $1.3/11$ (OLMo-2 7B on its recited dolmino windows; \cref{tab:populations}). Inside the bulk, moreover, the shape of a perturbation is irrelevant: seven noise shapes in the bulk block (isotropic, inverse-curvature, inverse-magnitude, small- or large-components only, rank $32$, an oracle ratio) cost the same to within measurement error at norms $90$ and $120$, while the same norm costs $+0.0013,+0.0020,+0.0022,+0.0041$ nats across the four bulk quintiles, graded by the block's mean curvature. What deleting the bulk \emph{forgets} depends on the population (\cref{law:flat}).
+
+\begin{law}[Half-whitening on both sides]\label{law:whiten}
+Per direction of the reference eigenbasis, the memorized population's mean activation energy $\E_{\mathrm{mem}}[\tilde a_i^2]$ and mean output-gradient energy $\E_{\mathrm{mem}}[\tilde g_o^2]$ fall relative to ordinary text's as a power of the reference energy, with the same exponent on the two sides.
+\end{law}
+Fitting $\log(E_{\mathrm{mem}}/E_{\mathrm{ord}})=a+b\log E_{\mathrm{ord}}$ over all directions of layers 23--25 of OLMo-2 7B for its Dolma memorized set gives $b=-0.65,-0.67,-0.69$ on the input side ($R^2=0.94$) and $-0.62,-0.66,-0.69$ on the output side of the up projection ($R^2=0.85$; gate output side $-0.58$ to $-0.63$). Clean text and typical text have $b$ between $-0.09$ and $+0.22$, and a split-half null gives $+0.01$. The memorized set's total activation energy is normal, $0.87$--$0.95$ of ordinary text's, but spread far more evenly over the spectrum: it carries $2.75\times$ the ordinary energy in the flattest fifth of input directions and $0.6\times$ in the head, with the steepest reallocation in the middle of the spectrum (local exponents by quintile $-0.50,-0.74,-0.78,-0.77,-0.43$). Its \emph{share of curvature} along an output direction, which marginalises one side against the other, inherits an exponent near $-\nicefrac12$. The law is representational: memorized text engages the reference's principal directions less on the way in, and its gradients point away from them on the way out. Fact answer tokens have the same input-side profile as memorized suffix tokens ($2.0$--$2.2\times$ the reference's bulk activation energy against $2.15\times$; bulk shares $0.45$ and $0.48$) and if anything a steeper exponent ($-0.73$ to $-0.81$): flatness marks item-specific content in general, not verbatim text in particular.
+
+\begin{law}[Flatness is a property of the population, and it predicts deletability]\label{law:flat}
+Within one model, populations memorized at different times sit at different depths of the spectrum, and the bulk share of a population's activation energy predicts the fraction of its recitation that deleting the bulk block removes.
+\end{law}
+\cref{tab:populations} places six memorized populations in four models on the same axes. Two populations live in OLMo-2 7B: the $1054$ Dolma windows, memorized during pretraining (recited at $95\%$ per token by the $1.26$T-token checkpoint, a third of the way through stage one), and the $129$ dolmino windows it recites, drawn from its mid-training mix and therefore memorized in the last $50$B tokens at annealing learning rates; $107$ of them are also recited by OLMo-3 7B, $118$ by OLMo-2 1B and $10$ by Qwen2.5-7B, so they are globally duplicated boilerplate. The Dolma set is whitened at $-0.67$ and moves $26$ points of its input energy into the bulk; deleting the bulk block of layers 23--25 leaves $18\%$ of it recited at $+0.024$ nats. The dolmino windows are whitened at $-0.33$ and move $10$ points; the same deletion leaves $89\%$ of them recited at $+0.020$ nats, and only removing the head block, at ten times the cost, forgets them. OLMo-3 7B, a different generation trained on a different mix, reproduces the split on the same two populations: its $85$ recited Dolma windows are whitened at $-0.55$ ($R^2=0.88$), move $20$ points into the bulk and go from $0.99$ to $0.40$ recited under the bulk deletion at $+0.010$ nats; its $111$ recited dolmino windows are whitened at $-0.2$, move $7$ points, and go from $1.00$ to $0.955$ under the identical edit. Across the six populations the bulk-share shift orders the forgotten fraction, with the 1B model, whose three-layer band is a larger share of its depth, the only exception. Flatness is therefore not a property of models, nor of verbatim text as such, but of how a population was stored; \cref{sec:storage} says why storage depth should track the training that follows memorization, and \cref{sec:causal} shows it happening.
+
+\begin{table}[t]
+\centering\small
+\caption{Six memorized populations in four models, late MLP band (layers 23--25 of 32 for the 7B models, 11--13 of 16 for the 1B, 20--22 of 28 for Qwen). Whitening exponent on the input side; bulk share of activation energy for ordinary and recited text; the two-halves cosine of the population's bulk direction; the product-law coupling ratio to ordinary text; recitation remaining after deleting the bulk block, with the ordinary-text cost; and the removal-to-noise cost ratios on the head and bulk blocks. Populations come from the recitation scan except the Dolma sets.}\label{tab:populations}
+\begin{tabular}{llcccccc}\toprule
+model & population ($n$) & exponent & bulk share & halves cos & coupling & bulk deletion & head/bulk ratio\\\midrule
+OLMo-2 7B & Dolma set (1054) & $-0.67$ & $0.19\to0.45$ & 0.64 & $\sim$24 & $0.18$, $+0.024$ & 4.4 / 1.0\\
+OLMo-2 7B & dolmino windows (129) & $-0.33$ & $0.27\to0.37$ & 0.88 & 15 & $0.89$, $+0.020$ & 11 / 1.3\\
+OLMo-3 7B & Dolma set (85) & $-0.55$ & $0.27\to0.47$ & 0.10 & 33 & $0.40$, $+0.010$ & \oiiiDolmaRatios\\
+OLMo-3 7B & dolmino windows (111) & $-0.20$ & $0.27\to0.34$ & 0.89 & 8 & $0.955$, $+0.010$ & 6.7 / 1.3\\
+OLMo-2 1B & dolmino windows (127) & $-0.34$ & $0.19\to0.31$ & 0.90 & 29 & $0.00$, $+0.070$ & 4.6 / 1.5\\
+Qwen2.5-7B & dolmino windows (21) & $-0.52$ & $0.19\to0.43$ & (0.09) & 58 & $0.33$, $+0.025$ & 2.5 / 1.3\\\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{law}[One direction per memorized distribution]\label{law:direction}
+The summed bulk-projected margin gradients of two disjoint halves of a memorized distribution have cosine $0.6$--$0.9$; those of two memorized distributions have cosine $\approx0$; and each is nearly orthogonal to the summed margin gradients of ordinary text and of facts.
+\end{law}
+For the Dolma set the halves' cosine is $0.62$--$0.65$ in the bulk ($0.74$--$0.92$ unprojected); for the $129$ self-labelled recited windows it is $0.86$ in the bulk ($0.91$ unprojected), and their cosine with the Dolma direction is $0.01$. The cosine of the Dolma direction with ordinary text's is $0.004$ and with facts' $0.001$ in the bulk. Two-halves cosines of $0.90$ (OLMo-2 1B) and $0.89$ (OLMo-3 7B) replicate the law on the recited windows; for Qwen2.5-7B the population is too small to test it ($0.09$ at ten items per half), and OLMo-3's $85$ recited Dolma windows, a scattering of individually memorized items rather than a set memorized together, share little ($0.10$). The shared component belongs to populations memorized as a set, with a common source, format and phase. Within a set the per-item directions are mostly orthogonal (median pairwise cosine $0.002$) with a coherent minority that clusters into groups (\cref{sec:editing}).
+
+\begin{law}[Learning flattens what it memorizes, by recoding]\label{law:dynamics}
+An item's profile flattens on both sides only when training fits it to saturation, and it does so by redistributing a conserved representational energy from the head to the bulk.
+\end{law}
+Between the 1.26T-token checkpoint of OLMo-2 7B and the final model, the $112$ ordinary windows that become recited move from a typical profile ($b=+0.08$ input, $+0.24$ output) to a flat one ($-0.17$, $-0.52$); the Dolma set, already recited at 1.26T, is flat at both checkpoints. Across all $9216$ windows the bulk share of input energy is $0.18$--$0.19$ for any final recitation accuracy below $0.9$, $0.257$ in $[0.9,1)$ and $0.273$ at $1.0$: a threshold at saturated fit, the same threshold the margin picture puts on memorization. Over the same interval ordinary text \emph{sharpens}, its bulk fraction falling $0.32\to0.23$ and head fraction rising $0.40\to0.50$ as shared computation consolidates, at $1.30\times$ the total energy. The windows that become recited are exempt and slightly reverse ($0.29\to0.30$ bulk, $0.42\to0.38$ head) at conserved energy ($1.07\times$). Memorization exempts an item from the consolidation into the head that ordinary text undergoes, and moves it a little further out; no energy is added.
+
+\section{A theory in two orders}\label{sec:theory}
+
+\subsection{Collateral}
+
+\begin{proposition}[Two-order collateral]\label{prop:collateral}
+For a population $\D$ and a perturbation $\Delta$,
+$\Delta L_\D=\E_\D[s_t]+\tfrac12\,\E^{\mathrm{sampled}}_\D[s_t^2]+R_3$,
+where the first expectation uses true-label gradients, the second uses labels sampled from the model, and $R_3$ is third order.
+\end{proposition}
+The second-order Taylor term of cross-entropy in the logits is the Fisher, $\operatorname{diag}(p)-pp^\top=\E_{y\sim p}[(e_y-p)(e_y-p)^\top]$, so the quadratic form is the sampled-label second moment of the first-order logit shift (\cref{app:proofs}). Measured per token for the deletion of the bulk blocks defined by two references (\cref{tab:collateral}), the proposition is exact to $10$--$12\%$ in distribution. Four corollaries carry the empirical content.
+
+\begin{table}[t]
+\centering\small
+\caption{Two-order prediction of the collateral of block deletions in OLMo-2 7B (layers 23--25, nats per token). In distribution the sum is within $12\%$ of the measurement; out of distribution the quadratic form is an upper bound (\cref{cor:ood}) and the first-order term is negative (\cref{cor:interference}).}\label{tab:collateral}
+\begin{tabular}{lcccc}\toprule
+edit $\to$ population & first order & second order & sum & measured\\\midrule
+dolmino bulk $\to$ dolmino & $-0.0025$ & $+0.0209$ & $+0.0184$ & $+0.021$\\
+Pile bulk $\to$ dolmino & $-0.0040$ & $+0.0607$ & $+0.0567$ & $+0.063$\\
+dolmino bulk $\to$ Pile & $-0.0228$ & $+0.0784$ & $+0.0556$ & $+0.027$\\
+Pile bulk $\to$ Pile & $-0.0147$ & $+0.0410$ & $+0.0263$ & $+0.015$\\\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{corollary}[Shape invariance and graded price]\label{cor:shape}
+For a perturbation with independent zero-mean coefficients of variance $\sigma_{oi}^2$, $\E[\Delta L_\D]=\tfrac12\sum_{oi}\Lambda_{oi}\sigma_{oi}^2$ exactly. On a block where $\Lambda$ is constant this is $\tfrac12\bar\Lambda\|\sigma\|^2$: the cost depends on the energy moved and on nothing else, and across blocks it is graded by $\bar\Lambda$.
+\end{corollary}
+This is \cref{law:asym}'s shape invariance and quintile grading. The diagonal form with EK-FAC's $\Lambda$ reproduces all ten band measurements (five blocks, removal and noise) with log-space $R^2=0.97$ and a single fitted constant of $0.57$ against the theoretical $\nicefrac12$.
+
+\begin{corollary}[Removal versus noise]\label{cor:ratio}
+Removing a block $S$ and adding noise of the same norm cost, to second order and neglecting off-diagonal fourth moments, in the ratio
+$\langle\Lambda\rangle_{C^2}/\langle\Lambda\rangle_{\mathrm{unif}}$, the content-weighted mean curvature over the uniform mean on $S$. It is one where $\Lambda$ is constant (the bulk) and exceeds one where the stored coefficients sit on the high-curvature components (the head).
+\end{corollary}
+The prediction is $1.0$ on the bulk quintiles (measured $0.73$--$0.99$) and $2.8$ on the head (measured $4.4$): the head's noise cost is predicted, its removal cost is under-predicted by $1.75\times$. Removing what the model computes with has a super-quadratic response, and the excess is the operational meaning of ``content versus computation''.
+
+\begin{corollary}[Out of distribution the quadratic form is an upper bound]\label{cor:ood}
+Since $|\ell(z+\delta)-\ell(z)|\le2\|\delta\|_\infty$ for cross-entropy, the loss grows linearly rather than quadratically in large logit shifts, and $\Delta L\le\E[\min(\text{quadratic},\,2\|\delta\|_\infty)]$.
+\end{corollary}
+The rms joint shift of the block deletions is $0.20$ logits on dolmino and $0.40$ on Pile; the Pile costs are $1.75$--$2\times$ below the quadratic prediction and the dolmino costs are on it. Out-of-reference text leans harder on the reference's bulk and saturates.
+
+\begin{corollary}[Interference, relativity, and the failure of factorised curvature]\label{cor:interference}
+(i) The first-order term for the removal of $\D$'s bulk is the directional derivative of another population's loss along $-C_S$; it is negative when that population's gradient points toward less of $\D$'s stored content ($-0.0025$ for dolmino, $-0.023$ for Pile, half of Pile's measured cost in magnitude). (ii) ``Private'' is a two-place relation: the cost to $\D'$ of deleting $\D$'s bulk is the $\D'$ quadratic form on $\D$'s content, which need not be small (deleting the Pile-defined bulk costs dolmino $3\times$ what its own deletion costs). (iii) The diagonal approximation $\E[\tilde g_o\tilde g_{o'}\tilde a_i\tilde a_{i'}]\approx\delta_{oo'}\delta_{ii'}\Lambda_{oi}$ is exact for random perturbations and fails for coherent ones, because $C_S$ is itself the population's accumulated gradient structure: it under-predicts the block deletions by $2$--$2.5\times$ where the exact form is within $12\%$.
+\end{corollary}
+
+\subsection{Forgetting at the margin}
+
+Let $m_t=z_{t,y_t}-\max_{j\ne y_t}z_{t,j}$ be the logit margin of a recited token; greedy recitation holds while $\min_t m_t>0$. Restricting $\nabla_Wm_t$ to a block $S$, call $c_t=\nabla_Sm_t\cdot C_S$ the block's \emph{coherent contribution} to the margin and $e_t=\|\nabla_Sm_t\|^2$ the token's \emph{energy} in the block.
+
+\begin{proposition}[Removal and noise at the margin]\label{prop:margin}
+Removal of $S$ shifts $m_t$ by $-c_t$ to first order. Isotropic noise of per-coefficient variance $\sigma^2$ shifts it by a random variable of standard deviation $\sigma\sqrt{e_t}$ and mean $\tfrac12\sigma^2\tr_S\nabla^2_Wm_t\le0$, negative because the competitor maximum is convex in the logits and a fitted target logit is locally concave in the weights that produce it.
+\end{proposition}
+On the $1054\times48$ memorized suffix tokens (\cref{tab:margins}) the coherent contribution equals the noise spread rather than exceeding it, so the ``coherent $N$ against incoherent $\sqrt N$'' intuition is false here; removal's advantage per unit norm is a mean shift $1.3\times$ larger than noise's systematic one. The noise mean is quadratic in the spread ($-\E[\Delta m]/\Var[\Delta m]\approx0.22$--$0.32$ per logit), the shrink response is linear in $\alpha$ to $\alpha\approx0.5$ (slope $0.90$) and sub-linear beyond, and one weight perturbation moves an item's $48$ tokens independently (within-item correlation $0.01$): the code is per token, with nearly orthogonal block couplings. The systematic shift is not the gate's convexity, nor either normaliser's: each of these was built into a model and read off (\cref{app:shift}); it is the second-order response of the later layers to the residual perturbation, $\E[\Delta m_t]=\tfrac12\tr(H_t\Sigma_t)$, with one constant measured per model.
+
+\begin{table}[t]
+\centering\small
+\caption{Per-token margin shifts of the memorized suffix tokens of OLMo-2 7B under removal (shrink) of the bulk block and noise of matched norm.}\label{tab:margins}
+\begin{tabular}{lcccc}\toprule
+norm & removal mean (s.d.) & noise mean (s.d.) & $|\text{mean}_{\text{rem}}|/\text{s.d.}_{\text{noise}}$ & noise mean$/$variance\\\midrule
+19 & $-0.20$ ($0.72$) & $-0.14$ ($0.66$) & $0.30$ & $-0.32$\\
+38 & $-0.76$ ($1.60$) & $-0.56$ ($1.41$) & $0.54$ & $-0.28$\\
+57 & $-1.72$ ($2.64$) & $-1.27$ ($2.29$) & $0.75$ & $-0.24$\\
+76 & $-2.92$ ($3.70$) & $-2.19$ ($3.17$) & $0.92$ & $-0.22$\\\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{corollary}[Selectivity]\label{cor:selectivity}
+For two populations of equal alignment $c/\sqrt{\|C_S\|^2e}$, the one coupling $k$ times more strongly suffers $k$ times more from removal and between $k$ and $k^2$ times more from noise. Noise is at least as selective as removal for the more strongly coupled population.
+\end{corollary}
+Memorized tokens against fact tokens at norm $76$: coherent contribution $2.92$ against $1.38$, noise spread $3.17$ against $1.65$, noise mean $2.19$ against $0.82$; the alignments are equal to $10\%$, so the selectivity difference is the linear-against-quadratic law. Facts survive edits not because their margins are larger (they are smaller, median $3.8$ against $9.9$) but because the block carries half as much of their logit. On the capability suite, at matched forgetting, bulk noise costs $5$ points of closed-book recall where deletion costs $8$.
+
+\begin{corollary}[The coupling law]\label{cor:coupling}
+To the product approximation a token's coupling factors, $e_t\approx\big(\sum_{o\in S}\tilde g^{m}_{to}{}^2\big)\big(\sum_{i\in S}\tilde a_{ti}^2\big)$, with $\tilde g^m$ the gradient of the margin with respect to the layer output. The ratio of two populations' noise-shift variances is the ratio of their products of bulk energies.
+\end{corollary}
+Predicted $3.04$ for memorized against fact tokens, measured $3.7$, with no free parameter. The decomposition is itself a finding: the two populations are identical on the input side (\cref{law:whiten}) and the whole difference is on the output side, where memorized margins are $3\times$ more sensitive to these layers' outputs with the same bulk share. Location in the sense that matters for editing is across layers, not across the spectrum, which is why every bulk edit costs factual recall first. Summing the coupling over positions and layers gives a \emph{layer map}: the memorized-to-fact ratio of margin sensitivities peaks at $4.2$--$4.5$ in layers 17--20, is $3.0$--$3.3$ in 23--25 and falls below $2$ in 27--31 (\cref{sec:editing}).
+
+\subsection{The storage cost of an item}\label{sec:storage}
+
+The two propositions treat the population's curvature as a metric for the cost of a perturbation. The same metric prices the storage of an item.
+
+\begin{proposition}[Minimum-interference storage]\label{prop:storage}
+Let an item require a first-order margin gain $\sum_{oi}M_{oi}\Delta_{oi}\ge\delta$ at a layer, where $M=\sum_t\nabla_Wm_t$ is its summed margin gradient in the reference eigenbasis. Among perturbations achieving it, the one of least population collateral $\tfrac12\sum_{oi}\Lambda_{oi}\Delta_{oi}^2$ is $\Delta^*_{oi}\propto M_{oi}/\Lambda_{oi}$, the natural-gradient direction of the item's margin, and its cost is
+\[
+\mathcal{C}^*=\frac{\delta^2}{2}\Big/\sum_{oi}\frac{M_{oi}^2}{\Lambda_{oi}}
+\;\approx\;\frac{\delta^2}{2}\Big/\Big(\sum_o\frac{\tilde g_o^2}{\lambda_o}\Big)\Big(\sum_i\frac{\tilde a_i^2}{\mu_i}\Big),
+\]
+the second form under the product approximation for a dominant token: the inverse product of the item's \emph{whitened} energies on the two sides.
+\end{proposition}
+The proof is a Lagrangian on a quadratic with one linear constraint (\cref{app:proofs}). Four consequences follow. (i) Items whose activations and margin gradients sit in flat directions are cheap to store, so any learner that trades fit against collateral, an optimizer preconditioned by the population curvature in particular \citep{amari1998natural,martens2020new}, stores them preferentially and stores them there; the memorized population is a flat-profile population by selection. (ii) The two sides enter symmetrically, so the whitening should be two-sided with equal exponents, which is what \cref{law:whiten} finds ($-0.65$ to $-0.69$ against $-0.62$ to $-0.69$). (iii) At fixed total energy the cost falls when energy moves from high-$\mu$ to low-$\mu$ directions, so if learning lowers the storage cost of an item it must \emph{redistribute} the item's energy toward the bulk, adding none, and only while the item is being fit: \cref{law:dynamics}. (iv) The readout structure is the coupling law's product, so the same whitened energies measure fragility: an item's bulk share of input energy at one layer, from one forward pass, predicts its fragility under a three-layer edit (Spearman $-0.44$ with the shrink factor at which it stops being recited, $+0.37$ with its mean margin shift under noise). What the proposition does not give is the value of the exponent, which varies across models and which we leave as a measured constant; \cref{app:exponent} discusses the candidate mechanisms and rules out an additive drive under plain gradient descent, whose U-shaped profile the monotone measurement excludes.
+
+\subsection{A causal test: writing a fresh imprint}\label{sec:causal}
+
+\cref{prop:storage} makes claims about learning, and learning can be run. We memorized $96$ never-recited dolmino windows into OLMo-2 1B by training the gate and up projections of layers 9--13 on mixed batches of item windows and reference sequences until the items were recited, with three optimizers on the same data: SGD with momentum, whose step is the item gradient; Adam; and the natural gradient in the population K-FAC basis, $\Delta W=-\eta\,Q[(Q^\top GP)\oslash(\lambda\mu^\top+\delta)]P^\top$, which is the minimum-interference direction of \cref{prop:storage} by construction. The imprint $W-W_0$ is then read in the population eigenbasis, the items' activation profile at the inputs of layers 11--13 is compared before and after, and the band is trained further on reference sequences alone to see what survives.
+
+\begin{table}[t]
+\centering\small
+\caption{Fresh imprints in OLMo-2 1B (layers 9--13, $96$ items, aggressive regime: eight item windows and four reference sequences per step at equal weight). Exponent of the imprint's energy per direction against the population eigenvalue (positive: head-heavy); the imprint's energy share in the bulk block ($0.36$ if uniform); ratio of head- to bulk-block imprint energy; recitation after $50$ steps of reference-only training with the same optimizer; the items' input-side whitening exponent at layer 13 before and after memorization.}\label{tab:imprint}
+\begin{tabular}{lcccccc}\toprule
+optimizer & imprint exponent $G$ / $A$ & bulk share & head/bulk & steps to recite & recited after 50 ref.\ steps & items' exponent, before $\to$ after\\\midrule
+SGD & $+0.35$ to $+0.62$ / $+0.65$ to $+0.71$ & 0.07--0.13 & 3.6 & 225 & $0.97\to0.08$ & $-0.08\to-0.33$\\
+Adam & $+0.11$ to $+0.44$ / $+0.51$ to $+0.67$ & 0.14--0.22 & 0.75 & 325 & $0.96\to0.42$, back to $0.94$ at 200 & $-0.08\to-0.29$\\
+natural gradient & \ngImprint & \ngBulk & \ngRatio & \ngSteps & \ngDecay & \ngExp\\\bottomrule
+\end{tabular}
+\end{table}
+
+Three things happen (\cref{tab:imprint}). \emph{The optimizer sets where the imprint goes.} SGD's imprint follows the item gradient: its energy per direction grows with the population eigenvalue (exponent $+0.65$ to $+0.71$ on the input side, $R^2=0.97$), only $7$--$13\%$ of it lies in the bulk block, and removing the imprint's bulk block leaves $92\%$ of the items recited while removing its head block removes all of them. Adam's imprint has five times more bulk energy at the same recitation, and the natural gradient's is in the bulk by construction. \emph{The head-stored imprint does not survive the population.} Fifty steps of training on reference sequences alone erase the SGD imprint's recitation ($0.97\to0.08$) while the bulk-heavier Adam imprint dips and returns ($0.42$ at $50$ steps, $0.94$ at $200$, $0.82$ at $400$); with the phase-two optimizer exchanged the ordering is the same (\crossDecay). Content written into the head is content the population's gradient acts on, and it is overwritten; content written into the bulk is left alone. This is the mechanism behind \cref{law:flat}: the populations that survived a long stretch of training after being memorized are the ones stored in the bulk, because the rest of what was written about them is gone, and a population memorized in the last $50$B tokens has not yet been sifted. \emph{The representation recodes, whatever the optimizer.} Before memorization the items' activation profile at the inputs of layers 11--13 is typical (exponent $-0.08$); after it, it is whitened, increasingly with the number of trained layers upstream ($-0.18,-0.27,-0.33$ at layers 11, 12, 13 under SGD; $-0.12,-0.21,-0.29$ under Adam), at conserved total energy ($0.86$--$1.03\times$). The items' bulk share tracks the fit and falls back as they are forgotten. Learning flattens what it memorizes even when the weight imprint that does the memorizing is head-heavy: the flattening is in the representation the earlier trained layers hand on, as \cref{law:dynamics} found in the pretraining run. \regimeNote
+
+\subsection{Predictive tests}\label{sec:predict}
+
+The theory's predictions were written down before the measurements. \emph{Forgetting curves.} Fitting per token a mean shift $-\beta_tn^2$ and a spread $\gamma_tn$ from noise at norms up to $76$ and assuming Gaussian independent shifts predicts strict recitation $0.777/0.486/0.229$ in sample against $0.789/0.532/0.282$ at norms $38/57/76$ and $0.121/0.062/0.040$ out of sample against $0.159/0.098/0.083$ at $90/107/120$; the residual is the saturation of the mean shift beyond norm $76$. Deletion beyond half the block is not linearly predictable ($0.43$ extrapolated against $0.18$ measured at $\alpha=1$): the first-order theory owns $\alpha\le0.5$. \emph{Coupling.} The product law's $3.04$ against $3.7$ above. \emph{Placement.} The layer map predicted that deleting the bulk at layers 17--19 would cost $1.4\times$ less closed-book recall per unit of forgetting than at 23--25; the measurement is $2.3\times$ (\cref{tab:placement}). \emph{A second model.} \cref{sec:replication} runs the collateral, forgetting, coupling and placement tests on OLMo-3 7B with the same code and no tuning.
+
+\section{Consequences for editing}\label{sec:editing}
+
+\paragraph{Why curvature fidelity cannot matter inside the bulk.} The methods compared in \citet{habo2026} (K-FAC, EK-FAC, E-FOOF, E-Shampoo, identity, with and without eigenvalue corrections and saliency ranking) differ in how well they estimate $\Lambda$. By \cref{cor:shape} the cost of any label-free edit inside the bulk is $\tfrac12\bar\Lambda$ times the energy it moves, whatever its shape, and by \cref{cor:coupling} the forgetting it buys is set by the same energy through the population's coupling. Inside the bulk the estimate cannot matter, and it does not: the methods' frontiers coincide, and plain deletion of the bulk block, needing one collection pass and no corrections, ranking or calibration, lands on the best of them (six-layer deletion against EK-FAC at matched Dolma recitation $\sim0.14$: $+0.48$ perplexity for $+0.047$ GSM8K and $-0.03$ historical quotes). Every label-free edit we built moves \emph{along} that frontier, trading perplexity for skills and quotes, rather than beyond it. The frontier is a genuine trade-off surface set by the energy a bulk edit moves, reachable with the eigenbasis alone. What the curvature estimate does buy is the head/bulk boundary and the depth ordering, which every approximation finds, since the ordering is what the near-degenerate spectrum makes reproducible.
+
+\paragraph{Lever one: placement.} The layer map of \cref{cor:coupling} predicts that an edit is most selective where the target population's coupling exceeds the preserved population's by the most. In OLMo-2 7B the memorized-to-fact ratio peaks in layers 17--20. The map therefore predicted that a bulk deletion at 17--19 would cost about $1.4\times$ less closed-book recall per unit of forgetting than the same deletion at 23--25, while forgetting less per unit norm and sparing arithmetic, which reads its number features from layers 20--24. \cref{tab:placement} shows the outcome: $2.3\times$, right in direction and conservative in size, at the price of two points of HellaSwag. Placement needs no labels beyond the map, which is one backward pass per population.
+
+\begin{table}[t]
+\centering\small
+\caption{Placement by the layer map in OLMo-2 7B. Deletion of the bulk block at three bands; capability changes in points on the suite; recall per unit forgotten is the summed NaturalQs and PopQA loss divided by the forgotten fraction of the memorized set.}\label{tab:placement}
+\begin{tabular}{lccccc}\toprule
+deletion & forgotten & NaturalQs & PopQA & HellaSwag & recall per unit forgotten\\\midrule
+layers 17--19 & 0.45 & $-1.8$ & $-2.2$ & $-2.0$ & 4.4\\
+layers 18--20 & 0.53 & $-3.7$ & $-3.0$ & $-2.3$ & 6.3\\
+layers 23--25 & 0.79 & $-7.9$ & $-8.0$ & $-1.3$ & 10.1\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Lever two: coherence.} \cref{law:direction} implies an edit: a coherent step along the bulk-projected margin gradient of a memorized set. To guard against fitting the items themselves, the set was split in half, the direction built from one half and forgetting scored on the other (\cref{tab:targeted}). At norm $19$ the held-out half falls from $0.98$ to $0.16$ recited, matching bulk deletion's $0.18$ and noise's $0.16$, at $+0.002$ nats on ordinary text against $+0.024$ and $+0.026$, $+0.000$ on the Pile against $+0.027$ and $+0.047$, and $-0.7/0.0$ points of NaturalQs/PopQA against $-7.9/-8.0$ and $-5.2/-6.8$, with reading comprehension and arithmetic unchanged. Through the benchmark pipeline the model sits at perplexity $17.61$ (unedited $17.62$), a point no label-free edit approaches. Two of the four predictions written down beforehand failed, and both failures are informative. \emph{Weak transfer} was predicted from the per-token orthogonality of noise couplings and refuted: items never used fall to $16\%$ recitation, because the set shares a direction (\cref{law:direction} was found this way). \emph{Shape invariance} was violated: this direction's collateral per unit norm is $2$--$5\times$ that of energy-matched noise, growing with the norm, because the shared direction sits at the high-curvature end of the bulk.
+
+\begin{table}[t]
+\centering\small
+\caption{The coherent edit in OLMo-2 7B: a step along the bulk-projected summed margin gradient of half the memorized set. Recitation of the train and held-out halves, collateral in nats, arithmetic accuracy.}\label{tab:targeted}
+\begin{tabular}{lccccc}\toprule
+edit & train half recited & held-out half recited & ordinary & Pile & arithmetic\\\midrule
+coherent, norm 19 & 0.019 & 0.156 & $+0.002$ & $+0.000$ & 0.892\\
+coherent, norm 38 & 0.013 & 0.055 & $+0.014$ & $+0.022$ & 0.887\\
+coherent, norm 76 & 0.008 & 0.013 & $+0.106$ & $+0.143$ & 0.838\\\midrule
+bulk deletion, norm 76 & \multicolumn{2}{c}{0.180} & $+0.024$ & $+0.027$ & 0.857\\
+bulk noise, norm 90 & \multicolumn{2}{c}{0.159} & $+0.026$ & $+0.047$ & 0.868\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The transfer is set-level, and the collateral is alignment.} The decisive control is a memorized population never used in the edit and drawn from a different distribution, the $129$ recited dolmino windows. At norm $19$ the edit removes $84\%$ of the held-out Dolma items' recitation and $5\%$ of theirs; through the pipeline the norm-$38$ model removes $43\%$ of a set of web-duplicated historical quotes and leaves GSM8K untouched. The edit removes what the labelled examples share, far more than the examples themselves and far less than ``memorization''. The recited windows' own direction, built and scored the same way, removes $86\%$ of their held-out recitation at norm $5$ and $2.5\%$ of the Dolma set's, but costs ordinary dolmino text $+0.045$ nats at that norm, some $600\times$ the per-energy cost of bulk noise, because these windows are drawn from the preserved distribution and their direction has cosine $0.30$ with the direction that raises ordinary dolmino margins (the Dolma direction's is $0.004$). Both signs are observed, so the general statement is this: for every coherent target population there is a mean bulk direction that labels, or the model's own recitation, reveal and no label-free edit can find; its reach is the population that shares it, and its collateral is the alignment of that direction with the preserved population's gradient structure. Memorized text foreign to what is preserved can be removed coherently for almost nothing; memorized text drawn from what is preserved cannot, and there the placed bulk edit is the ceiling.
+
+\paragraph{Groups.} Within the recited windows, average linkage on the per-item bulk directions finds three coherent clusters and a remainder, forming two super-groups. A direction from one member of a super-group removes all of that super-group's recitation at norm $5$ and leaves the other at $0.88$--$1.00$, with Dolma and Pile untouched: selectivity within a memorized distribution is clean and label-free after detection. But the collateral per item forgotten is the same for a cluster as for the union ($0.00037$ against $0.00039$ nats per item on ordinary text). Grouping buys the choice of what to forget, not a discount on forgetting it. A label-free isolation procedure follows: detect recitation, group by direction, and remove coherently the groups foreign to what is to be preserved; the alignment of a group's direction with the preserved population prices the rest in advance.
+
+\section{The theory's tests on a second model}\label{sec:replication}
+
+\cref{tab:populations} already carries the laws across four models. The head/bulk asymmetry, the shift of activation energy toward the bulk for recited text, the shared direction per memorized set and the coupling law replicate in every model with a large enough population, and the whitening exponent is a property of the population (\cref{law:flat}). Here we run the theory's quantitative predictions with the same code, and no tuning, on OLMo-3 7B, with OLMo-2 7B as the control (\cref{tab:xmodel}).
+
+\begin{table}[t]
+\centering\small
+\caption{Parameter-free predictions on OLMo-3 7B and OLMo-2 7B with identical code (layers 23--25; bulk block of norm $84.5$ and $76.2$; recited dolmino windows). Top: two-order collateral (\cref{prop:collateral}) of bulk removal and matched noise, predicted from the first-order logit shift by central differences in float32, against measured, in nats per token. Middle: forgetting (\cref{prop:margin}). Bottom: the layer map's predicted margin-shift variance under isotropic noise of per-matrix norm $60$ on five three-layer bands, for recited and ordinary tokens, against measured.}\label{tab:xmodel}
+\begin{tabular}{llcccc}\toprule
+\multicolumn{6}{l}{\emph{Collateral}: edit $\to$ population; first order, second order, sum; measured}\\
+OLMo-2 7B & bulk remove $\to$ ordinary & $-0.0052$ & $+0.0233$ & $+0.0180$ & $+0.0177$\\
+OLMo-2 7B & bulk remove $\to$ Pile & $-0.0058$ & $+0.0460$ & $+0.0402$ & $+0.0377$\\
+OLMo-2 7B & bulk noise $\to$ ordinary & $-0.0012$ & $+0.0148$ & $+0.0136$ & $+0.0149$\\
+OLMo-2 7B & bulk noise $\to$ Pile & $-0.0002$ & $+0.0251$ & $+0.0249$ & $+0.0227$\\
+OLMo-3 7B & bulk remove $\to$ ordinary & $-0.0058$ & $+0.0143$ & $+0.0085$ & $+0.0088$\\
+OLMo-3 7B & bulk remove $\to$ Pile & $-0.0018$ & $+0.0250$ & $+0.0232$ & $+0.0253$\\
+OLMo-3 7B & bulk noise $\to$ ordinary & $+0.0003$ & $+0.0088$ & $+0.0091$ & $+0.0089$\\
+OLMo-3 7B & bulk noise $\to$ Pile & $-0.0000$ & $+0.0121$ & $+0.0120$ & $+0.0120$\\
+\xmodelCollateralRows
+\midrule
+\multicolumn{6}{l}{\emph{Forgetting}: strict recitation predicted against measured}\\
+\xmodelForgettingRows
+\midrule
+\multicolumn{6}{l}{\emph{Placement}: band; predicted variance (recited, ordinary); measured; ratio predicted / measured}\\
+OLMo-2 7B & 3--5 & 2.16, 0.22 & 0.58, 0.20 & 9.9 / 2.9 &\\
+OLMo-2 7B & 9--11 & 0.81, 0.15 & 0.98, 0.17 & 5.4 / 5.9 &\\
+OLMo-2 7B & 16--18 & 1.82, 0.20 & 3.81, 0.40 & 9.1 / 9.6 &\\
+OLMo-2 7B & 22--24 & 2.92, 0.27 & 2.93, 0.31 & 10.8 / 9.4 &\\
+OLMo-2 7B & 28--30 & 2.05, 0.27 & 2.78, 0.32 & 7.6 / 8.8 &\\
+OLMo-3 7B & 3--5 & 0.10, 0.10 & 0.11, 0.08 & 1.0 / 1.4 &\\
+OLMo-3 7B & 9--11 & 0.16, 0.09 & 0.21, 0.09 & 1.8 / 2.5 &\\
+OLMo-3 7B & 16--18 & 0.35, 0.08 & 0.42, 0.10 & 4.5 / 4.4 &\\
+OLMo-3 7B & 22--24 & 0.68, 0.10 & 0.97, 0.10 & 7.1 / 9.6 &\\
+OLMo-3 7B & 28--30 & 0.62, 0.11 & 0.70, 0.12 & 5.4 / 5.7 &\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Collateral.} The two-order form predicts the ordinary-text and Pile cost of bulk removal and of matched noise within $2$--$10\%$ in both models, with no calibration. The first-order term of removal is negative in both, $30$--$40\%$ of the quadratic term in OLMo-3: deleting stored content relieves interference. On the recited tokens themselves the form under-predicts by $5\times$, as it must: they sit at saturation, where the Fisher vanishes while shifts of $3$--$5$ logits still change the loss. \paragraph{Placement.} The first-order layer map gives the absolute margin-shift variance of a band perturbation within a factor two for both populations in nine of ten bands, and the recited-to-ordinary ratio within $10$--$30\%$ in eight; it fails at layers 3--5 of OLMo-2, where twenty-seven layers of nonlinearity separate the perturbation from the logits. At matched norm OLMo-3's margins move three times less than OLMo-2's for both populations, with the same ratio: matched norm is not matched effect across models, and the map is what makes them comparable. \paragraph{Forgetting.} \xmodelNarrative
+
+\section{Related work}
+
+\paragraph{Memorization and its location.} Verbatim memorization scales with model size, duplication and prompt length \citep{carlini2023quantifying,nasr2023scalable}, and is tied to the long tail \citep{feldman2020does,feldman2020neural}. Attempts to localize memorized paragraphs in weights or neurons \citep{stoehr2024localizing,chang2024localization,huang2024demystifying} report distributed, partly shared machinery; \citet{hase2023does} find that causal localization does not predict where editing works. Our location is in a different coordinate system, the curvature spectrum of a layer, where memorized content is not a set of parameters but a spectral profile, and where location across layers (coupling) rather than across the spectrum is what predicts editing outcomes. \citet{goodfire2025memorization} propose the low-curvature intuition that this paper turns into laws and a theory, and \citet{habo2026} benchmark the curvature approximations whose coincidence we explain.
+
+\paragraph{Curvature and its approximations.} K-FAC \citep{martens2015optimizing}, its eigenvalue correction \citep{george2018fast}, Shampoo \citep{gupta2018shampoo} and their unifying view \citep{eschenhagen2023kfac} supply the eigenbases we use; the Fisher as a metric for the cost of moving weights goes back to natural gradient \citep{amari1998natural,martens2020new} and to its use for protecting old knowledge \citep{kirkpatrick2017overcoming}, of which \cref{prop:storage} is the storage-side reading. Influence functions in the EK-FAC metric \citep{grosse2023studying,koh2017understanding,bae2024source} and pruning by second-order saliency \citep{lecun1989optimal,hassibi1993optimal} share the two-order expansion; the failure of factorised curvature for coherent perturbations (\cref{cor:interference}) is the same off-diagonal structure that makes influence estimates sensitive to their Hessian \citep{hong2025better}. The bulk-plus-outliers shape of the Hessian spectrum is known for small networks \citep{sagun2017empirical,papyan2019measurements,ghorbani2019investigation}, as is the concentration of gradient descent in the outlier subspace \citep{gurari2018gradient}; that item-specific content lives in the bulk while shared computation lives in the outliers is, to our knowledge, new.
+
+\section{Limitations and conclusion}
+
+The laws are established in the late MLP band of one model with a memorized population of known provenance, and replicated in three others with populations the models reveal by recitation; attention weights, embeddings and the first and last layers, whose spectra differ, are not treated. The exponent of the whitening is a measured constant per model, not a derived one, and the systematic mean shift under noise carries one measured constant. The two-order theory owns the regime of small logit shifts: deletion beyond half a block and noise beyond the norms probed leave it, and out of distribution it gives a bound rather than a value. The coherent edit needs a labelled or self-labelled set and removes what that set shares, no more and no less.
+
+Within those limits the picture is simple. A trained matrix has a head that computes and a bulk that stores. Memorized text ends up in the bulk because the bulk is where storing it costs the population least and because whatever was written elsewhere the population overwrites; how far a population has gone down that road is what decides whether a bulk deletion can reach it, and its own shared direction reaches it either way. The same population metric prices every edit: energy moved times curvature for label-free edits, coupling times margin for forgetting, alignment with the preserved population for coherent edits. Better curvature cannot lower the label-free price. Choosing the layer and the direction can.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+
+\section{Proofs}\label{app:proofs}
+
+\paragraph{\cref{prop:collateral}.} Write $\ell_t(\Delta)=\ell(z_t+\delta z_t(\Delta))$ with $z_t$ the logits and $\delta z_t$ their change. To second order in $\Delta$, $\delta z_t=J_t\Delta+O(\Delta^2)$ and $\ell_t(\Delta)-\ell_t(0)=\nabla_z\ell^\top J_t\Delta+\tfrac12(J_t\Delta)^\top\nabla^2_z\ell\,(J_t\Delta)+\nabla_z\ell^\top(\text{second-order part of }\delta z_t)+O(\Delta^3)$. The Gauss--Newton approximation drops the last term. For softmax cross-entropy $\nabla_z\ell=p-e_y$ and $\nabla_z^2\ell=\operatorname{diag}(p)-pp^\top=\E_{y'\sim p}[(e_{y'}-p)(e_{y'}-p)^\top]$, so $(J_t\Delta)^\top\nabla_z^2\ell(J_t\Delta)=\E_{y'\sim p}[((e_{y'}-p)^\top J_t\Delta)^2]$, the second moment under sampled labels of the first-order loss shift $s_t=(e_{y'}-p)^\top J_t\Delta$. Taking the population mean gives the statement. For a perturbation of a linear layer $y=Wa$, $(e_{y'}-p)^\top J_t\Delta=g_t^\top\Delta W a_t$ summed over the perturbed matrices, which is $s_t(\Delta)$ as defined in \cref{sec:setting}.
+
+\paragraph{\cref{cor:shape}.} $\E[s_t^2]=\sum_{oi,o'i'}\Delta_{oi}\Delta_{o'i'}\tilde g_{to}\tilde g_{to'}\tilde a_{ti}\tilde a_{ti'}$; for independent zero-mean coefficients the expectation over $\Delta$ kills all terms with $(oi)\ne(o'i')$ and leaves $\sum_{oi}\sigma_{oi}^2\E[\tilde g_o^2\tilde a_i^2]=\sum_{oi}\sigma_{oi}^2\Lambda_{oi}$. The first-order term has zero mean.
+
+\paragraph{\cref{cor:ratio}.} With the diagonal approximation, removal costs $\tfrac12\sum_S\Lambda_{oi}C_{oi}^2$ and noise of the same norm $\|C_S\|^2$ spread uniformly over $|S|$ coefficients costs $\tfrac12(\|C_S\|^2/|S|)\sum_S\Lambda_{oi}$; the ratio is as stated.
+
+\paragraph{\cref{cor:ood}.} $\ell(z)=-z_y+\operatorname{lse}(z)$; $\nabla\operatorname{lse}$ is a probability vector, so $\operatorname{lse}$ is $1$-Lipschitz in $\|\cdot\|_\infty$ and $|\ell(z+\delta)-\ell(z)|\le|\delta_y|+\|\delta\|_\infty\le2\|\delta\|_\infty$.
+
+\paragraph{\cref{prop:margin}.} First order in $\Delta$: $\Delta m_t=\nabla_Sm_t\cdot\Delta$, which is $-c_t$ for $\Delta=-C_S$ and a zero-mean variable of variance $\sigma^2\|\nabla_Sm_t\|^2=\sigma^2e_t$ for isotropic noise. Second order: $\E[\tfrac12\Delta^\top\nabla^2_Wm_t\Delta]=\tfrac12\sigma^2\tr_S\nabla^2_Wm_t$. The margin is $z_y-\max_{j\ne y}z_j$; the maximum is convex in $z$, so $-\max$ contributes a non-positive trace through the logit Hessian, and the target logit of a fitted token is locally concave in the weights producing it in the measured regime.
+
+\paragraph{\cref{prop:storage}.} Minimise $\tfrac12\sum_{oi}\Lambda_{oi}\Delta_{oi}^2$ subject to $\sum_{oi}M_{oi}\Delta_{oi}=\delta$. The Lagrangian condition is $\Lambda_{oi}\Delta_{oi}=\theta M_{oi}$, so $\Delta^*_{oi}=\theta M_{oi}/\Lambda_{oi}$ with $\theta=\delta/\sum_{oi}M_{oi}^2/\Lambda_{oi}$, and the cost is $\tfrac12\theta^2\sum_{oi}M_{oi}^2/\Lambda_{oi}=\tfrac12\delta^2/\sum_{oi}M_{oi}^2/\Lambda_{oi}$. For a single token $M_{oi}=\tilde g_o\tilde a_i$ and, with $\Lambda_{oi}\approx\lambda_o\mu_i$, the sum factors as $(\sum_o\tilde g_o^2/\lambda_o)(\sum_i\tilde a_i^2/\mu_i)$. In the full parameter space the same argument gives $\Delta^*=F^{-1}\nabla m$, the natural gradient of the margin.
+
+\section{The systematic shift under noise}\label{app:shift}
+
+\cref{prop:margin} leaves the negative mean shift as a concavity. Three mechanisms were tested by constructing the model each implies and reading off the margins, so that a refutation is a refutation and not a poor fit. (i) \emph{Convexity of the gate}: noise on the gate pre-activation has mean effect equal to replacing SiLU by its Gaussian smoothing; the smoothed-gate model shifts margins by $+0.002$ to $+0.005$ where $-0.14$ and $-0.56$ are measured at norms $19$ and $38$. (ii) \emph{The final normaliser}: under norm-$76$ noise the final residual rms changes by $0.09\%$ and the logit scale not at all. (iii) \emph{The edited layers' own normalisers}: OLMo-2 adds $\mathrm{RMSNorm}(\mathrm{mlp}(h))$ to the residual, and noise inflates the MLP output variance by $40$--$48\%$ at layers 23--25 (predicted to first order and confirmed), shrinking each layer's genuine contribution by $16$--$18\%$; but the noise-free model with those outputs scaled by the measured factors moves the mean margin by $-0.02$ against $-2.19$ measured. Scaling a layer's output is a different operation from removing its block. What remains is the zero-mean part of the perturbation entering the residual stream and the second-order response of layers 26--31 to it, $\E[\Delta m_t]=\tfrac12\tr(H_t\Sigma_t)$, which yields the exactly quadratic scaling (constant to $3\%$ over four norms), the proportionality to the token's coupling (correlation $0.56$ with the removal shift) and equal population coefficients relative to margin; its constant, $-\E[\Delta m]/\Var[\Delta m]\approx0.22$--$0.32$ per logit, is measured once per model.
+
+\section{On the exponent}\label{app:exponent}
+
+The profile $E_{\mathrm{mem},i}/E_{\mathrm{ord},i}$ against $E_{\mathrm{ord},i}$ is monotone with local exponents between $-0.4$ and $-0.9$ and flattest at both ends of the spectrum. An additive item drive against a curvature-proportional restoring force under plain gradient descent gives $E_{\mathrm{mem},i}=c\mu_i+F/(r\mu_i)$, a U-shaped ratio flat in the head and $\propto\mu^{-2}$ in the bulk, which the monotone measurement excludes. Optimizer preconditioning points the right way: Adam \citep{kingma2015adam} normalises each coordinate's update by the square root of its second moment, which in the population eigenbasis is $\propto\sqrt{\lambda_o\mu_i}$, so item-specific content accumulates with an extra $\kappa^{-1/2}$ relative to gradient descent, which is the exponent of the curvature share; and \cref{prop:storage} says that the exact natural-gradient step whitens fully. The measured representational exponent lies between the two, varies across models, and the drift of the weights across checkpoints (the flattest decile drifts only $10$--$20\%$ more than the sharpest) shows that bulk directions are not slowly learned. What sets the exponent is therefore the joint recoding of the item's representation by the earlier layers and the imprint in the later ones, under the population's restoring force; writing that down is the open derivation.
+
+\section{Experimental details}\label{app:details}
+
+\paragraph{Factors and bases.} Coupled K-FAC factors are accumulated over $1152$ reference sequences of $512$ tokens with labels sampled from the model, $A_k\mathrel{+}=\sum_t\|g_t\|^2a_ta_t^\top$ and $B_k\mathrel{+}=\sum_t\|a_t\|^2g_tg_t^\top$ per matrix, and diagonalised in float32. Directions are ordered by eigenvalue; the depth ordering by $\sum_i\Lambda_{oi}$ agrees with it to rank correlation above $0.98$. Block edits act on the outer product of the chosen output and input directions.
+
+\paragraph{Recitation scan.} Each of the $9216$ windows of $112$ tokens is prompted with its first $64$ tokens and decoded greedily for $48$; a window is recited if all $48$ tokens match, ordinary if fewer than $75\%$ match. Recitation of an edited model is scored by teacher-forced argmax agreement on the $48$ suffix tokens, which coincides with greedy decoding.
+
+\paragraph{Two-order predictions.} The first-order logit shift of an edit is computed by central differences in float32 at $\pm0.02$ of the edit; the first-order loss term is $(p-e_y)^\top\delta z$ and the second-order term $\tfrac12(\sum_yp_y\delta z_y^2-(p^\top\delta z)^2)$, averaged over tokens; the measured change applies the full edit.
+
+\paragraph{Layer map.} For each layer, $C_l=\frac1{N}\sum_s\|a_{l,s}\|^2\sum_t(\|\partial m_t/\partial h_{l,s}\|^2+\|\partial m_t/\partial u_{l,s}\|^2)$ over target tokens $t$ and all positions $s$, with $h,u$ the gate and up pre-activations, estimated by backpropagating $\sum_t\varepsilon_tm_t$ for random signs $\varepsilon_t$ ($4$ draws). Isotropic noise of per-entry variance $\sigma^2$ on a band's gate and up matrices then has predicted margin-shift variance $\sigma^2\sum_{l\in\text{band}}C_l$.
+
+\paragraph{Capability suite.} Twelve tasks from olmo-eval with capped instance counts: NaturalQuestions and PopQA (closed-book recall), DROP, SQuAD and Jeopardy (reading comprehension and recall), HellaSwag, ARC, OpenBookQA, WinoGrande, CommonsenseQA (commonsense), GSM8K and a curated arithmetic set.
+
+\end{document}
