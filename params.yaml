@@ -11,25 +11,25 @@ collect_kfac:
     - '24'
     - '25'
     layers_per_pass: 3
-    batch_size: 40
+    batch_size: 36
     method: kfac
-    calibration_mix: first_n
+    calibration_mix: dolmino_50B
   script: data/collect_kfac_bergson.py
   extra_dep: pyproject.toml
   fsdp: true
   world_size: 8
   bf16_batch_size: 40
 eval_kfac:
-  use_weight_coefficients: false
+  use_weight_coefficients: true
   use_wanda: false
   use_foof: false
   use_marginal_corrections: false
   corrections_from: ''
-  start_from_model: ''
+  start_from_model: /home/guillaume/memorization_kfac/out/aux/model_dolma_ga_h035/model
   corrections_side: ''
   args:
-    layers-json: '{"23": {"gate": 0.4, "up": 0.4, "down": 1.0}, "24": {"gate": 0.4,
-      "up": 0.4, "down": 1.0}, "25": {"gate": 0.4, "up": 0.4, "down": 1.0}}'
+    layers-json: '{"23": {"gate": 1.0, "up": 1.0, "down": 1.0}, "24": {"gate": 1.0,
+      "up": 1.0, "down": 1.0}, "25": {"gate": 1.0, "up": 1.0, "down": 1.0}}'
     bs: 96
     bergson-factors: out/collect_kfac/bergson/7b
   use_eigenvalue_corrections: true
@@ -64,8 +64,8 @@ band_activations:
       "NeelNanda/pile-10k", "split": "train", "column": "text"}}'
 mask_intersection:
   args:
-    layers_json: '{"23": {"gate": 0.4, "up": 0.4, "down": 1.0}, "24": {"gate": 0.4,
-      "up": 0.4, "down": 1.0}, "25": {"gate": 0.4, "up": 0.4, "down": 1.0}}'
+    layers_json: '{"23": {"gate": 1.0, "up": 1.0, "down": 1.0}, "24": {"gate": 1.0,
+      "up": 1.0, "down": 1.0}, "25": {"gate": 1.0, "up": 1.0, "down": 1.0}}'
 out_suffix: bergson/7b
 out_dir:
   prepare_pile10k: data/pile10k_None.txt
@@ -79,12 +79,12 @@ out_dir:
   benchmark: out/benchmark/bergson/7b
 computed:
   eigenvalue_corrections_flag: --eigenvalue-corrections
-  weight_coefficients_flag: ''
+  weight_coefficients_flag: --weight-coefficients
   wanda_flag: ''
   foof_flag: ''
   marginal_corrections_flag: ''
   corrections_from_flag: ''
-  start_from_model_flag: ''
+  start_from_model_flag: --start-from-model /home/guillaume/memorization_kfac/out/aux/model_dolma_ga_h035/model
   corrections_side_flag: ''
   sample_labels_flag: --sample_labels
   fsdp_flag: --fsdp
@@ -93,21 +93,21 @@ model:
   name: allenai/OLMo-2-1124-7B
   size: 7b
   layer_mass:
-    gate: 0.4
-    up: 0.4
+    gate: 1.0
+    up: 1.0
     down: 1.0
   layers:
     '23':
-      gate: 0.4
-      up: 0.4
+      gate: 1.0
+      up: 1.0
       down: 1.0
     '24':
-      gate: 0.4
-      up: 0.4
+      gate: 1.0
+      up: 1.0
       down: 1.0
     '25':
-      gate: 0.4
-      up: 0.4
+      gate: 1.0
+      up: 1.0
       down: 1.0
 method:
   name: bergson
@@ -118,4 +118,4 @@ benchmark:
     data_source: hf://openai/gsm8k?subset=main&split=test
     num_gpus: 1
 model_method:
-  gate_up_mass: 0.4
+  gate_up_mass: 1.0
