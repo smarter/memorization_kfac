@@ -2891,3 +2891,44 @@ and large margins. Noise part and (C) pending.
 dolmino windows recited 8 of the final 129 (mean acc 0.11); Dolma set 550 of
 1054 (0.70). The Dolma set's memorization is complete and static from 1.26T;
 the dolmino windows are not memorized by 2.1T.
+
+## 2026-09-06: (B) noise and (C) coupling law, both 7B models, recited dolmino windows
+Noise in the bulk block, mean margin shift (sd) at norms n/4..n: OLMo-2
+-0.09 (0.43), -0.31 (0.90), -0.69 (1.43), -1.24 (2.05); mean/var -0.48 ->
+-0.30. OLMo-3: -0.05 (0.22), -0.17 (0.50), -0.38 (0.85), -0.69 (1.25);
+mean/var -0.96 -> -0.44. Two-coefficient Gaussian model from the three
+smaller norms: OLMo-2 in-sample 0.994/0.967/0.897 vs 0.988/0.973/0.930,
+out-of-sample 0.767 vs 0.888; OLMo-3 1.000/0.996/0.975 vs 1.000/1.000/0.982,
+out-of-sample 0.925 vs 0.973. Over-predicts forgetting at the largest norm
+(5 and 12 points), as with the Dolma set (saturating mean shift).
+Coupling law (product of bulk energies): OLMo-2 predicted 15.2 vs measured
+18.1; OLMo-3 7.5 vs 14.5. Output side carries all of it (input-side ratios
+1.12 / 1.03).
+
+## 2026-09-06: gentle Adam run (big pool, item weight 0.25): same imprint, same recoding
+650 steps to 0.97 recited. Imprint A exponents +0.50..+0.58, bulk share
+0.17-0.22 (same as the aggressive run); items' A exponent at layer 13 vs
+ordinary text on the same final model -0.24 (bulk share 0.315 vs 0.225),
+energy x0.98-1.05. Removing the imprint's head block: 0.031 recited; its bulk
+block: 0.844. The Adam imprint's memorization is carried by its head part.
+Ordinary loss at the end 2.535 (base ~2.51); the item-free control (Adam,
+weight 0) is running to separate the pool's distribution shift.
+
+## 2026-09-06: natural-gradient imprint does NOT persist better -- the key drifts
+NG imprint (bulk share 0.54-0.69) under reference-only training: under SGD
+0.99 -> 0.22 recited (item loss 0.43) by step 50, flat after; under Adam ->
+0.44 -> 0.375 (0.36). Compare the Adam imprint under the same optimizers:
+0.48 (0.30) and 0.9 (0.06). So bulk location alone does not buy persistence
+in this setting; the SGD-vs-Adam ordering holds, the NG imprint breaks it.
+In every decay run the items' bulk share at layer 13 falls back toward the
+ordinary value (NG 0.321 -> 0.266, ordinary 0.236 -> 0.211; SGD 0.331 ->
+0.27): the recoded representation (the key that reads the imprint) drifts
+back under population training, and recitation tracks it. The NG imprint,
+which relies most on bulk keys, is the most exposed. Persistence in the
+pretrained models therefore rests on recurrence: the item is re-fit while
+its key and imprint co-adapt, and what survives long training is what the
+population's gradient leaves alone on BOTH sides. The selective-decay
+corollary is one line of the story, not the whole of it; stated as such in
+the paper.
+
+## 2026-09-06: checkpoint 2.9T: dolmino windows still 8 of 129; Dolma 599 (0.744)
