@@ -1,5 +1,6 @@
 % generated: numbers from the cross-model and imprint runs
 \newcommand{\pending}{\textcolor{gray}{--}}
+\newcommand{\gentleControl}{\pending}
 \newcommand{\oiiiDolmaRatios}{6.1 / 1.2}
 \newcommand{\xmodelCollateralRows}{}
 \newcommand{\xmodelForgettingRows}{OLMo-2 7B & shrink $\alpha=0.5$ / $0.75$ / $1$ & predicted $0.969$ / $0.961$ / $0.922$ & measured $0.961$ / $0.930$ / $0.891$ & &\\ OLMo-3 7B & shrink $\alpha=0.5$ / $0.75$ / $1$ & predicted $0.991$ / $0.982$ / $0.982$ & measured $0.991$ / $0.982$ / $0.955$ & &\\ \xmodelNoiseRows}
@@ -8,7 +9,7 @@
 \newcommand{\ngDecay}{$0.99\to0.22$ under SGD, $0.99\to0.44$ under Adam}
 \newcommand{\crossDecay}{under SGD the Adam imprint keeps $0.48$ recited at item loss $0.30$ where the SGD imprint keeps $0.09$ at $0.7$; under Adam the Adam imprint keeps $0.9$ at $0.06$ where the SGD imprint keeps $0.6$ at $0.19$}
 \newcommand{\regimeNote}{The regime is aggressive, with items at $8\%$ of the training tokens, and the $1152$-sequence reference pool overfits after two epochs, so the collateral figures of this section compare optimizers at matched steps rather than measure the cost of memorization; a gentler regime on a $35$k-sequence pool with an item-free control is reported in \cref{app:gentle}.}
-\newcommand{\timelineNote}{by $2.1$T and $2.9$T tokens still only $8$}
+\newcommand{\timelineNote}{at $2.1$T, $2.9$T and $3.8$T tokens, the end of stage one, still only $8$, $8$ and $10$, so they were memorized during the $50$B-token mid-training, while the Dolma set stands at $558$, $550$, $599$ and $673$ recited at the same checkpoints}
 \newcommand{\gentleSection}{Items at one quarter of the loss weight, four item windows and eight reference sequences per step from a pool of $34{,}795$ sequences (under one epoch), with an item-free control run of the same optimizer and length. \gentleResults}
 \newcommand{\gentleResults}{Adam reaches $0.97$ recited in $650$ steps with the same imprint profile as in the aggressive regime (input-side exponents $+0.50$ to $+0.58$, bulk share $0.17$--$0.22$) and the same recoding of the items' representation at layer 13 ($-0.24$ against ordinary text on the same final model, bulk share $0.315$ against $0.225$, energy $0.98$--$1.05\times$); removing the imprint's head block leaves $0.03$ recited and removing its bulk block $0.84$. \gentleMore}
-\newcommand{\gentleMore}{\pending}
+\newcommand{\gentleMore}{SGD reaches $0.98$ in $1100$ steps with input-side imprint exponents $+0.65$ to $+0.77$ and bulk share $0.07$--$0.13$, recodes the items to $-0.27$ at layer 13 ($0.326$ against $0.219$), and again stores the recitation in the imprint's head block ($0.00$ left when it is removed, $0.84$ when the bulk block is). The optimizer sets the imprint's location and the regime does not. \gentleControl}
