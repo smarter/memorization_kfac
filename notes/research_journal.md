@@ -2932,3 +2932,33 @@ corollary is one line of the story, not the whole of it; stated as such in
 the paper.
 
 ## 2026-09-06: checkpoint 2.9T: dolmino windows still 8 of 129; Dolma 599 (0.744)
+
+## 2026-09-06: the dolmino windows were memorized in midtraining; the Dolma set in the first third of pretraining
+OLMo-2 7B checkpoints, recitation of the final model's populations:
+
+| tokens | dolmino windows recited (of 129) | mean acc | Dolma set recited (of 1054) | mean acc |
+|---|---|---|---|---|
+| 424B | (pending) | | | |
+| 1.26T | 7 | 0.11 | 558 | 0.70 |
+| 2.10T | 8 | 0.11 | 550 | 0.70 |
+| 2.94T | 8 | 0.11 | 599 | 0.74 |
+| 3.78T (end of stage 1) | 10 | 0.12 | 673 | 0.80 |
+| final (after 50B midtraining) | 129 | 1.00 | 1054 | 1.00 |
+
+The boilerplate windows go from 10 to 129 recited during the 50B-token
+midtraining; the Dolma set is 53% recited at 1.26T and 64% at the end of
+stage 1 (the remaining third also completes in midtraining -- annealing
+sharpens memorization generally). So the two populations differ by ~3T
+tokens of training after memorization, which is the time axis of Law 5.
+
+## 2026-09-06: gentle SGD (big pool) and NG decay finals
+SGD, item weight 0.25, big pool: 1100 steps to 0.98; imprint A exponents
++0.65..+0.77 (bulk share 0.07-0.13), recoding at layer 13: -0.27 (bulk share
+0.326 vs 0.219 ordinary, same final model), energy x0.95; imprint's head
+block carries the recitation (0.000 left when removed; bulk block 0.844).
+Same picture as the aggressive regime. Item-free Adam control at step 300:
+ordinary -0.0125 (in-distribution fine-tuning improves held-out dolmino);
+final comparison at 650 steps pending.
+NG imprint decay finals (300 steps): under SGD 0.24 recited (loss 0.43),
+under Adam 0.31 (0.40); items' bulk share at 13 0.32 -> 0.27 (ordinary 0.24
+-> 0.21) in both.
