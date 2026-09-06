@@ -28,6 +28,10 @@ if CORPUS == "pile":
     pile_all = torch.load(f"{S}/pile_seqs_2304.pt")
     if tok.get_vocab() != otok.get_vocab(): pile_all = retok(pile_all, 512)
     windows = pile_all[:, :(512 // L) * L].reshape(-1, L); print("scanning Pile windows for recitation", flush=True)
+elif CORPUS == "dolma":
+    dol = torch.load(f"{S}/population_sets2.pt")["mem"][0]
+    if tok.get_vocab() != otok.get_vocab(): dol = retok(dol, L)
+    windows = torch.cat([dol, gen[:, :(512 // L) * L].reshape(-1, L)]); print(f"scanning {len(dol)} Dolma memorized windows (+ dolmino windows for the never set)", flush=True)
 else: windows = gen[:, :(512 // L) * L].reshape(-1, L)
 def scan():
     acc = []
@@ -37,6 +41,7 @@ def scan():
             acc.append((out[:, PRE:L] == x[:, PRE:]).float().mean(1).cpu())
     return torch.cat(acc)
 acc = scan(); recited = (acc == 1).nonzero()[:, 0]; never = (acc < 0.75).nonzero()[:, 0]
+if CORPUS == "dolma": ND = len(dol); recited = recited[recited < ND]; never = never[never >= ND]; print(f"Dolma set: recited {len(recited)} of {ND}, mean acc {acc[:ND].mean():.3f}", flush=True)
 if len(recited) < 40: recited = (acc >= 0.95).nonzero()[:, 0]; print("relaxed recitation threshold to 0.95", flush=True)
 g = torch.Generator().manual_seed(0); never = never[torch.randperm(len(never), generator=g)[:1200]]
 print(f"[{tag}] recitation scan: mean suffix acc {acc.mean():.3f}, recited (acc==1) {int((acc == 1).sum())}, >=0.95 {int((acc >= 0.95).sum())}, using {len(recited)} recited and {len(never)} never", flush=True)

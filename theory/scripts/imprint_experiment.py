@@ -11,7 +11,7 @@ import sys, math, time, numpy as np, torch
 sys.path.insert(0, "/tmp/claude-1002/-home-guillaume-memorization-kfac/a39940c3-dcc5-4714-8566-58fa7889e391/scratchpad")
 from xmodel_common import *
 OPT, LR = sys.argv[1], float(sys.argv[2]); MAX_STEPS = int(sys.argv[3]) if len(sys.argv) > 3 else 600
-ITEM_W = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0; NI, NR = (int(v) for v in (sys.argv[5].split(",") if len(sys.argv) > 5 else ("8,4",)))
+ITEM_W = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0; NI, NR = (int(v) for v in (sys.argv[5].split(",") if len(sys.argv) > 5 else "8,4".split(",")))
 RUN = OPT + (f"_w{ITEM_W:g}" if len(sys.argv) > 4 else "")
 P1B = "/home/guillaume/.cache/huggingface/hub/models--allenai--OLMo-2-0425-1B/snapshots"
 import glob; P1B = glob.glob(P1B + "/*")[0]

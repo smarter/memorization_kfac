@@ -2728,3 +2728,68 @@ cosine 0.908 / 0.882 (bulk); vs never 0.11 (bulk). Edits: bulk remove 0.891 |
   tests whether OLMo-3 has a flat, bulk-deletable pretraining-era population.
 * In the 1B, bulk deletion at 11-13 removed 100% of the recited windows: a
   3-of-16-layer band is a larger share of that model's depth.
+
+## 2026-09-06: two-order collateral, same code, OLMo-2 7B and OLMo-3 7B (fp32, central differences)
+
+`xmodel_theory.py` (A): first-order (true labels) + 1/2 Fisher quadratic form
+of the first-order logit shift vs measured loss change of the full edit,
+layers 23-25 bulk block (flattest 60% x 60%), norms 76 (OLMo-2) / 84.5 (OLMo-3).
+
+| model | edit | population | first | second | sum | measured |
+|---|---|---|---|---|---|---|
+| OLMo-2 7B | bulk remove | ordinary | -0.0052 | +0.0233 | +0.0180 | +0.0177 |
+| OLMo-2 7B | bulk remove | Pile | -0.0058 | +0.0460 | +0.0402 | +0.0377 |
+| OLMo-2 7B | bulk noise | ordinary | -0.0012 | +0.0148 | +0.0136 | +0.0149 |
+| OLMo-2 7B | bulk noise | Pile | -0.0002 | +0.0251 | +0.0249 | +0.0227 |
+| OLMo-3 7B | bulk remove | ordinary | -0.0058 | +0.0143 | +0.0085 | +0.0088 |
+| OLMo-3 7B | bulk remove | Pile | -0.0018 | +0.0250 | +0.0232 | +0.0253 |
+| OLMo-3 7B | bulk noise | ordinary | +0.0003 | +0.0088 | +0.0091 | +0.0089 |
+| OLMo-3 7B | bulk noise | Pile | -0.0000 | +0.0121 | +0.0120 | +0.0120 |
+
+Within 2-10% everywhere, no free parameter, two models. The first-order
+term of removal is negative in both (interference relief), 30-40% of the
+second-order term in OLMo-3. On the recited tokens themselves the form
+under-predicts (0.004 vs 0.026): they sit at saturation (p ~ 1, Fisher ~ 0)
+and see 2.7-5 logit shifts, outside the quadratic regime by construction.
+Head edits pending.
+
+## 2026-09-06: the coherent edit on the non-flat population, both 7B models
+
+`xmodel_coherent.py`, layers 23-25, recited dolmino windows split in halves,
+direction = bulk-projected summed margin gradient of the train half:
+
+| model | halves cosine | dir vs ordinary | norm | train | held-out | ordinary d | Pile d |
+|---|---|---|---|---|---|---|---|
+| OLMo-3 7B | 0.871 | 0.059 | 2.5 | 0.000 | 0.089 | +0.0051 | +0.0001 |
+| OLMo-3 7B | | | 5 | 0.000 | 0.089 | +0.0088 | +0.0002 |
+| OLMo-2 7B | 0.878 | 0.114 | 2.5 | 0.016 | 0.138 | +0.0069 | +0.0000 |
+| OLMo-2 7B | | | 5 | 0.000 | 0.138 | +0.0133 | +0.0001 |
+
+Where the bulk deletion (norm 76-85) forgets 5-11% of these windows at
++0.009-0.020 nats, a coherent step of norm 2.5 forgets 86-91% of the
+held-out half at +0.005-0.007, with the Pile untouched. The population
+that is not flat enough for the label-free edit is fully reachable by its
+own direction. The residual 9-14% do not go away with norm (0.054 at 20):
+items outside the shared component.
+
+## 2026-09-06: selective decay of a fresh imprint (phase 2, aggressive runs)
+
+`imprint_decay.py`: reference-only training of the band after memorization.
+* SGD imprint (head/bulk energy 3.6) under SGD: recitation 0.969 -> 0.083 in
+  50 steps; ordinary loss recovers 2.94 -> 2.56.
+* Adam imprint (head/bulk 0.75, 5x more bulk energy than SGD's) under Adam:
+  a transient dip to 0.42 at step 50 (fresh-optimizer artefact), back to
+  0.94-0.97 by 200-250 and 0.82 at 400 with no item training.
+* Items' bulk share at layer 13 tracks the fit: SGD 0.331 -> 0.27 as the
+  items are forgotten (ordinary 0.28 -> 0.24).
+* Confounds: (i) different phase-2 optimizers -- cross runs launched (Adam
+  imprint under SGD, SGD imprint under Adam); (ii) the 1152-sequence
+  reference pool overfits after ~2 epochs (the gentle Adam run reached
+  +0.39 nats on held-out ordinary text at step 700 = 5 epochs): all
+  "ordinary d" numbers in the imprint runs beyond ~150 steps are overfitting
+  of the pool, not item collateral. A larger reference pool is needed for
+  clean collateral numbers; recitation decay and imprint profiles stand.
+
+## 2026-09-06: OLMo-3 recites 85 of the 1054 Dolma memorized windows
+A pretraining-era population for OLMo-3 (mean suffix acc 0.223); probe at
+23-25 running.
