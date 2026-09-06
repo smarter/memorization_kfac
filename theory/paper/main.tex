@@ -350,6 +350,9 @@ Three things happen (\cref{tab:imprint}). \emph{The optimizer sets where the imp
 \section{The gentle regime}\label{app:gentle}
 \gentleSection
 
+\section{Attention projections}\label{app:attention}
+The probe of \cref{sec:laws} run on the query, key, value and output projections of layers 23--25 (coupled bases from the same reference data). Recited dolmino windows, input side of the query projection: exponent $-0.32$ in OLMo-2 7B and $-0.29$ in OLMo-3 7B (bootstrap $95\%$ intervals $[-0.34,-0.30]$ and $[-0.30,-0.27]$), bulk share $0.35$ against $0.19$ for ordinary text; output projection $-0.03$ and $-0.24$. Removing the bulk block of the four projections (norm $38$--$41$ per matrix) leaves $0.96$ and $1.00$ of the windows recited at $+0.003$ and $-0.000$ nats on ordinary text; removing the head block (norm $19$--$24$) leaves $0.23$ and $0.27$ at $+0.25$ and $+0.17$. The removal-to-noise asymmetry and the location of the late boilerplate outside the bulk hold for attention as for the MLPs.
+
 \section{Experimental details}\label{app:details}
 
 \paragraph{Factors and bases.} Coupled K-FAC factors are accumulated over $1152$ reference sequences of $512$ tokens with labels sampled from the model, $A_k\mathrel{+}=\sum_t\|g_t\|^2a_ta_t^\top$ and $B_k\mathrel{+}=\sum_t\|a_t\|^2g_tg_t^\top$ per matrix, and diagonalised in float32. Directions are ordered by eigenvalue; the depth ordering by $\sum_i\Lambda_{oi}$ agrees with it to rank correlation above $0.98$. Block edits act on the outer product of the chosen output and input directions.
