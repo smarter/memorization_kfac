@@ -2816,3 +2816,20 @@ deletability across populations, as the storage-cost proposition says it
 should. OLMo-2 7B shows the same split (Dolma set 0.18 left vs dolmino
 windows 0.89). The checkpoint scans (424B ... 3775B tokens) will date the two
 populations' memorization.
+
+## 2026-09-06: head removal is super-quadratic in both 7B models (two-order test, cont.)
+Head block (top 20% x 20%, norm 34.5 / 28.5), first + second order vs measured
+on ordinary text: OLMo-3 +0.0145 + 0.0732 = +0.088 vs +0.128 (1.45x under);
+OLMo-2 +0.0065 + 0.0798 = +0.086 vs +0.319 (3.7x under). Pile: 0.078 vs 0.102
+(OLMo-3), 0.081 vs 0.271 (OLMo-2). Mean |dz|_inf 3.6 logits. Same quadratic
+prediction (~0.087) in both models, very different measured costs: the
+super-quadratic remainder of removing computation is model-specific and
+large; the bulk edits are predicted to 2-10%. The head/bulk split is also
+the split between where the two-order theory is exact and where it is a
+lower bound.
+
+OLMo-3 Dolma set (85) edits at 23-25: bulk remove 0.400 | +0.0100 | +0.021;
+bulk noise 0.482 | +0.0084 | +0.016; head remove 0.412 | +0.109 | +0.144;
+head noise 0.776 | +0.018 | +0.016. Removal/noise cost ratio 1.2 bulk, 6.1
+head. Bulk removal forgets as much of this population as head removal at a
+tenth of the cost -- the opposite of the dolmino windows in the same model.
