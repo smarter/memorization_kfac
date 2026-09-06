@@ -2988,3 +2988,16 @@ the mechanism the theory describes (imprint and key co-adapt under
 recurrence; the population's gradient removes what interferes).
 Paper draft updated (theory/paper/main.tex, branch theory-paper) and sent.
 All GPUs free.
+
+## 2026-09-06: iteration plan after a critical self-review of the paper
+Weaknesses: no figures; 12-page main text; elementary theory presented as
+the contribution; small n without CIs; laws one band deep; mechanism story
+unresolved; no unlearning baselines; mixed evidence base; thin related work.
+Plan: (A) `xmodel_probe2.py` (bf16, saves per-direction and per-item data,
+bootstrap CIs, a per-window bulk-share detector with AUC, first-order
+deletability prediction) on both 7B models x bands 17-19 / 23-25 / 28-30 x
+populations (recited windows, Dolma set) + attention projections at 23-25;
+(B) unlearning baselines (gradient ascent with retain loss, NPO) on the
+recited windows at matched held-out forgetting, capability suite on both
+models; (C) five figures; (D) nine-page rewrite, causal study to the
+appendix, theory positioned as validation of standard expansions.
