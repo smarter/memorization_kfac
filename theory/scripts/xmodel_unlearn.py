@@ -38,7 +38,7 @@ if METHOD == "coherent":
     set_weights(mods, W0, dW); r = evaluate(); report(f"coherent norm {NU:g}", r); name = f"{tag}_{POPN}_coherent{NU:g}"
 else:
     LR = float(sys.argv[5]); TARGET = float(sys.argv[6]); MAX = int(sys.argv[7]) if len(sys.argv) > 7 else 300; RW = float(sys.argv[8]) if len(sys.argv) > 8 else 1.0; BETA = float(sys.argv[9]) if len(sys.argv) > 9 else 0.1
-    ref = None
+    ref = None; SNAP = [0.6, 0.35]
     if METHOD == "npo": ref = copy.deepcopy(model).eval()
     params = [m.weight for m in mods.values()]
     for p in params: p.requires_grad_(True)
@@ -56,6 +56,8 @@ else:
         if step % 10 == 0:
             for p in params: p.requires_grad_(False)
             r = evaluate(); report(f"step {step}", r)
+            for thr in [x for x in SNAP if r["held-out"]["strict"] <= x]:
+                SNAP.remove(thr); d_ = f"{S}/models/{tag}_{POPN}_{METHOD}_h{thr:g}"; os.makedirs(d_, exist_ok=True); model.save_pretrained(d_, safe_serialization=True); tok.save_pretrained(d_); print(f"snapshot {d_} (step {step})", flush=True)
             for p in params: p.requires_grad_(True)
             if r["held-out"]["strict"] <= TARGET: break
     for p in params: p.requires_grad_(False)

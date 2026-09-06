@@ -3001,3 +3001,35 @@ populations (recited windows, Dolma set) + attention projections at 23-25;
 recited windows at matched held-out forgetting, capability suite on both
 models; (C) five figures; (D) nine-page rewrite, causal study to the
 appendix, theory positioned as validation of standard expansions.
+
+## 2026-09-06: bands 17-19 and 28-30 (probe v2, bf16, bootstrap CIs, detector)
+Recited dolmino windows, input-side exponent [95% CI] / recited bulk share / bulk deletion left / head-bulk cost ratios:
+* OLMo-2 7B 17-19: -0.11 [-0.14, -0.09] / 0.25 (never 0.22) / 0.729 at +0.016 / 8.3, 1.8
+* OLMo-2 7B 28-30: -0.42 [-0.43, -0.40] / 0.43 (0.31) / 0.930 at +0.028 / 8.6, 1.8
+* OLMo-3 7B 17-19: -0.03 [-0.04, -0.01] / 0.21 (0.21) / 0.991 at +0.007 / 6.9, 1.2
+* OLMo-3 7B 28-30: -0.34 [-0.36, -0.33] / 0.40 (0.30) / 0.991 at +0.011 / 9.2, 1.3
+* OLMo-3 7B Dolma set 17-19: -0.31 [-0.33, -0.29] / 0.33 (0.21) / 0.565 at +0.007
+* OLMo-2 7B Dolma set 17-19: 0.551 left at +0.016
+Whitening deepens with layer for the same population (17-19 -> 28-30:
+-0.1 -> -0.4), as the causal experiment's recoding-with-depth predicts. The
+first-order deletability prediction from the alpha = 0.25 probe: OLMo-2
+17-19 0.884 vs 0.729 (under-predicts forgetting where the response is
+super-linear), OLMo-3 exact (0.991/0.991), OLMo-2 28-30 0.961 vs 0.930.
+Detector AUC (window bulk share -> recited): layer 17 input 0.70 / 0.53
+(OLMo-2 / OLMo-3), layer 28 input 0.94 / 0.95. The forward-pass detector
+works where the whitening is deep.
+Head/bulk removal-noise ratios hold in every band (6.9-9.2 vs 1.2-1.8).
+
+## 2026-09-06: Pareto comparison with the HABO curvature methods
+`make_pareto.py` from `dvc exp show` (357 rows): EK-FAC, K-FAC, E-FOOF,
+FOOF, E-Shampoo, Shampoo, Identity, E-Identity over rho (dolmino_50B
+calibration) vs our bulk deletions (bands), bulk noise (norms), coherent
+Dolma-direction steps (10/19/38), on Dolma loose recitation vs pile10k
+perplexity / quotes strict / GSM8K. The label-free edits sit on the
+curvature methods' frontier in all three panels; the coherent steps sit
+below it in perplexity (17.6 at Dolma 0.15-0.25) and above in GSM8K, and
+above it in quotes (they do not remove quotes: selectivity).
+Gradient ascent / NPO on the train half (lr 2e-5, retain loss): the train
+half drops (0.996 -> 0.86 in 40 steps) while the held-out half does not
+move (0.98): item-specific methods do not transfer at this rate. Relaunched
+at lr 1e-4 with snapshots at held-out 0.6 / 0.35 for pipeline evaluation.
