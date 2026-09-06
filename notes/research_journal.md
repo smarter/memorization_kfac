@@ -3061,3 +3061,20 @@ left at +0.020 (noise 0.277 at +0.016; head removal 0.088 at +0.259); OLMo-3
 from alpha = 0.25: OLMo-3 0.529 vs 0.400 (super-linear response in the
 forgetting regime), consistent with the shrink curve's saturation beyond
 alpha ~ 0.5 seen in the margin study.
+
+## 2026-09-06: baselines on the recited windows (OLMo-2 7B, layers 23-25 gate/up)
+Gradient ascent (lr 1e-4, retain weight 1) to matched held-out forgetting:
+step 70 train 0.047 / held-out 0.123 / ordinary +0.111 / Pile +0.045.
+Coherent step (norm 2.5): held-out 0.138 / ordinary +0.0069 / Pile +0.0000.
+Sixteen times the ordinary-text cost for the same forgetting; GA also
+collapses to held-out 0.002 at +0.52 on the Dolma set one step after 0.40 at
++0.057. NPO on the Dolma set: step 220 train 0.027 / held-out 0.266 /
+ordinary -0.060 / Pile +0.006: the retain term fine-tunes on in-distribution
+dolmino text, which lowers the held-out ordinary loss (same confound as the
+imprint experiment's reference pool), so the pipeline metrics (pile10k ppl,
+GSM8K, quotes) are the fair comparison; snapshots h0.6/h0.35 queued
+(broad-moit, still-souk), GA h0.6/h0.35 queued (sewed-mene, north-tale).
+Capability suite launched for OLMo-2 windows edits (coherent 2.5, GA final,
+GA h0.6); NPO windows running. OLMo-3 through vLLM needs a config with
+rope_parameters per layer type (KeyError 'rope_theta' / 'full_attention'
+otherwise); patched copy in models/olmo3_vllm, test pending.
