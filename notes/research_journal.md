@@ -2806,3 +2806,13 @@ late boilerplate is not. Two-halves cosine of the Dolma-85 direction is weak
 (0.15 / 0.10 bulk, 42 per half): items memorized individually from a
 scattered set share little; the shared direction belongs to populations
 memorized as a set (same source/format/phase). Edits pending.
+
+## 2026-09-06: within OLMo-3, the flat population is bulk-deletable and the non-flat one is not
+Same model, same layers (23-25), same basis, same edit (bulk block removal,
+norm 84.5, ordinary cost +0.010): the 85 Dolma-era windows go 0.988 -> 0.400
+recited; the 111 dolmino boilerplate windows go 1.000 -> 0.955. Flatness
+(bulk share shift +0.19 vs +0.07; exponents -0.55 vs -0.2) predicts
+deletability across populations, as the storage-cost proposition says it
+should. OLMo-2 7B shows the same split (Dolma set 0.18 left vs dolmino
+windows 0.89). The checkpoint scans (424B ... 3775B tokens) will date the two
+populations' memorization.
