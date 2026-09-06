@@ -2859,3 +2859,35 @@ Erasure is partial in every case (item loss stays far below the unmemorized
 2.5): the filter removes the head part of the imprint and leaves the rest.
 Control run (Adam, item weight 0, big pool) launched to separate item
 collateral from the pool's distribution shift.
+
+## 2026-09-06: natural-gradient imprint is in the bulk by construction, and the representation recodes regardless
+NG (lr 1e-1, aggressive regime, 600 steps, 0.99 recited; ordinary +0.072,
+Pile +0.20). Imprint exponents vs population eigenvalue: G -0.65..-1.08, A
+-0.47..-0.88 (R2 0.93-0.99); imprint bulk share 0.54-0.69 (uniform 0.36).
+Removing the imprint's bulk block: 0.062 recited (it IS the memorization);
+removing its head block: 0.917. Compare SGD (+0.65 A, bulk 0.07-0.13, head
+block carries it) and Adam (+0.5..+0.67 A, bulk 0.14-0.22, head/bulk 0.75).
+The NG imprint's profile (-0.5..-0.9 on A) is the profile of the real
+pretraining-era memorized populations (-0.55..-0.67); SGD's and Adam's are
+head-heavy. Recoding of the items' representation at layer 13 (vs ordinary
+text measured on the same final model): A exponent -0.24 under NG, -0.29
+under Adam, -0.33 under SGD (before: -0.08); bulk share 0.32 vs 0.23
+ordinary; total energy x1.0-1.06. Optimizer-independent, grows with depth
+into the trained band.
+
+## 2026-09-06: (B) forgetting on the boilerplate windows -- margins explain the survival
+Base margins of the recited dolmino windows: mean 12.2 / 13.1 logits
+(OLMo-3 / OLMo-2), median over items of the minimum 9.2 / 8.4. Full bulk
+deletion shifts them by -1.01 / -1.54 on average (Dolma set in OLMo-2 at
+norm 76: -2.92 with min-margins ~2.3). Response linear in alpha: OLMo-2
+slopes 0.98-1.04 up to alpha = 1, OLMo-3 1.0 -> 1.36. First-order prediction
+of strict recitation from the alpha = 0.25 probe: OLMo-2 0.969/0.961/0.922 vs
+measured 0.961/0.930/0.891 (alpha 0.5/0.75/1); OLMo-3 0.991/0.982/0.982 vs
+0.991/0.982/0.955. The survival of these windows is quantitatively the
+margin picture: small coherent coupling to the block (less content there)
+and large margins. Noise part and (C) pending.
+
+## 2026-09-06: checkpoint 2.1T: same as 1.26T
+dolmino windows recited 8 of the final 129 (mean acc 0.11); Dolma set 550 of
+1054 (0.70). The Dolma set's memorization is complete and static from 1.26T;
+the dolmino windows are not memorized by 2.1T.
