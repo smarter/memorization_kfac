@@ -2962,3 +2962,14 @@ final comparison at 650 steps pending.
 NG imprint decay finals (300 steps): under SGD 0.24 recited (loss 0.43),
 under Adam 0.31 (0.40); items' bulk share at 13 0.32 -> 0.27 (ordinary 0.24
 -> 0.21) in both.
+
+## 2026-09-06: item-free control closes the gentle regime
+Adam, weight 0, big pool, 650 steps: ordinary -0.0155, Pile -0.0016
+(in-distribution fine-tuning helps held-out dolmino). Adam with the 96 items,
+same steps: +0.0123 / +0.0181. Net cost of memorizing 96 windows (10.7k
+tokens) with Adam: +0.028 nats on ordinary text, +0.020 on the Pile -- about
+the cost of deleting the bulk block of three layers in the 7B models. NG in
+the gentle regime still converging (step 600: item loss 1.19, ordinary
+-0.006, Pile +0.011). The 424B-token checkpoint scan failed (no fast
+tokenizer in that snapshot; sentencepiece missing) -- not needed.
+Paper draft: theory/paper/main.tex (17 pp with appendix), branch theory-paper.
