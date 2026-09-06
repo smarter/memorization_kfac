@@ -7,7 +7,7 @@ profile per direction against the population eigenvalue (exponents), imprint bul
 the inputs of layers 11-13 before and after (bulk share, exponent vs ordinary; total energy); collateral on held-out
 ordinary text and Pile; then edits of the final model in the band: bulk and head block removal of the imprint only, and
 of the full weights, with items' recitation remaining and ordinary cost."""
-import sys, math, time, numpy as np, torch
+import os, sys, math, time, numpy as np, torch
 sys.path.insert(0, "/tmp/claude-1002/-home-guillaume-memorization-kfac/a39940c3-dcc5-4714-8566-58fa7889e391/scratchpad")
 from xmodel_common import *
 OPT, LR = sys.argv[1], float(sys.argv[2]); MAX_STEPS = int(sys.argv[3]) if len(sys.argv) > 3 else 600
@@ -24,7 +24,8 @@ WPS = 512 // L; g = torch.Generator().manual_seed(1)
 cand = [int(i) for i in never.tolist() if i // WPS >= 1152]; items_idx = torch.tensor(cand)[torch.randperm(len(cand), generator=g)[:NITEM]]
 ord_idx = torch.tensor([int(i) for i in never.tolist() if i // WPS < 1152])[:400]
 items = windows[items_idx]; ordinary = windows[ord_idx]; item_seqs = set((items_idx // WPS).tolist())
-ref_pool = torch.tensor([s for s in range(1152, 2304) if s not in item_seqs]); print(f"[{OPT}] items {len(items)} ordinary {len(ordinary)} ref pool {len(ref_pool)}", flush=True)
+ref_pool = torch.tensor([s for s in range(1152, 2304) if s not in item_seqs]); REF = gen
+if os.path.exists(f"{S}/dolmino_pool_big.pt"): REF = torch.load(f"{S}/dolmino_pool_big.pt"); ref_pool = torch.arange(len(REF)); print(f"using big pool {len(REF)}", flush=True); print(f"[{OPT}] items {len(items)} ordinary {len(ordinary)} ref pool {len(ref_pool)}", flush=True)
 IM = wm[None].expand(NITEM, -1); OM = wm[None].expand(len(ordinary), -1); PM = torch.ones(128, 511, dtype=torch.bool)
 def evaluate():
     r = token_stats(model, items, IM); o = token_stats(model, ordinary, OM); p = token_stats(model, pile[:128], PM, bs=8)
@@ -71,7 +72,7 @@ if OPT == "ng":
 gi = torch.Generator().manual_seed(2); step = 0; t0 = time.time(); order = torch.randperm(NITEM, generator=gi); ptr = 0
 while step < MAX_STEPS:
     if ptr + NI > NITEM: order = torch.randperm(NITEM, generator=gi); ptr = 0
-    xi = items[order[ptr:ptr + NI]].to(dev); ptr += NI; xr = gen[ref_pool[torch.randint(len(ref_pool), (NR,), generator=gi)]].to(dev)
+    xi = items[order[ptr:ptr + NI]].to(dev); ptr += NI; xr = REF[ref_pool[torch.randint(len(ref_pool), (NR,), generator=gi)]].to(dev)
     li = torch.nn.functional.cross_entropy(model(input_ids=xi).logits[:, :-1].reshape(-1, model.config.vocab_size), xi[:, 1:].reshape(-1))
     lr_ = torch.nn.functional.cross_entropy(model(input_ids=xr).logits[:, :-1].reshape(-1, model.config.vocab_size), xr[:, 1:].reshape(-1))
     (ITEM_W * li + lr_).backward()

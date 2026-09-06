@@ -4,7 +4,7 @@ same band on reference sequences only (no items), same optimizer and lr, trackin
 ordinary loss, the imprint's energy (relative to the original weights) in the bulk and head blocks of the population basis,
 and the items' activation profile at the input of layer 13. Prediction: the head part of the imprint decays faster than the
 bulk part; recitation that survives rests on the bulk; the items' representation flattens further."""
-import sys, math, time, glob, numpy as np, torch
+import os, sys, math, time, glob, numpy as np, torch
 sys.path.insert(0, "/tmp/claude-1002/-home-guillaume-memorization-kfac/a39940c3-dcc5-4714-8566-58fa7889e391/scratchpad")
 from xmodel_common import *
 RUN, OPT, LR = sys.argv[1], sys.argv[2], float(sys.argv[3]); STEPS = int(sys.argv[4]) if len(sys.argv) > 4 else 400
@@ -17,7 +17,8 @@ if "Wf" in R: Wf = {k: v.to(dev) for k, v in R["Wf"].items()}
 else: Wf = {k: W0[k] + Q[k][0] @ R["D"][k].to(dev) @ Q[k][1].T for k in mods}
 set_weights(mods, Wf)
 ord_idx = torch.tensor([int(i) for i in never.tolist() if i // WPS < 1152])[:400]; ordinary = windows[ord_idx]
-ref_pool = torch.tensor([s for s in range(1152, 2304) if s not in item_seqs])
+ref_pool = torch.tensor([s for s in range(1152, 2304) if s not in item_seqs]); REF = gen
+if os.path.exists(f"{S}/dolmino_pool_big.pt"): REF = torch.load(f"{S}/dolmino_pool_big.pt"); ref_pool = torch.arange(len(REF)); print(f"using big pool {len(REF)}", flush=True)
 IM = wm[None].expand(len(items), -1); OM = wm[None].expand(len(ordinary), -1)
 def imprint_energy():
     out = {"bulk": 0.0, "head": 0.0, "total": 0.0}
@@ -51,7 +52,7 @@ else:
     for k in mods: lam = Q[k][2][:, None] * Q[k][3][None, :]; PRE_[k] = lam.mean() / (lam + 0.05 * lam.mean())
 gi = torch.Generator().manual_seed(3)
 for step in range(1, STEPS + 1):
-    xr = gen[ref_pool[torch.randint(len(ref_pool), (8,), generator=gi)]].to(dev)
+    xr = REF[ref_pool[torch.randint(len(ref_pool), (8,), generator=gi)]].to(dev)
     torch.nn.functional.cross_entropy(model(input_ids=xr).logits[:, :-1].reshape(-1, model.config.vocab_size), xr[:, 1:].reshape(-1)).backward()
     if opt is not None: opt.step(); opt.zero_grad()
     else:

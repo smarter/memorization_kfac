@@ -2793,3 +2793,16 @@ items outside the shared component.
 ## 2026-09-06: OLMo-3 recites 85 of the 1054 Dolma memorized windows
 A pretraining-era population for OLMo-3 (mean suffix acc 0.223); probe at
 23-25 running.
+
+## 2026-09-06: OLMo-3's pretraining-era population IS flat
+
+`xmodel_probe.py ... dolma` on OLMo-3 7B, layers 23-25, the 85 Dolma
+memorized windows it recites (of OLMo-2's 1054): A exponents -0.53..-0.59
+(R2 0.87-0.88), G -0.66..-0.88 (R2 0.76-0.86); activation bulk share
+0.26-0.28 -> 0.45-0.48 (+0.19; the dolmino windows in the same model: +0.07);
+coupling ratio 33 (dolmino windows: 8). Same model, same layers, same basis:
+the pretraining-era population is half-whitened like OLMo-2's Dolma set, the
+late boilerplate is not. Two-halves cosine of the Dolma-85 direction is weak
+(0.15 / 0.10 bulk, 42 per half): items memorized individually from a
+scattered set share little; the shared direction belongs to populations
+memorized as a set (same source/format/phase). Edits pending.
